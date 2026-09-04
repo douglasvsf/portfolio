@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Next.js
+apps/web/.next/
+apps/web/out/
+.next/
+out/
+
+# NestJS / Node build output
+apps/api/dist/
+dist/
+
+# Shared package build output
+packages/shared/dist/
+
+# Vercel
+.vercel
+
+# Logs
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Testing / coverage
+coverage/
+
+# TypeScript build info
+*.tsbuildinfo
+
+# IDEs / editors
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db
