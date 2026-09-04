@@ -1,10 +1,10 @@
 import { SectionHeading } from "@/components/ui/section-heading";
 
 const FACTS = [
-  { label: "Experiência", value: "5+ anos" },
+  { label: "Experiência", value: "6+ anos" },
   { label: "Foco", value: "Full Stack" },
-  { label: "Stack principal", value: "TypeScript" },
-  { label: "Localização", value: "Brasil" },
+  { label: "Stack principal", value: "React & Node.js" },
+  { label: "Formação", value: "ADS — Cesumar" },
 ];
 
 export function AboutSection() {
@@ -14,10 +14,12 @@ export function AboutSection() {
 
       <div className="grid gap-12 md:grid-cols-2">
         <p className="text-lg leading-relaxed text-muted">
-          Texto fictício de apresentação. Aqui entra uma descrição pessoal sobre
-          trajetória, forma de trabalhar e o que motiva o desenvolvimento de
-          software. Substitua este parágrafo por uma apresentação real, destacando
-          experiências, valores e objetivos profissionais.
+          Meu nome é Douglas Vinicius Szapak Ferreira — no mercado, também conhecido
+          como Godzilla. Engenheiro de software com mais de 6 anos de experiência
+          entre frontend e backend, passando por migração de sistemas legados,
+          construção de APIs e squads multidisciplinares. Uso ferramentas de IA
+          (Code Assist e agentes inteligentes) no dia a dia para aumentar
+          produtividade e acelerar o desenvolvimento de soluções.
         </p>
 
         <dl className="grid grid-cols-2 gap-6">

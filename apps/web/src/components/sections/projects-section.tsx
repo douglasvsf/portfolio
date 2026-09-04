@@ -1,14 +1,16 @@
 import { SectionHeading } from "@/components/ui/section-heading";
 import { Badge } from "@/components/ui/badge";
-import { projects } from "@/data/projects";
+import { getProjects } from "@/lib/api";
 
-export function ProjectsSection() {
+export async function ProjectsSection() {
+  const projects = await getProjects();
+
   return (
     <section id="projetos" className="mx-auto max-w-6xl px-6 py-24">
       <SectionHeading
         index="03"
         title="Projetos"
-        description="Uma seleção de projetos. Conteúdo fictício, pronto para ser substituído."
+        description="Iniciativas que liderei ou das quais fiz parte ao longo da carreira."
       />
 
       <div className="grid gap-6 md:grid-cols-3">
@@ -16,6 +18,8 @@ export function ProjectsSection() {
           <a
             key={project.name}
             href={project.link ?? "#"}
+            target="_blank"
+            rel="noopener noreferrer"
             className="group flex flex-col gap-4 rounded-lg border border-border bg-bg-elevated p-6 transition-colors hover:border-accent"
           >
             <h3 className="text-lg font-semibold group-hover:text-accent">

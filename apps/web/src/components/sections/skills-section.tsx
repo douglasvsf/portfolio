@@ -1,8 +1,10 @@
 import { SectionHeading } from "@/components/ui/section-heading";
 import { Badge } from "@/components/ui/badge";
-import { skillGroups } from "@/data/skills";
+import { getSkills } from "@/lib/api";
 
-export function SkillsSection() {
+export async function SkillsSection() {
+  const skillGroups = await getSkills();
+
   return (
     <section id="skills" className="border-t border-border bg-bg-elevated/40">
       <div className="mx-auto max-w-6xl px-6 py-24">

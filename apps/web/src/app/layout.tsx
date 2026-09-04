@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Godzilla — Full Stack Developer",
   description:
-    "Portfolio pessoal de Godzilla, desenvolvedor full stack. Projetos, skills e experiência.",
+    "Portfolio pessoal de Douglas Vinicius Szapak Ferreira (Godzilla), engenheiro fullstack. Projetos, skills e experiência.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
