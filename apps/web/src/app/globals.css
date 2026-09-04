@@ -1,0 +1,98 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #08090a;
+  --color-bg-elevated: #111316;
+  --color-bg-elevated-2: #17191d;
+  --color-border: #2a2d33;
+  --color-border-strong: #3d4149;
+
+  --color-foreground: #e7e9ec;
+  --color-muted: #9aa0a8;
+  --color-muted-2: #6b7178;
+
+  --color-accent: #a6ff3d;
+  --color-accent-dim: #7ecc2e;
+  --color-accent-foreground: #06120a;
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  --animate-pulse-slow: pulse-slow 4s ease-in-out infinite;
+  --animate-scan: scan 6s linear infinite;
+}
+
+@keyframes pulse-slow {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes scan {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100%);
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+::selection {
+  background: var(--color-accent);
+  color: var(--color-accent-foreground);
+}
+
+.bg-grid {
+  background-image:
+    linear-gradient(to right, color-mix(in srgb, var(--color-border) 60%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--color-border) 60%, transparent) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.text-glow {
+  text-shadow: 0 0 24px color-mix(in srgb, var(--color-accent) 55%, transparent);
+}
+
+.kaiju-divider {
+  clip-path: polygon(
+    0% 100%,
+    0% 20%,
+    4% 60%,
+    8% 15%,
+    12% 55%,
+    16% 5%,
+    20% 45%,
+    25% 70%,
+    30% 25%,
+    35% 60%,
+    40% 10%,
+    45% 50%,
+    50% 0%,
+    55% 50%,
+    60% 10%,
+    65% 60%,
+    70% 25%,
+    75% 70%,
+    80% 45%,
+    84% 5%,
+    88% 55%,
+    92% 15%,
+    96% 60%,
+    100% 20%,
+    100% 100%
+  );
+}
