@@ -1,7 +1,9 @@
 import { SectionHeading } from "@/components/ui/section-heading";
-import { experience } from "@/data/experience";
+import { getExperience } from "@/lib/api";
 
-export function ExperienceSection() {
+export async function ExperienceSection() {
+  const experience = await getExperience();
+
   return (
     <section id="experiencia" className="border-t border-border bg-bg-elevated/40">
       <div className="mx-auto max-w-6xl px-6 py-24">

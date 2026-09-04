@@ -1,9 +1,16 @@
 import { SectionHeading } from "@/components/ui/section-heading";
 
 const CONTACT_LINKS = [
-  { label: "Email", value: "contato@godzilla.dev", href: "mailto:contato@godzilla.dev" },
-  { label: "GitHub", value: "github.com/godzilla", href: "#" },
-  { label: "LinkedIn", value: "linkedin.com/in/godzilla", href: "#" },
+  {
+    label: "GitHub",
+    value: "github.com/douglasvsf",
+    href: "https://github.com/douglasvsf",
+  },
+  {
+    label: "LinkedIn",
+    value: "linkedin.com/in/douglas-vinicius-szapak-ferreira",
+    href: "https://www.linkedin.com/in/douglas-vinicius-szapak-ferreira-2ba7a115b/",
+  },
 ];
 
 export function ContactSection() {
@@ -12,7 +19,7 @@ export function ContactSection() {
       <SectionHeading
         index="05"
         title="Contato"
-        description="Dados fictícios de contato — substitua pelos seus canais reais."
+        description="Vamos conversar? Esses são os melhores canais para me encontrar."
       />
 
       <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap">
@@ -20,6 +27,8 @@ export function ContactSection() {
           <a
             key={link.label}
             href={link.href}
+            target="_blank"
+            rel="noopener noreferrer"
             className="flex flex-1 min-w-[220px] flex-col gap-1 rounded-lg border border-border bg-bg-elevated p-5 transition-colors hover:border-accent"
           >
             <span className="font-mono text-xs uppercase tracking-wider text-muted-2">

@@ -4,9 +4,10 @@ Portfolio pessoal full stack, com identidade visual dark/tecnológica inspirada 
 kaiju. Este repositório é a base do projeto: frontend e backend funcionando
 localmente, prontos para evoluir.
 
-> Estágio atual: fundação do projeto (estrutura, integração básica frontend↔API
-> e identidade visual). Sem banco de dados, autenticação ou funcionalidades de
-> negócio ainda — isso vem em etapas futuras.
+> Estágio atual: fundação do projeto — estrutura, identidade visual, testes
+> (Jest + Cypress) e o conteúdo da homepage (skills, projetos, experiência)
+> persistido em MongoDB e servido pela API. Sem autenticação, painel admin ou
+> outras funcionalidades de negócio ainda — isso vem em etapas futuras.
 
 ## Stack
 
@@ -24,9 +25,14 @@ localmente, prontos para evoluir.
 
 **Backend** (`apps/api`)
 
-- NestJS 12
+- NestJS 11
 - Node.js + TypeScript
 - API REST
+- MongoDB + Mongoose (`@nestjs/mongoose`)
+
+**Banco de dados**
+
+- MongoDB, rodando localmente via Docker Compose
 
 **Compartilhado** (`packages/shared`)
 
@@ -38,23 +44,33 @@ localmente, prontos para evoluir.
 .
 ├── apps/
 │   ├── web/              # Frontend Next.js
+│   │   ├── cypress/
+│   │   │   ├── e2e/            # Specs de E2E (fluxos do usuário)
+│   │   │   ├── fixtures/       # Dados de apoio para os testes (quando houver)
+│   │   │   └── support/        # Setup global do Cypress
 │   │   ├── src/
 │   │   │   ├── app/            # Rotas (App Router)
 │   │   │   ├── components/     # Componentes de UI, layout e seções
-│   │   │   ├── data/           # Conteúdo fictício da homepage
-│   │   │   └── lib/            # Integração com a API
+│   │   │   └── lib/            # Integração com a API (com teste unitário)
+│   │   ├── jest.config.ts
+│   │   ├── cypress.config.ts
 │   │   └── .env.example
 │   │
 │   └── api/               # Backend NestJS
 │       ├── src/
-│       │   ├── health/         # Módulo de health check
+│       │   ├── health/         # Módulo de health check (com teste unitário)
+│       │   ├── skills/         # Módulo skills (Mongoose)
+│       │   ├── projects/       # Módulo projects (Mongoose)
+│       │   ├── experience/     # Módulo experience (Mongoose)
+│       │   ├── seed.ts         # Popula o MongoDB com o conteúdo da homepage
 │       │   ├── app.module.ts
 │       │   └── main.ts
 │       └── .env.example
 │
 ├── packages/
-│   └── shared/            # Tipos compartilhados (ex.: HealthResponse)
+│   └── shared/            # Tipos compartilhados (HealthResponse, SkillGroup, Project, ExperienceItem)
 │
+├── docker-compose.yml     # MongoDB para desenvolvimento local
 ├── package.json           # Scripts raiz do monorepo
 ├── pnpm-workspace.yaml
 ├── tsconfig.json           # tsconfig base, estendido pelos pacotes
@@ -87,6 +103,7 @@ NEXT_PUBLIC_API_URL=http://localhost:3001
 
 ```
 API_PORT=3001
+MONGODB_URI=mongodb://127.0.0.1:27017/portfolio
 ```
 
 ```bash
@@ -94,9 +111,31 @@ cp apps/web/.env.example apps/web/.env.local
 cp apps/api/.env.example apps/api/.env
 ```
 
+> No Windows, use `127.0.0.1` em vez de `localhost` na `MONGODB_URI` — o driver
+> do MongoDB pode tentar resolver `localhost` como IPv6 (`::1`) e falhar ao
+> conectar na porta publicada pelo Docker.
+
+## Banco de dados (MongoDB)
+
+O conteúdo da homepage (skills, projetos, experiência) é servido pela API a
+partir do MongoDB — não é mais conteúdo estático no frontend.
+
+Suba o banco localmente com Docker:
+
+```bash
+pnpm docker:up      # inicia o MongoDB (docker compose up -d)
+pnpm seed           # popula skills, projects e experience com o conteúdo atual
+pnpm docker:down    # para o container quando terminar
+```
+
+O seed (`apps/api/src/seed.ts`) apaga e recria as três coleções com os dados
+definidos no próprio script — é a fonte da verdade do conteúdo hoje. Rode-o
+sempre que quiser resetar o banco para esse estado conhecido.
+
 ## Executando localmente
 
-Rodar frontend e backend juntos, a partir da raiz:
+Com o MongoDB no ar (`pnpm docker:up` + `pnpm seed`, uma vez), rode frontend e
+backend juntos a partir da raiz:
 
 ```bash
 pnpm dev
@@ -111,6 +150,10 @@ Rodar separadamente, se preferir:
 pnpm dev:web   # apenas o frontend, porta 3000
 pnpm dev:api   # apenas o backend, porta 3001
 ```
+
+O frontend não quebra se a API ou o MongoDB estiverem fora do ar: as seções
+dinâmicas (skills, projetos, experiência) simplesmente renderizam vazias nesse
+caso — ver [Decisões arquiteturais](#decisões-arquiteturais).
 
 ### Testando a integração
 
@@ -138,6 +181,101 @@ frontend dependem dos tipos compartilhados).
 ```bash
 pnpm lint
 ```
+
+## Estratégia de testes
+
+Dois níveis, cada um com uma responsabilidade clara:
+
+```
+Jest    → unitários / regras de negócio / services / utilitários (isolado, rápido)
+Cypress → fluxos reais do usuário na interface (navegador, ponta a ponta)
+```
+
+Não existe (nem deve existir) sobreposição entre os dois: o que já é validado de
+forma isolada pelo Jest não é reexaminado pelo Cypress, e vice-versa. A suíte é
+propositalmente pequena — prioriza testes que agregam valor real, não cobertura
+por cobertura.
+
+### Jest — testes unitários
+
+- **`apps/api/src/health/health.controller.spec.ts`** — verifica que
+  `GET /health` retorna `{ status: "ok" }`. É a única regra de negócio que existe
+  hoje no backend; novos módulos (quando criados com lógica real) devem seguir o
+  mesmo padrão, com o `.spec.ts` ao lado do `.service.ts`/`.controller.ts`.
+- **`apps/web/src/lib/api.test.ts`** — testa `getHealth()` (sucesso e erro) e
+  `getSkills()`/`getProjects()`/`getExperience()`: URL correta chamada e,
+  principalmente, que uma falha de rede é engolida e vira lista vazia em vez de
+  derrubar a página (fazendo mock de `fetch`, sem rede real). Esse
+  comportamento de fallback é a única lógica não-trivial do frontend hoje, por
+  isso é o que está coberto.
+
+Os services do backend (`SkillsService`, `ProjectsService`, `ExperienceService`)
+não têm `.spec.ts`: são leitura pura (`find().lean()` + seleção de campos), sem
+nenhuma regra de negócio a validar — testá-los seria coverage por coverage. O
+mesmo vale para os componentes React da homepage, puramente apresentacionais.
+Esse tipo de comportamento (renderização, navegação) é responsabilidade do
+Cypress.
+
+Executar:
+
+```bash
+pnpm test              # roda uma vez em todos os pacotes que têm testes
+pnpm test:watch        # modo watch (api + web em paralelo)
+pnpm test:coverage     # com relatório de cobertura
+
+# individualmente
+pnpm --filter api test
+pnpm --filter web test
+```
+
+Coverage é gerado normalmente (via `--coverage`), mas **sem threshold mínimo
+configurado** — a prioridade é qualidade sobre percentual, e não faz sentido
+perseguir número em uma base de código ainda pequena.
+
+### Cypress — testes end-to-end
+
+**`apps/web/cypress/e2e/homepage.cy.ts`** cobre os três fluxos que realmente
+existem na homepage hoje:
+
+```
+Homepage
+  ├── deve carregar corretamente        (hero renderiza: título + subtítulo)
+  ├── deve navegar para projetos        (clique no CTA → seção de projetos visível)
+  └── deve navegar para contato         (clique no menu → seção de contato visível)
+```
+
+Não há testes de formulário de contato (ainda não existe) nem testes repetindo
+o que o Jest já garante (ex.: o texto exato retornado pela API). As asserções
+verificam apenas a navegação/estrutura (seção correta fica visível), não o
+conteúdo dinâmico em si: as seções de skills/projetos/experiência são Server
+Components que buscam dados no servidor Next.js durante o SSR — `cy.intercept`
+atua na rede do navegador e não enxerga essa chamada, então mockar esse dado no
+Cypress não é possível sem infraestrutura extra. Validar que o dado certo saiu
+do MongoDB é responsabilidade do Jest (na função de fetch) e da checagem manual
+via `pnpm dev` + `pnpm docker:up`. Quando surgirem funcionalidades reais
+(formulário, etc.), novos specs devem seguir o mesmo critério: poucos testes,
+de alto valor, cobrindo comportamento do usuário.
+
+Executar:
+
+```bash
+pnpm test:e2e                     # sobe o Next.js e roda o Cypress headless (start-server-and-test)
+pnpm --filter web cypress:open    # abre a interface do Cypress para desenvolvimento dos specs
+pnpm --filter web cypress:run     # roda headless contra um servidor já em execução
+```
+
+### Preparado para CI (não implementado agora)
+
+A ordem de execução já reflete o pipeline que uma CI (GitHub Actions ou
+similar) deveria rodar no futuro:
+
+```
+lint → test (unitário) → build → test:e2e
+```
+
+Os scripts da raiz (`pnpm lint`, `pnpm test`, `pnpm build`, `pnpm test:e2e`) já
+funcionam de forma isolada e nessa ordem — falta apenas o workflow do CI em si,
+que será adicionado quando fizer sentido.
 
 ## Deploy do frontend na Vercel
 
@@ -170,3 +308,33 @@ Para o frontend:
   ainda não é usada.
 - **Tailwind CSS 4** usa configuração via CSS (`@theme` em `globals.css`) em
   vez de `tailwind.config.js` — é o modelo atual do framework.
+- **NestJS 11 em vez do 12**: a v12 (recém-lançada) migrou todos os pacotes
+  (`@nestjs/core`, `@nestjs/common`, etc.) para ESM puro (`"type": "module"`),
+  o que quebra a integração padrão com Jest/ts-jest e exigiria configuração
+  experimental (`--experimental-vm-modules`, tsconfig dedicado para ESM) só
+  para rodar testes. A v11 é CJS, estável, madura e é o que a documentação
+  oficial e o `nest generate` ainda assumem — a escolha mais simples e
+  profissional dado que testes automatizados são um requisito.
+- **Jest configurado por app, não na raiz**: cada app tem necessidades de
+  transform/ambiente diferentes (`ts-jest` + Node no backend,
+  `next/jest` no frontend) — configuração compartilhada geraria mais
+  acoplamento do que benefício para dois projetos tão distintos.
+- **`start-server-and-test`** no `test:e2e` do frontend: evita o passo manual
+  de "suba o servidor, depois rode o Cypress" e já deixa o comando pronto para
+  rodar sem intervenção em CI.
+- **MongoDB via Docker Compose, sem ODM extra além do Mongoose**: `@nestjs/mongoose`
+  é a integração oficial do Nest, com `.lean()` + mapeamento explícito de campos
+  nos services (não expõe `_id`/`__v` do Mongo na resposta da API). Um único
+  serviço no `docker-compose.yml`, sem autenticação — é banco local de
+  desenvolvimento, não produção.
+- **`getContent()` no frontend nunca lança erro** (`apps/web/src/lib/api.ts`):
+  ao contrário de `getHealth()` (que precisa saber se a API está no ar),
+  `getSkills`/`getProjects`/`getExperience` engolem falhas de rede e retornam
+  lista vazia. Sem isso, `next build`/`pnpm build` quebraria sempre que rodado
+  sem o MongoDB/API ativos (CI, ambiente de build da Vercel antes do backend
+  existir, etc.) — o backend é deliberadamente desacoplado, então o frontend
+  não pode depender dele estar de pé para simplesmente compilar.
+- **`seed.ts` como fonte da verdade do conteúdo**, não um script único
+  executado uma vez: ele apaga e recria as coleções a cada execução, propositalmente
+  simples (sem migrations) porque o conteúdo ainda é editado por código, não por
+  um painel admin.

@@ -6,7 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run",
+    "test:e2e": "start-server-and-test dev http://localhost:3000 cypress:run"
   },
   "dependencies": {
     "@portfolio/shared": "workspace:*",
@@ -16,11 +22,15 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "cypress": "^16.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.3.4",
+    "jest": "^30.5.1",
+    "start-server-and-test": "^3.0.12",
     "tailwindcss": "^4",
     "typescript": "^5"
   },

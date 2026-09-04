@@ -33,6 +33,9 @@ yarn-error.log*
 
 # Testing / coverage
 coverage/
+apps/web/cypress/videos/
+apps/web/cypress/screenshots/
+apps/web/cypress/downloads/
 
 # TypeScript build info
 *.tsbuildinfo
