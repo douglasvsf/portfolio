@@ -36,14 +36,55 @@ export function contactLinks(emailLabel: string) {
 }
 
 export const SKILL_ITEMS = {
-  frontend: ["React", "Next.js", "TypeScript", "AngularJS", "Tailwind CSS"],
-  backend: ["Node.js", "NestJS", "Laravel", "PHP", "GraphQL"],
-  data: ["PostgreSQL", "MySQL", "MongoDB", "Docker"],
-  quality: ["Jest", "Cypress", "React Testing Library", "Storybook"],
+  frontend: [
+    "React",
+    "Next.js",
+    "TypeScript",
+    "JavaScript",
+    "AngularJS",
+    "React Native",
+    "Tailwind CSS",
+    "shadcn/ui",
+    "Material UI",
+    "Styled Components",
+    "Sass",
+  ],
+  backend: ["Node.js", "NestJS", "Express", "PHP", "Laravel", "GraphQL", "Apollo", "REST APIs"],
+  data: ["PostgreSQL", "MySQL", "MongoDB", "Oracle", "PL/SQL", "Docker", "Google Cloud Platform", "CI/CD", "Git"],
+  quality: ["Jest", "React Testing Library", "Cypress", "Storybook", "Code Review"],
+  architecture: ["BFF", "Microservices", "Atomic Design", "DDD", "SOLID", "SPA · SSR · SSG"],
 };
 
 export const PROJECT_TAGS = {
-  pravaler: ["Next.js", "Node.js", "Jest", "GCP"],
-  inoa: ["AngularJS", "React", "TypeScript"],
+  epa: ["Next.js", "Node.js", "shadcn/ui", "Tailwind CSS", "GCP"],
+  discovery: ["Next.js", "TypeScript", "BFF", "Jest", "Cypress"],
+  inoa: ["AngularJS", "React", "TypeScript", "Storybook"],
   qualicloud: ["NestJS", "Laravel", "React Native"],
+};
+
+/** Empresa, local e stack de cada experiência — só cargo e textos são traduzidos. */
+export const EXPERIENCE = {
+  inoa: {
+    company: "Inoa",
+    technologies: ["AngularJS", "TypeScript", "JavaScript", "React", "Next.js", "Node.js", "Jest", "React Testing Library", "Storybook"],
+  },
+  pravalerPleno: {
+    company: "Pravaler",
+    location: "São Paulo, SP",
+    technologies: ["Node.js", "Next.js", "React", "TypeScript", "Material UI", "shadcn/ui", "Tailwind CSS", "Jest", "GraphQL", "Docker", "GCP"],
+  },
+  pravalerJunior: {
+    company: "Pravaler",
+    technologies: ["Next.js", "Node.js", "TypeScript", "Express", "GraphQL", "PHP", "Laravel", "PostgreSQL", "MongoDB", "Docker", "GCP", "Cypress"],
+  },
+  qualicloud: {
+    company: "QualiCloud Soluções em Nuvem",
+    location: "Campo Mourão, PR",
+    technologies: ["Node.js", "NestJS", "PHP", "Laravel", "React", "React Native", "Oracle", "MySQL"],
+  },
+  cristofoli: {
+    company: "Cristófoli Equipamentos de Biossegurança",
+    location: "Campo Mourão, PR",
+    technologies: ["PHP", "Laravel", "JavaScript", "jQuery", "WordPress", "MySQL", "PL/SQL"],
+  },
 };
