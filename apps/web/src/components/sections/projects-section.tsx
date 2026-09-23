@@ -1,39 +1,65 @@
-import { SectionHeading } from "@/components/ui/section-heading";
-import { Badge } from "@/components/ui/badge";
-import { getProjects } from "@/lib/api";
+import type { Project } from "@portfolio/shared";
+import { Badge, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, cn } from "@godzilla/ui";
+import { ExternalLink } from "@godzilla/icons";
+import { Section, type SectionProps } from "@/components/layout/section";
 
-export async function ProjectsSection() {
-  const projects = await getProjects();
+export interface ProjectsSectionProps extends Omit<SectionProps, "children"> {
+  items: Project[];
+}
 
+export function ProjectsSection({ items, ...section }: ProjectsSectionProps) {
   return (
-    <section id="projetos" className="mx-auto max-w-6xl px-6 py-24">
-      <SectionHeading
-        index="03"
-        title="Projetos"
-        description="Iniciativas que liderei ou das quais fiz parte ao longo da carreira."
-      />
-
-      <div className="grid gap-6 md:grid-cols-3">
-        {projects.map((project) => (
-          <a
-            key={project.name}
-            href={project.link ?? "#"}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group flex flex-col gap-4 rounded-lg border border-border bg-bg-elevated p-6 transition-colors hover:border-accent"
-          >
-            <h3 className="text-lg font-semibold group-hover:text-accent">
-              {project.name}
-            </h3>
-            <p className="flex-1 text-sm text-muted">{project.description}</p>
-            <div className="flex flex-wrap gap-2">
-              {project.tags.map((tag) => (
-                <Badge key={tag}>{tag}</Badge>
-              ))}
-            </div>
-          </a>
+    <Section {...section}>
+      <ul className="grid gap-6 md:grid-cols-3">
+        {items.map((project) => (
+          <li key={project.name}>
+            <ProjectCard project={project} />
+          </li>
         ))}
-      </div>
-    </section>
+      </ul>
+    </Section>
+  );
+}
+
+export interface ProjectCardProps {
+  project: Project;
+  className?: string;
+}
+
+/** Card de projeto. Com `link`, o card inteiro vira um link externo. */
+export function ProjectCard({ project, className }: ProjectCardProps) {
+  const card = (
+    <Card
+      className={cn(
+        "group flex h-full flex-col transition-colors duration-(--duration-base)",
+        project.link && "hover:border-primary",
+        className,
+      )}
+    >
+      <CardHeader>
+        <CardTitle className="flex items-start justify-between gap-3 text-h4 leading-snug group-hover:text-primary">
+          {project.name}
+          {project.link ? <ExternalLink className="mt-1 size-(--size-icon-sm) shrink-0" aria-hidden="true" /> : null}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="flex-1">
+        <CardDescription>{project.description}</CardDescription>
+      </CardContent>
+      <CardFooter className="flex-wrap gap-2">
+        {project.tags.map((tag) => (
+          <Badge key={tag} variant="tag">
+            {tag}
+          </Badge>
+        ))}
+      </CardFooter>
+    </Card>
+  );
+
+  return project.link ? (
+    <a href={project.link} target="_blank" rel="noopener noreferrer" className="block h-full rounded-lg">
+      {card}
+    </a>
+  ) : (
+    card
   );
 }

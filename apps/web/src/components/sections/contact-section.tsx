@@ -1,43 +1,46 @@
-import { SectionHeading } from "@/components/ui/section-heading";
+import type { LucideIcon } from "@godzilla/icons";
+import { Linkedin, Mail } from "@godzilla/icons";
+import { Card } from "@godzilla/ui";
+import type { ContactIcon, ContactLink } from "@/content/types";
+import { Section, type SectionProps } from "@/components/layout/section";
 
-const CONTACT_LINKS = [
-  {
-    label: "GitHub",
-    value: "github.com/douglasvsf",
-    href: "https://github.com/douglasvsf",
-  },
-  {
-    label: "LinkedIn",
-    value: "linkedin.com/in/douglas-vinicius-szapak-ferreira",
-    href: "https://www.linkedin.com/in/douglas-vinicius-szapak-ferreira-2ba7a115b/",
-  },
-];
+const icons: Record<ContactIcon, LucideIcon> = {
+  mail: Mail,
+  linkedin: Linkedin,
+};
 
-export function ContactSection() {
+export interface ContactSectionProps extends Omit<SectionProps, "children"> {
+  links: ContactLink[];
+}
+
+export function ContactSection({ links, ...section }: ContactSectionProps) {
   return (
-    <section id="contato" className="mx-auto max-w-6xl px-6 py-24">
-      <SectionHeading
-        index="05"
-        title="Contato"
-        description="Vamos conversar? Esses são os melhores canais para me encontrar."
-      />
-
-      <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap">
-        {CONTACT_LINKS.map((link) => (
-          <a
-            key={link.label}
-            href={link.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex flex-1 min-w-[220px] flex-col gap-1 rounded-lg border border-border bg-bg-elevated p-5 transition-colors hover:border-accent"
-          >
-            <span className="font-mono text-xs uppercase tracking-wider text-muted-2">
-              {link.label}
-            </span>
-            <span className="font-medium text-foreground">{link.value}</span>
-          </a>
-        ))}
-      </div>
-    </section>
+    <Section {...section}>
+      <ul className="flex flex-col gap-4 sm:flex-row sm:flex-wrap">
+        {links.map((link) => {
+          const Icon = icons[link.icon];
+          const external = link.href.startsWith("http");
+          return (
+            <li key={link.href} className="min-w-[220px] flex-1">
+              <a
+                href={link.href}
+                {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                className="group block h-full rounded-lg"
+              >
+                <Card className="flex h-full items-center gap-4 p-5 transition-colors duration-(--duration-base) group-hover:border-primary">
+                  <Icon className="size-(--size-icon-lg) shrink-0 text-primary" aria-hidden="true" />
+                  <span className="flex min-w-0 flex-col gap-1">
+                    <span className="font-mono text-caption uppercase tracking-wider text-muted-foreground">
+                      {link.label}
+                    </span>
+                    <span className="truncate font-medium">{link.value}</span>
+                  </span>
+                </Card>
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+    </Section>
   );
 }

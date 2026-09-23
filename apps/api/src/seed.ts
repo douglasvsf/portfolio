@@ -25,29 +25,24 @@ const skillGroups = [
   },
 ];
 
-const GITHUB_URL = "https://github.com/douglasvsf";
-
 const projects = [
   {
     name: "Modernização do Ecossistema Discovery — Pravaler",
     description:
       "Liderança da migração de um legado WordPress/PHP com mais de 20 anos para Next.js e Node.js, incluindo a reconstrução completa dos fluxos de simulação, cadastro e atendimento, com mais de 400 testes automatizados.",
     tags: ["Next.js", "Node.js", "Jest", "GCP"],
-    link: GITHUB_URL,
   },
   {
     name: "Integração Multi-Backend — Inoa",
     description:
       "Desenvolvimento e manutenção da camada frontend integrada a 16 módulos de backend distintos, com AngularJS, React e TypeScript, em alinhamento técnico contínuo entre múltiplas equipes.",
     tags: ["AngularJS", "React", "TypeScript"],
-    link: GITHUB_URL,
   },
   {
     name: "QualiCloud — SaaS Própria",
     description:
       "Cofundador e líder técnico de uma software house, traduzindo demandas de negócio em produtos fullstack com NestJS, Laravel e React Native junto a uma equipe de desenvolvimento.",
     tags: ["NestJS", "Laravel", "React Native"],
-    link: GITHUB_URL,
   },
 ];
 

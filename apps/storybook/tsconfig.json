@@ -1,0 +1,7 @@
+{
+  "extends": "@godzilla/typescript-config/react-library.json",
+  "compilerOptions": {
+    "types": ["vite/client"]
+  },
+  "include": [".storybook/**/*.ts", ".storybook/**/*.tsx"]
+}

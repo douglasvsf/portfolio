@@ -21,6 +21,12 @@ dist/
 # Shared package build output
 packages/shared/dist/
 
+# Turborepo
+.turbo/
+
+# Storybook
+apps/storybook/storybook-static/
+
 # Vercel
 .vercel
 

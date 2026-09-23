@@ -1,0 +1,4 @@
+{
+  "extends": "@godzilla/typescript-config/react-library.json",
+  "include": ["src", "vitest.config.ts"]
+}
