@@ -10,7 +10,7 @@ export interface ProjectsSectionProps extends Omit<SectionProps, "children"> {
 export function ProjectsSection({ items, ...section }: ProjectsSectionProps) {
   return (
     <Section {...section}>
-      <ul className="grid gap-6 md:grid-cols-3">
+      <ul className="grid gap-6 md:grid-cols-2">
         {items.map((project) => (
           <li key={project.name}>
             <ProjectCard project={project} />

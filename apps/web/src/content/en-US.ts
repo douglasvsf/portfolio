@@ -1,5 +1,5 @@
 import type { SiteContent } from "./types";
-import { PROJECT_TAGS, SECTION_IDS, SKILL_ITEMS, contactLinks, navLinks } from "./shared";
+import { EXPERIENCE, PROJECT_TAGS, SECTION_IDS, SKILL_ITEMS, contactLinks, navLinks } from "./shared";
 
 export const enUS: SiteContent = {
   meta: {
@@ -30,46 +30,56 @@ export const enUS: SiteContent = {
   about: {
     title: "About me",
     paragraphs: [
-      "My name is Douglas Vinicius Szapak Ferreira — also known in the industry as Godzilla. I'm a software engineer with 6+ years of experience across frontend and backend, including legacy system migrations, API development and cross-functional squads.",
-      "I use AI tools (Code Assist and intelligent agents) every day to boost productivity and speed up how solutions get built.",
+      "My name is Douglas Vinicius Szapak Ferreira — also known in the industry as Godzilla. I'm a senior full stack software engineer with 9+ years of experience building web products from requirements all the way to production.",
+      "I started out building corporate systems, APIs and integrations at Cristófoli. Then I co-founded QualiCloud, where I was a partner and tech lead of a team building web and mobile SaaS products. At Pravaler, I took part in modernizing a 20+ year-old legacy ecosystem — migrating WordPress/PHP to Next.js, Node.js and TypeScript, helping design a BFF architecture and writing 400+ automated tests. At Inoa, I worked as a senior engineer on the frontend of a platform integrated with 16 backend modules.",
+      "I care about well-organized code and teams that grow together: I take part in code reviews, architecture decisions and building reusable components. Day to day, I use AI tools (Code Assist and agents) to move faster without compromising quality.",
     ],
     facts: [
-      { label: "Experience", value: "6+ years" },
-      { label: "Focus", value: "Full Stack" },
-      { label: "Main stack", value: "React & Node.js" },
+      { label: "Experience", value: "9+ years" },
+      { label: "Level", value: "Senior" },
+      { label: "Main stack", value: "React · Next.js · Node.js" },
+      { label: "Automated tests", value: "400+" },
+      { label: "Leadership", value: "Former partner & tech lead" },
       { label: "Education", value: "Systems Analysis — Cesumar" },
     ],
   },
   skills: {
     title: "Skills",
-    description: "The technologies and practices I use day to day.",
+    description: "Technologies and practices I've used in production throughout my career.",
     groups: [
       { category: "Frontend", items: SKILL_ITEMS.frontend },
       { category: "Backend", items: SKILL_ITEMS.backend },
       { category: "Data & Infrastructure", items: SKILL_ITEMS.data },
       { category: "Testing & Quality", items: SKILL_ITEMS.quality },
+      { category: "Architecture", items: SKILL_ITEMS.architecture },
     ],
   },
   projects: {
     title: "Projects",
-    description: "Initiatives I've led or been part of throughout my career.",
+    description: "Initiatives I've been part of throughout my career.",
     items: [
       {
-        name: "Discovery Ecosystem Modernization — Pravaler",
+        name: "Legacy rebuild — EPA Channels · Pravaler",
         description:
-          "Led the migration of a 20+ year-old WordPress/PHP legacy system to Next.js and Node.js, fully rebuilding the simulation, sign-up and customer service flows, backed by 400+ automated tests.",
-        tags: PROJECT_TAGS.pravaler,
+          "On the “Strategy for Action” team, rebuilding the company's legacy system: simulation, pre-simulation, sign-up, credit, customer service, website and forms, with Next.js, Node.js, shadcn/ui and Tailwind CSS running on Google Cloud Platform.",
+        tags: PROJECT_TAGS.epa,
       },
       {
-        name: "Multi-Backend Integration — Inoa",
+        name: "Discovery modernization — Pravaler",
         description:
-          "Built and maintained the frontend layer integrated with 16 distinct backend modules, using AngularJS, React and TypeScript, in continuous technical alignment across multiple teams.",
+          "Migration of a 20+ year-old WordPress/PHP ecosystem to Next.js, Node.js and TypeScript (SPA, SSR and SSG), with a new BFF architecture for the portal and marketplace and 400+ unit and integration tests.",
+        tags: PROJECT_TAGS.discovery,
+      },
+      {
+        name: "Capital markets platform — Inoa",
+        description:
+          "Evolving an AngularJS, TypeScript and React frontend integrated with 16 backend modules owned by different teams, with reusable components, automated tests and consistency between UI and services.",
         tags: PROJECT_TAGS.inoa,
       },
       {
-        name: "QualiCloud — In-house SaaS",
+        name: "SaaS products — QualiCloud",
         description:
-          "Co-founder and tech lead of a software house, turning business needs into full stack products with NestJS, Laravel and React Native alongside a development team.",
+          "As partner and tech lead, I turned business needs into web and mobile SaaS products, from architecture to delivery, with NestJS, Laravel, React and React Native.",
         tags: PROJECT_TAGS.qualicloud,
       },
     ],
@@ -78,32 +88,82 @@ export const enUS: SiteContent = {
     title: "Experience",
     items: [
       {
-        role: "Software Engineer",
-        company: "Inoa — Capital Markets Specialists",
-        period: "Jan 2026 — present",
+        role: "Senior Full Stack Software Engineer",
+        company: EXPERIENCE.inoa.company,
+        period: "Jan 2026 — Jul 2026",
+        location: "Rio de Janeiro, Brazil · Remote",
         description:
-          "Building and maintaining the platform's frontend (AngularJS, React and TypeScript), keeping integration consistent across 16 backend modules owned by different teams.",
+          "Building and maintaining Inoa's platform, focused on an AngularJS frontend integrated with 16 backend modules owned by different teams.",
+        highlights: [
+          "New features, business flows and integrations with the APIs of all 16 backend modules.",
+          "Built and maintained reusable components in AngularJS, TypeScript and React.",
+          "Technical alignment with multiple backend teams.",
+          "Code reviews, technical decisions and frontend architecture evolution.",
+          "Automated tests with Jest and React Testing Library; components documented in Storybook.",
+        ],
+        technologies: EXPERIENCE.inoa.technologies,
       },
       {
-        role: "Software Engineer",
-        company: "Pravaler — Student Financing",
-        period: "Jun 2022 — Nov 2025",
+        role: "Mid-level Full Stack Software Engineer",
+        company: EXPERIENCE.pravalerPleno.company,
+        period: "Jun 2023 — Nov 2025",
+        location: "São Paulo, Brazil",
         description:
-          "Led the migration of a WordPress/PHP legacy system to Next.js and Node.js, evolving 300k+ lines of code, adding 400+ automated tests and fully rebuilding the critical simulation, sign-up and customer service flows.",
+          "Modernizing Pravaler's digital ecosystem. From 2025, on the “Strategy for Action (EPA)” team, on a mission to rebuild the company's legacy system.",
+        highlights: [
+          "Rebuilt the critical simulation, pre-simulation, sign-up, credit and customer service flows.",
+          "Interfaces and services with Node.js and Next.js, using Material UI, shadcn/ui and Tailwind CSS.",
+          "Frontend-to-API integration and architecture evolution for scalability and maintainability.",
+          "Applications running on Google Cloud Platform, gradually replacing legacy structures.",
+          "Unit and integration tests with Jest to reduce regressions.",
+        ],
+        technologies: EXPERIENCE.pravalerPleno.technologies,
       },
       {
-        role: "Full Stack Developer / Partner",
-        company: "QualiCloud Cloud Solutions",
+        role: "Junior Full Stack Software Engineer",
+        company: EXPERIENCE.pravalerJunior.company,
+        period: "Jul 2022 — Jul 2023",
+        location: "Remote",
+        description:
+          "Acquisition and Discovery team, focused on customer acquisition, user experience, performance and SEO.",
+        highlights: [
+          "Migrated a 20+ year-old WordPress/PHP legacy to Next.js, Node.js and TypeScript (SPA, SSR and SSG).",
+          "Helped create a new BFF architecture for the portal and marketplace, including microservice studies and integrations.",
+          "400+ unit and integration tests with Jest, React Testing Library and Cypress.",
+          "Moved applications to Google Cloud Platform, Docker and CI/CD.",
+          "New portal/rebrand, TypeScript adoption and contributions to the Agile culture.",
+        ],
+        technologies: EXPERIENCE.pravalerJunior.technologies,
+      },
+      {
+        role: "Full Stack Developer — Partner",
+        company: EXPERIENCE.qualicloud.company,
         period: "Apr 2019 — Nov 2022",
+        location: "Campo Mourão, Brazil",
         description:
-          "Co-founder and tech lead of a development team, turning business needs into full stack SaaS products with NestJS, Laravel and React Native.",
+          "Co-owner and tech lead of a SaaS company, responsible for the team and for products from concept to delivery.",
+        highlights: [
+          "Technical leadership: alignment meetings, task distribution and delivery follow-up.",
+          "Turned business needs into viable technical solutions.",
+          "Defined and evolved the architecture of web and mobile applications.",
+          "APIs and integrations with Node.js, NestJS, PHP and Laravel; apps with React and React Native.",
+        ],
+        technologies: EXPERIENCE.qualicloud.technologies,
       },
       {
         role: "Systems Development Analyst",
-        company: "Cristófoli Equipamentos",
-        period: "Jul 2015 — Nov 2022",
+        company: EXPERIENCE.cristofoli.company,
+        period: "Jul 2017 — Jun 2022",
+        location: "Campo Mourão, Brazil",
         description:
-          "Built MVC applications and RESTful APIs (PHP, Laravel, Node.js) for an internal CRM used by around 160 people, integrated with the corporate ERP.",
+          "Developing and evolving corporate systems, from requirements gathering to implementation, maintenance and continuous improvement.",
+        highlights: [
+          "Web applications and internal systems with PHP, Laravel, JavaScript, jQuery and WordPress.",
+          "System and database integrations, APIs, SQL queries and PL/SQL routines.",
+          "Modernized legacy systems and removed bottlenecks in internal processes.",
+          "Worked closely with business areas to turn requirements into features.",
+        ],
+        technologies: EXPERIENCE.cristofoli.technologies,
       },
     ],
   },
