@@ -1,0 +1,35 @@
+{
+  "name": "storybook",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Documentação viva do Design System (@godzilla/ui) via Storybook",
+  "type": "module",
+  "scripts": {
+    "storybook": "storybook dev -p 6006",
+    "build": "storybook build",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@godzilla/i18n": "workspace:*",
+    "@godzilla/tokens": "workspace:*",
+    "@godzilla/ui": "workspace:*",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@godzilla/eslint-config": "workspace:*",
+    "@godzilla/typescript-config": "workspace:*",
+    "@storybook/addon-a11y": "^10.6.0",
+    "@storybook/addon-themes": "^10.6.0",
+    "@storybook/react-vite": "^10.6.0",
+    "@tailwindcss/vite": "^4",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9.18.0",
+    "storybook": "^10.6.0",
+    "tailwindcss": "^4",
+    "typescript": "^5.9.3",
+    "vite": "^6.0.7"
+  }
+}

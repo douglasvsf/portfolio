@@ -1,0 +1,7 @@
+{
+  "name": "@godzilla/typescript-config",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Configurações base de TypeScript compartilhadas entre os pacotes do Design System",
+  "files": ["base.json", "react-library.json"]
+}

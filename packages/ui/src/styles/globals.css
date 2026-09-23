@@ -1,0 +1,59 @@
+@import "tailwindcss";
+@import "@godzilla/tokens/theme.css";
+@plugin "tailwindcss-animate";
+
+/*
+ * Aplicações que consomem @godzilla/ui devem importar este arquivo E
+ * declarar `@source` apontando para o código-fonte de packages/ui (Tailwind
+ * v4 não escaneia node_modules por padrão) — ver README > "Consumindo o
+ * Design System".
+ */
+
+/* Ativa as variantes `dark:` pela classe `.dark` (a mesma que troca os tokens) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---- Utilities da identidade visual (kaiju) ---- */
+
+/* Grade de fundo "sala de controle" */
+@utility bg-grid {
+  background-image:
+    linear-gradient(to right, hsl(var(--border) / 0.6) 1px, transparent 1px),
+    linear-gradient(to bottom, hsl(var(--border) / 0.6) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Brilho radioativo em textos de destaque */
+@utility text-glow {
+  text-shadow: 0 0 24px hsl(var(--primary) / 0.55);
+}
+
+/* Silhueta das placas dorsais — usar em um bloco com altura e cor de fundo */
+@utility kaiju-divider {
+  clip-path: polygon(
+    0% 100%,
+    0% 20%,
+    4% 60%,
+    8% 15%,
+    12% 55%,
+    16% 5%,
+    20% 45%,
+    25% 70%,
+    30% 25%,
+    35% 60%,
+    40% 10%,
+    45% 50%,
+    50% 0%,
+    55% 50%,
+    60% 10%,
+    65% 60%,
+    70% 25%,
+    75% 70%,
+    80% 45%,
+    84% 5%,
+    88% 55%,
+    92% 15%,
+    96% 60%,
+    100% 20%,
+    100% 100%
+  );
+}

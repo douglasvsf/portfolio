@@ -15,6 +15,9 @@
     "test:e2e": "start-server-and-test dev http://localhost:3000 cypress:run"
   },
   "dependencies": {
+    "@godzilla/i18n": "workspace:^",
+    "@godzilla/icons": "workspace:^",
+    "@godzilla/ui": "workspace:^",
     "@portfolio/shared": "workspace:*",
     "next": "16.3.4",
     "react": "19.2.8",

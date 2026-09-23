@@ -1,0 +1,5 @@
+@import "@godzilla/ui/styles.css";
+
+/* Tailwind v4 não escaneia node_modules — aponta para o código-fonte de
+   @godzilla/ui para gerar as utilities usadas pelos componentes. */
+@source "../../../packages/ui/src/**/*.{ts,tsx}";
