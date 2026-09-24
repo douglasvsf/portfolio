@@ -9,6 +9,7 @@ export const esES: Dictionary = {
   cancel: "Cancelar",
   confirm: "Confirmar",
   close: "Cerrar",
+  openMenu: "Abrir menú",
   noResults: "No se encontraron resultados",
   select: "Seleccionar",
   clear: "Limpiar",
