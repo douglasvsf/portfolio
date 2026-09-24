@@ -33,8 +33,9 @@ export function navLinks(labels: Record<"about" | "skills" | "projects" | "exper
 }
 
 /** Itens do dropdown "Sistemas" — cada idioma só fornece as descrições. */
-export function systemLinks(descriptions: Record<"stocks" | "designSystem", string>) {
+export function systemLinks(descriptions: Record<"spotify" | "stocks" | "designSystem", string>) {
   return [
+    { ...SPOTIFY_LINK, description: descriptions.spotify },
     { ...STOCKS_LINK, description: descriptions.stocks },
     { ...DESIGN_SYSTEM_LINK, description: descriptions.designSystem },
   ];
@@ -46,6 +47,9 @@ export function contactLinks(emailLabel: string) {
     { icon: "linkedin" as const, label: "LinkedIn", value: CONTACT.linkedinLabel, href: CONTACT.linkedinUrl },
   ];
 }
+
+/** GODZILLA Spotify Stats — dashboard de estatísticas musicais (ver src/app/spotify). */
+export const SPOTIFY_LINK = { label: "Spotify Stats", href: "/spotify" };
 
 /** Kaiju Stocks — cotações da B3, rota do próprio app (ver src/app/stocks). */
 export const STOCKS_LINK = { label: "Kaiju Stocks", href: "/stocks" };

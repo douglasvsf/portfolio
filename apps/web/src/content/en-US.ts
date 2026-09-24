@@ -20,6 +20,7 @@ export const enUS: SiteContent = {
     systems: {
       label: "Systems",
       items: systemLinks({
+        spotify: "Your Spotify stats: top artists, tracks, genres and what's playing now.",
         stocks: "B3 stock quotes with charts for gainers, losers, sectors and history.",
         designSystem: "The site's component library, documented in Storybook.",
       }),

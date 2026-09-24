@@ -14,6 +14,7 @@ export * from "./atoms/badge";
 export * from "./atoms/avatar";
 export * from "./atoms/spinner";
 export * from "./atoms/separator";
+export * from "./atoms/skeleton";
 export * from "./atoms/typography";
 
 // Molecules

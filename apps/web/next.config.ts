@@ -10,7 +10,12 @@ const nextConfig: NextConfig = {
   images: {
     // Logos das empresas no /stocks, servidos pela brapi (SVG).
     dangerouslyAllowSVG: true,
-    remotePatterns: [{ protocol: "https", hostname: "icons.brapi.dev" }],
+    remotePatterns: [
+      { protocol: "https", hostname: "icons.brapi.dev" },
+      // Capas e fotos de artistas no /spotify (CDN da Spotify).
+      { protocol: "https", hostname: "i.scdn.co" },
+      { protocol: "https", hostname: "*.spotifycdn.com" },
+    ],
   },
   async redirects() {
     return [{ source: "/design-system", destination: "/design-system/index.html", permanent: false }];
