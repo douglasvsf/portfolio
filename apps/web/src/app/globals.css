@@ -1,5 +1,5 @@
 @import "@godzilla/ui/styles.css";
-/* Tema do GODZILLA Spotify Stats — só age dentro de .theme-spotify. */
+/* Utilities do GODZILLA Spotify Stats (aura, equalizador). */
 @import "./spotify/spotify.css";
 
 /* Tailwind v4 não escaneia node_modules — aponta para o código-fonte do

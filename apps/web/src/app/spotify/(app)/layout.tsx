@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { Sparkles } from "@godzilla/icons";
+import { appContainerClassName, cn } from "@godzilla/ui";
 import { routes } from "@/config/spotify";
 import { getSpotifySource } from "@/lib/spotify/source";
 import type { SpotifyUser } from "@/lib/spotify/types";
@@ -33,7 +34,7 @@ export default async function DashboardLayout({ children }: LayoutProps<"/spotif
           to see your own stats.
         </div>
       )}
-      <main id="content" className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-4 py-8">
+      <main id="content" className={cn(appContainerClassName, "flex flex-1 flex-col gap-8 py-8")}>
         {children}
       </main>
     </div>

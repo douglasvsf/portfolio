@@ -1,58 +1,13 @@
 /*
- * Tema do GODZILLA Spotify Stats — sobrescreve os tokens do Design System
- * (@godzilla/tokens) só dentro deste app. Todos os componentes do DS herdam a
- * paleta sem nenhuma mudança: é o mesmo sistema, com outra "skin".
- *
- * `.dark.theme-spotify` tem especificidade maior que `.dark`, então vence
- * independentemente da ordem dos imports.
+ * Utilities visuais do GODZILLA Spotify Stats. As cores vêm dos tokens do
+ * Design System (mesma paleta do portfólio) — aqui só efeitos próprios do app.
  */
-.dark.theme-spotify {
-  --background: 0 0% 4.3%; /* #0B0B0B */
-  --foreground: 0 0% 100%; /* #FFFFFF */
 
-  --card: 0 0% 8.2%; /* #151515 */
-  --card-foreground: 0 0% 100%;
-  --popover: 0 0% 8.2%;
-  --popover-foreground: 0 0% 100%;
-
-  --primary: 141 73% 42%; /* #1DB954 */
-  --primary-foreground: 0 0% 4%;
-
-  --secondary: 0 0% 11%;
-  --secondary-foreground: 0 0% 100%;
-
-  --muted: 0 0% 12%;
-  --muted-foreground: 240 5% 65%; /* #A1A1AA */
-
-  --accent: 0 0% 13%;
-  --accent-foreground: 145 100% 61%; /* #39FF88 */
-
-  --success: 141 73% 42%;
-  --success-foreground: 0 0% 4%;
-
-  --border: 0 0% 15%;
-  --input: 0 0% 22%;
-  --ring: 145 100% 61%;
-
-  --chart-1: 141 73% 42%;
-  --chart-2: 145 100% 61%;
-  --chart-3: 168 70% 45%;
-  --chart-4: 84 81% 56%;
-  --chart-5: 190 80% 55%;
-
-  /* Cor de destaque (#39FF88) como utility: text-neon, bg-neon, etc. */
-  --neon: 145 100% 61%;
-}
-
-@theme inline {
-  --color-neon: hsl(var(--neon));
-}
-
-/* Aura verde atrás do hero e dos cards de destaque. */
+/* Aura na cor primária atrás do hero e dos cards de destaque. */
 @utility bg-aura {
   background-image:
-    radial-gradient(60% 50% at 50% 0%, hsl(var(--primary) / 0.22), transparent 70%),
-    radial-gradient(40% 40% at 90% 30%, hsl(var(--neon) / 0.08), transparent 70%);
+    radial-gradient(60% 50% at 50% 0%, hsl(var(--primary) / 0.18), transparent 70%),
+    radial-gradient(40% 40% at 90% 30%, hsl(var(--primary) / 0.06), transparent 70%);
 }
 
 /* Barras de equalizador animadas do "now playing". */
