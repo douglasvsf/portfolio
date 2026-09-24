@@ -180,7 +180,7 @@ export default async function OverviewPage({ searchParams }: PageProps<"/spotify
             {artistCounts.length ? (
               <HorizontalBarChart data={artistCounts} labelKey="artist" valueKey="tracks" valueLabel="Tracks" />
             ) : (
-              <EmptyState title="No top tracks yet" description="Listen to more music on Spotify and check back later." />
+              <EmptyState title="No top tracks yet" description="Listen to more music and check back later — or try a longer period." />
             )}
           </CardContent>
         </Card>

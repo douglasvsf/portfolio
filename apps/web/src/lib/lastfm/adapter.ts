@@ -32,7 +32,7 @@ export function lastfmId(...parts: string[]) {
     .join("--")
     .toLowerCase()
     .normalize("NFKD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/\p{Diacritic}/gu, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
 }
@@ -62,7 +62,6 @@ export function toTopTrack(track: LastfmTopTrack): SpotifyTrack {
     id: lastfmId(track.artist.name, track.name),
     name: track.name,
     duration_ms: (Number(track.duration) || 0) * 1000,
-    explicit: false,
     playcount: Number(track.playcount) || undefined,
     // user.getTopTracks não informa o álbum.
     album: { id: lastfmId(track.artist.name, track.name, "album"), name: "", images: toImages(track.image), external_urls: {} },
@@ -78,7 +77,6 @@ export function toRecentTrack(track: LastfmRecentTrack): SpotifyTrack {
     id: lastfmId(artist, track.name),
     name: track.name,
     duration_ms: 0,
-    explicit: false,
     album: { id: lastfmId(artist, album || track.name, "album"), name: album, images: toImages(track.image), external_urls: {} },
     artists: [artistRef(artist)],
     external_urls: { lastfm: track.url },

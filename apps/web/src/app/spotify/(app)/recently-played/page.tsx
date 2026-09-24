@@ -31,7 +31,7 @@ export default async function RecentlyPlayedPage() {
       />
       {items.length === 0 ? (
         <Card>
-          <EmptyState title="No listening history yet" description="Play some music on Spotify and your recent tracks will show up here." />
+          <EmptyState title="No listening history yet" description="Play some music and your recent tracks will show up here." />
         </Card>
       ) : (
         <Timeline items={items} />

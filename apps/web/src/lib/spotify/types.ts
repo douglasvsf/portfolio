@@ -50,7 +50,8 @@ export interface SpotifyTrack {
   id: string;
   name: string;
   duration_ms: number;
-  explicit: boolean;
+  /** Ausente quando a fonte não informa (Last.fm). */
+  explicit?: boolean;
   popularity?: number;
   /** Só no Last.fm: quantas vezes o usuário ouviu no período. */
   playcount?: number;

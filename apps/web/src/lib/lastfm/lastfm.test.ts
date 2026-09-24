@@ -2,6 +2,7 @@ import { lastfmId, splitRecentTracks, toArtist, toImages, toTopTrack, toUser } f
 import { buildLastfmUrl, kindFromLastfmError, lastfmFetch } from "./client";
 import { pickGenreTags, withLastfmGenres } from "./tags";
 import type { LastfmRecentTrack } from "./types";
+import { isValidLastfmUsername } from "./username";
 
 const originalFetch = global.fetch;
 const originalKey = process.env.LASTFM_API_KEY;
@@ -96,6 +97,16 @@ describe("tags → gêneros", () => {
 
     expect(result.map((artist) => artist.genres)).toEqual([["jazz"], ["rock"], []]);
     expect(global.fetch).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("isValidLastfmUsername", () => {
+  it.each(["rj", "douglasvsf", "Some_User-99", "a1"])("aceita %s", (name) => {
+    expect(isValidLastfmUsername(name)).toBe(true);
+  });
+
+  it.each(["", "r", "9lives", "has space", "way-too-long-username", "<script>", undefined, 42])("rejeita %p", (name) => {
+    expect(isValidLastfmUsername(name)).toBe(false);
   });
 });
 

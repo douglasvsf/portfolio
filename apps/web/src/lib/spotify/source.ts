@@ -7,6 +7,7 @@ import * as api from "./endpoints";
 import * as lastfm from "@/lib/lastfm/endpoints";
 import { isLastfmConfigured } from "@/lib/lastfm/client";
 import { withLastfmGenres } from "@/lib/lastfm/tags";
+import { isValidLastfmUsername } from "@/lib/lastfm/username";
 import { DEMO_COOKIE, DEMO_MOCK_VALUE, LASTFM_COOKIE, SESSION_COOKIE, isExpiring, sessionFromToken, unsealSession } from "./session";
 import * as mock from "./mock-data";
 import { getOwnerAccessToken, isOwnerConfigured } from "./owner";
@@ -76,11 +77,6 @@ export function lastfmSource(username: string): SpotifySource {
     // "Tocando agora" vem do histórico recente; cache curto para refletir o momento.
     getNowPlaying: async () => (await lastfm.getRecentTracks(username, 1, CACHE_SECONDS.showcaseNowPlaying)).nowPlaying,
   };
-}
-
-/** Nome de usuário do Last.fm: 2–15 caracteres, começa com letra (regra do Last.fm). */
-export function isValidLastfmUsername(value: unknown): value is string {
-  return typeof value === "string" && /^[a-zA-Z][w-]{1,14}$/.test(value);
 }
 
 /** `MOCK_MODE=true` força o demo mockado para todo mundo (útil em preview/CI). */
