@@ -31,7 +31,8 @@ Live at **`/spotify`** in the portfolio (same deploy as the site): <https://doug
 | Now playing | Cover, progress bar that advances in real time, refreshed every 20 s | `GET /me/player/currently-playing` |
 | Genres | Donut chart **derived from the top artists' genres** (the chart says so) | from `/me/top/artists` |
 | Periods | `4 weeks` · `6 months` · `1 year` (`short_term`, `medium_term`, `long_term`) | `time_range` |
-| Demo mode | The whole dashboard with mock data. No Spotify account needed | — |
+| Live showcase | Visitors see the **owner's real stats**, live, without logging in | owner's refresh token |
+| Demo mode | The whole dashboard with mock data; fallback when the showcase isn't set up | — |
 
 ## Tech Stack
 
@@ -109,6 +110,18 @@ Landing ─▶ /api/spotify/login ─▶ accounts.spotify.com/authorize ─▶ /
 - **Logout:** a Server Action that deletes every app cookie.
 - `SPOTIFY_CLIENT_SECRET` is only read on the server and never uses the `NEXT_PUBLIC_` prefix.
 
+## Live showcase (owner mode)
+
+Spotify's Development Mode only lets **invited accounts** (up to 5) log in. So that any visitor can see the app working with real data, the server uses the **owner's** Spotify connection:
+
+1. Log in locally with your account (`http://127.0.0.1:3000/spotify` → Connect Spotify).
+2. Open `http://127.0.0.1:3000/api/spotify/owner-token` (a **development-only** route; it returns 404 in production) and copy the refresh token.
+3. Set it in Vercel as `SPOTIFY_OWNER_REFRESH_TOKEN` (type **Secret**) and redeploy.
+
+The "View Demo" button then becomes **"Explore Douglas's live stats"**. The access token (1 h) is cached in memory and shared by all visitors, and *now playing* gets a 10 s cache to spare the API. If the owner's token expires (after **6 months**) or is revoked, the site automatically falls back to the mock demo. To renew it, repeat steps 1–3.
+
+> Everything the dashboard shows (top artists/tracks, the last 50 plays and what's playing now) becomes public. Only use this with your own account.
+
 ## Environment Variables
 
 In `apps/web/.env.local` (template in [`apps/web/.env.example`](../apps/web/.env.example)):
@@ -117,7 +130,8 @@ In `apps/web/.env.local` (template in [`apps/web/.env.example`](../apps/web/.env
 SPOTIFY_CLIENT_ID=
 SPOTIFY_CLIENT_SECRET=
 SPOTIFY_REDIRECT_URI=http://127.0.0.1:3000/api/spotify/callback
-MOCK_MODE=false   # true = everyone sees demo mode
+SPOTIFY_OWNER_REFRESH_TOKEN=   # optional: live showcase (see above)
+MOCK_MODE=false   # true = everyone sees the mock demo
 ```
 
 > ⚠️ Spotify **does not accept `localhost`** as a redirect URI; only `127.0.0.1` (or HTTPS). Open the site at `http://127.0.0.1:3000`. If you open it via `localhost`, the login route redirects you to the right host before starting OAuth, so the cookies end up in the right place.
@@ -169,7 +183,7 @@ Without the variables, the app still works in demo mode, and "Connect Spotify" s
 
 ## Limitations
 
-- **Development Mode (Spotify, Feb/2026):** up to **5 users** allow-listed in the dashboard, and the app owner needs Premium. That's why demo mode is the main way for visitors to explore the project. Opening it to everyone requires *Extended Quota Mode*, which Spotify only grants to companies.
+- **Development Mode (Spotify, Feb/2026):** up to **5 users** allow-listed in the dashboard, and the app owner needs Premium. That's why the **live showcase** (owner's data) and the mock demo are how visitors explore the project. Opening it to everyone requires *Extended Quota Mode*, which Spotify only grants to companies.
 - In Development Mode, Spotify **no longer sends `popularity` or `followers`** for artists and tracks. The UI hides those fields (and the popularity chart) when they're missing. Demo mode includes them to show the full layout.
 - Genres come from the **top artists** (up to 50), not from your full history. Spotify may send an empty list, and the UI shows an empty state in that case.
 - *Recently played* only goes up to the **last 50 plays**. The API offers no full history, and this project **is not a Wrapped** replacement.

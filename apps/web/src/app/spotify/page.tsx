@@ -5,6 +5,7 @@ import { AppHeader, Card, CardContent, CardDescription, CardHeader, CardTitle, a
 import { routes } from "@/config/spotify";
 import { mockCurrentlyPlaying, mockTopArtists, mockTopTracks } from "@/lib/spotify/mock-data";
 import { DEMO_COOKIE, SESSION_COOKIE } from "@/lib/spotify/session";
+import { isShowcaseAvailable } from "@/lib/spotify/source";
 import { artistNames, formatDuration, genreDistribution, normalizeNowPlaying } from "@/lib/spotify/transform";
 import { GenreChart } from "@/components/spotify/charts/genre-chart";
 import { CoverArt } from "@/components/spotify/common/cover-art";
@@ -39,6 +40,8 @@ export default async function LandingPage({ searchParams }: PageProps<"/spotify"
 
   const store = await cookies();
   const hasSession = Boolean(store.get(SESSION_COOKIE) || store.get(DEMO_COOKIE)?.value === "1");
+  // Com a vitrine configurada, o visitante vê as estatísticas reais do dono em vez do mock.
+  const exploreLabel = isShowcaseAvailable() ? "Explore Douglas's live stats" : "View Demo";
 
   // Prévia do dashboard com os dados do demo — o visitante vê o produto antes de conectar.
   const previewArtists = mockTopArtists("medium_term", 20);
@@ -84,7 +87,7 @@ export default async function LandingPage({ searchParams }: PageProps<"/spotify"
                 </a>
               )}
               <a href={routes.demo} className={ctaSecondary} data-testid="view-demo">
-                View Demo
+                {exploreLabel}
               </a>
             </div>
             <p className="text-caption text-muted-foreground">Read-only access · we never post, follow or change anything on your account.</p>
@@ -158,7 +161,7 @@ export default async function LandingPage({ searchParams }: PageProps<"/spotify"
         <section className={cn(appContainerClassName, "pb-20")}>
           <Card className="bg-aura mx-auto flex max-w-4xl flex-col items-center gap-5 px-6 py-12 text-center">
             <h2 className="text-h3 font-bold">Connect your Spotify</h2>
-            <p className="max-w-md text-muted-foreground">See your own top artists, tracks and genres in seconds — or explore with demo data first.</p>
+            <p className="max-w-md text-muted-foreground">See your own top artists, tracks and genres in seconds — or explore without logging in first.</p>
             <div className="flex flex-col gap-3 sm:flex-row">
               {!hasSession && (
                 <a href={routes.login} className={ctaPrimary}>
@@ -166,7 +169,7 @@ export default async function LandingPage({ searchParams }: PageProps<"/spotify"
                 </a>
               )}
               <a href={routes.demo} className={ctaSecondary}>
-                View Demo
+                {exploreLabel}
               </a>
             </div>
           </Card>

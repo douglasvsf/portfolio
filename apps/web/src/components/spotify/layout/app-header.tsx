@@ -3,14 +3,18 @@ import { AppHeader as ShellHeader, Avatar, AvatarFallback, AvatarImage, Badge, a
 import { signOut } from "@/app/spotify/actions";
 import { routes } from "@/config/spotify";
 import { pickImage } from "@/lib/spotify/transform";
+import type { SourceMode } from "@/lib/spotify/source";
 import type { SpotifyUser } from "@/lib/spotify/types";
 import { NavLinks } from "./nav-links";
 import { SpotifyBrand } from "./spotify-brand";
 
-export function AppHeader({ user, demo }: { user: SpotifyUser | null; demo: boolean }) {
+const badges: Record<SourceMode, string | null> = { live: null, showcase: "Live showcase", demo: "Demo" };
+const logoutLabels: Record<SourceMode, string> = { live: "Logout", showcase: "Exit showcase", demo: "Exit demo" };
+
+export function AppHeader({ user, mode }: { user: SpotifyUser | null; mode: SourceMode }) {
   const name = user?.display_name ?? "Spotify listener";
   const avatar = pickImage(user?.images, 64);
-  const logoutLabel = demo ? "Exit demo" : "Logout";
+  const logoutLabel = logoutLabels[mode];
 
   return (
     <ShellHeader
@@ -19,7 +23,7 @@ export function AppHeader({ user, demo }: { user: SpotifyUser | null; demo: bool
       nav={<NavLinks className="hidden lg:flex" />}
       actions={
         <div className="flex items-center gap-3">
-          {demo && <Badge variant="outline">Demo</Badge>}
+          {badges[mode] && <Badge variant="outline">{badges[mode]}</Badge>}
           <Avatar className="size-8" title={name}>
             {avatar && <AvatarImage src={avatar} alt="" />}
             <AvatarFallback className="text-caption">{name.slice(0, 1).toUpperCase()}</AvatarFallback>
