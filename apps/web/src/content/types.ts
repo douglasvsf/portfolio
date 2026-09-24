@@ -5,6 +5,16 @@ export interface LinkItem {
   href: string;
 }
 
+export interface SystemLink extends LinkItem {
+  description: string;
+}
+
+/** Dropdown "Sistemas" do menu — apps publicados junto com o site. */
+export interface SystemsMenu {
+  label: string;
+  items: SystemLink[];
+}
+
 export interface Photo {
   src: string;
   alt: string;
@@ -44,6 +54,7 @@ export interface SiteContent {
     brand: string;
     skipToContent: string;
     links: LinkItem[];
+    systems: SystemsMenu;
   };
   hero: {
     prompt: string;

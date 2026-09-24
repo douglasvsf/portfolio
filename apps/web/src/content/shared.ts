@@ -22,14 +22,22 @@ const s = SECTION_IDS;
 
 /**
  * Links do menu: as seções na ordem da página (cada idioma só fornece os
- * rótulos) e, por último, o Design System.
+ * rótulos). Os sistemas embutidos no site ficam no dropdown de `systemLinks`.
  */
 export function navLinks(labels: Record<"about" | "skills" | "projects" | "experience" | "contact", string>) {
   const sections = (["about", "skills", "projects", "experience", "contact"] as const).map((key) => ({
     href: `#${s[key]}`,
     label: labels[key],
   }));
-  return [...sections, DESIGN_SYSTEM_LINK];
+  return sections;
+}
+
+/** Itens do dropdown "Sistemas" — cada idioma só fornece as descrições. */
+export function systemLinks(descriptions: Record<"stocks" | "designSystem", string>) {
+  return [
+    { ...STOCKS_LINK, description: descriptions.stocks },
+    { ...DESIGN_SYSTEM_LINK, description: descriptions.designSystem },
+  ];
 }
 
 export function contactLinks(emailLabel: string) {
@@ -38,6 +46,9 @@ export function contactLinks(emailLabel: string) {
     { icon: "linkedin" as const, label: "LinkedIn", value: CONTACT.linkedinLabel, href: CONTACT.linkedinUrl },
   ];
 }
+
+/** Kaiju Stocks — cotações da B3, rota do próprio app (ver src/app/stocks). */
+export const STOCKS_LINK = { label: "Kaiju Stocks", href: "/stocks" };
 
 /** Storybook do Design System, publicado junto com o site (ver next.config.ts). */
 export const DESIGN_SYSTEM_LINK = { label: "Design System", href: "/design-system" };

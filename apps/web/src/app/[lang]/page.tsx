@@ -22,6 +22,7 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
         brand={nav.brand}
         brandHref={`#${SECTION_IDS.hero}`}
         links={nav.links}
+        systems={nav.systems}
         locale={lang}
         skipToContent={nav.skipToContent}
       />

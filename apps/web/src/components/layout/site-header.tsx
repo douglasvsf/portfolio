@@ -1,12 +1,15 @@
-import type { LinkItem } from "@/content/types";
+import type { LinkItem, SystemsMenu as SystemsMenuContent } from "@/content/types";
 import type { Locale } from "@/i18n/config";
 import { LanguageSwitcher } from "./language-switcher";
+import { SystemsMenu } from "./systems-menu";
 
 export interface SiteHeaderProps {
   brand: string;
   /** Destino do logo. @default "#hero" */
   brandHref?: string;
   links: LinkItem[];
+  /** Dropdown com os sistemas publicados junto com o site (último item do menu). */
+  systems: SystemsMenuContent;
   locale: Locale;
   /** Texto do link "pular para o conteúdo" (visível só no foco via teclado). */
   skipToContent: string;
@@ -18,6 +21,7 @@ export function SiteHeader({
   brand,
   brandHref = "#hero",
   links,
+  systems,
   locale,
   skipToContent,
   contentId = "content",
@@ -44,6 +48,7 @@ export function SiteHeader({
                 {link.label}
               </a>
             ))}
+            <SystemsMenu {...systems} />
           </nav>
 
           <LanguageSwitcher locale={locale} />
