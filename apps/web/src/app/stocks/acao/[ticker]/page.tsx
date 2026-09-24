@@ -17,7 +17,10 @@ import {
   cn,
 } from "@godzilla/ui";
 import { BrapiError, FREE_TICKERS, availableRanges, getQuote, isRange, ranges, type HistoricalPrice, type Range } from "@/lib/stocks/brapi";
-import { formatCompact, formatCurrency, formatDate, formatDateTime, formatNumber, formatPercent } from "@/lib/stocks/format";
+import { getStocksDictionary, type StocksDictionary } from "@/content/stocks";
+import { fmt } from "@/i18n/message";
+import { getRequestLocale } from "@/i18n/request";
+import { createFormatters } from "@/lib/stocks/format";
 import { ChangeBadge } from "@/components/stocks/change-badge";
 import { StockLogo } from "@/components/stocks/stock-logo";
 import { PriceChart, VolumeChart, type PricePoint } from "@/components/stocks/price-chart";
@@ -34,6 +37,10 @@ export default async function StockPage({ params, searchParams }: PageProps<"/st
   const ticker = (await params).ticker.toUpperCase();
   if (!TICKER_PATTERN.test(ticker)) notFound();
 
+  const locale = await getRequestLocale();
+  const dict = getStocksDictionary(locale);
+  const format = createFormatters(locale);
+
   const rangeParam = (await searchParams).range;
   const allowed = availableRanges(ticker);
   // Período fora do plano (ex.: ?range=5y numa ação paga) cai para 3 meses.
@@ -44,7 +51,7 @@ export default async function StockPage({ params, searchParams }: PageProps<"/st
     quote = await getQuote(ticker, range);
   } catch (error) {
     if (error instanceof BrapiError && error.status === 404) notFound();
-    return <QuoteUnavailable ticker={ticker} error={error} />;
+    return <QuoteUnavailable ticker={ticker} error={error} dict={dict} />;
   }
 
   const history = (quote.historicalDataPrice ?? []).filter(
@@ -52,8 +59,8 @@ export default async function StockPage({ params, searchParams }: PageProps<"/st
   );
   const monthly = ranges[range].interval === "1mo";
   const points: PricePoint[] = history.map((point) => ({
-    label: formatDate(point.date, monthly ? { month: "2-digit", year: "2-digit" } : { day: "2-digit", month: "2-digit" }),
-    date: formatDate(point.date, monthly ? { month: "long", year: "numeric" } : { dateStyle: "medium" }),
+    label: format.date(point.date, monthly ? { month: "2-digit", year: "2-digit" } : { day: "2-digit", month: "2-digit" }),
+    date: format.date(point.date, monthly ? { month: "long", year: "numeric" } : { dateStyle: "medium" }),
     close: point.close,
     volume: point.volume ?? 0,
   }));
@@ -63,19 +70,19 @@ export default async function StockPage({ params, searchParams }: PageProps<"/st
   const closes = history.map((point) => point.close);
 
   const stats = [
-    { label: "Abertura", value: formatCurrency(quote.regularMarketOpen) },
-    { label: "Fech. anterior", value: formatCurrency(quote.regularMarketPreviousClose) },
-    { label: "Mín. / Máx. dia", value: `${formatNumber(quote.regularMarketDayLow)} – ${formatNumber(quote.regularMarketDayHigh)}` },
-    { label: "Mín. / Máx. 52 sem.", value: `${formatNumber(quote.fiftyTwoWeekLow)} – ${formatNumber(quote.fiftyTwoWeekHigh)}` },
-    { label: "Volume", value: formatCompact(quote.regularMarketVolume) },
-    { label: "Valor de mercado", value: formatCompact(quote.marketCap) },
-    { label: "P/L", value: formatNumber(quote.priceEarnings) },
-    { label: "LPA", value: formatCurrency(quote.earningsPerShare) },
+    { label: dict.detail.open, value: format.currency(quote.regularMarketOpen) },
+    { label: dict.detail.previousClose, value: format.currency(quote.regularMarketPreviousClose) },
+    { label: dict.detail.dayRange, value: `${format.number(quote.regularMarketDayLow)} – ${format.number(quote.regularMarketDayHigh)}` },
+    { label: dict.detail.yearRange, value: `${format.number(quote.fiftyTwoWeekLow)} – ${format.number(quote.fiftyTwoWeekHigh)}` },
+    { label: dict.detail.volume, value: format.compact(quote.regularMarketVolume) },
+    { label: dict.detail.marketCap, value: format.compact(quote.marketCap) },
+    { label: dict.detail.pe, value: format.number(quote.priceEarnings) },
+    { label: dict.detail.eps, value: format.currency(quote.earningsPerShare) },
   ];
 
   return (
     <div className="flex flex-col gap-6">
-      <BackLink />
+      <BackLink label={dict.detail.back} />
 
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex items-center gap-4">
@@ -87,14 +94,14 @@ export default async function StockPage({ params, searchParams }: PageProps<"/st
         </div>
         <div className="flex flex-col items-start gap-1 sm:items-end">
           <div className="flex items-center gap-3">
-            <span className="font-mono text-h2 font-bold tabular-nums">{formatCurrency(quote.regularMarketPrice)}</span>
-            <ChangeBadge value={quote.regularMarketChangePercent} className="text-body-sm" />
+            <span className="font-mono text-h2 font-bold tabular-nums">{format.currency(quote.regularMarketPrice)}</span>
+            <ChangeBadge value={quote.regularMarketChangePercent} locale={locale} className="text-body-sm" />
           </div>
-          <span className="text-caption text-muted-foreground">Atualizado em {formatDateTime(quote.regularMarketTime)}</span>
+          <span className="text-caption text-muted-foreground">{fmt(dict.detail.updatedAt, { date: format.dateTime(quote.regularMarketTime) })}</span>
         </div>
       </header>
 
-      <section aria-label="Indicadores" className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <section aria-label={dict.detail.indicators} className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {stats.map((stat) => (
           <Card key={stat.label} className="flex flex-col gap-1 p-4">
             <span className="text-overline uppercase tracking-widest text-muted-foreground">{stat.label}</span>
@@ -106,20 +113,20 @@ export default async function StockPage({ params, searchParams }: PageProps<"/st
       <Card>
         <CardHeader className="flex-row flex-wrap items-center justify-between gap-4 space-y-0">
           <div className="flex flex-col gap-1.5">
-            <CardTitle>Cotação</CardTitle>
+            <CardTitle>{dict.detail.quote}</CardTitle>
             <CardDescription>
-              No período: <span className={cn("font-mono", periodChange != null && (periodChange >= 0 ? "text-success" : "text-destructive"))}>{formatPercent(periodChange)}</span>
+              {dict.detail.periodChange}: <span className={cn("font-mono", periodChange != null && (periodChange >= 0 ? "text-success" : "text-destructive"))}>{format.percent(periodChange)}</span>
               {closes.length > 0 && (
                 <>
-                  {" "}· mín. {formatCurrency(Math.min(...closes))} · máx. {formatCurrency(Math.max(...closes))}
+                  {" "}· {dict.detail.min} {format.currency(Math.min(...closes))} · {dict.detail.max} {format.currency(Math.max(...closes))}
                 </>
               )}
             </CardDescription>
           </div>
           <div className="flex flex-col items-start gap-1 sm:items-end">
-            <RangeTabs ticker={ticker} active={range} available={allowed} />
+            <RangeTabs ticker={ticker} active={range} available={allowed} dict={dict} />
             {allowed.length < Object.keys(ranges).length && (
-              <span className="text-caption text-muted-foreground">1A e 5A disponíveis no plano Pro da brapi</span>
+              <span className="text-caption text-muted-foreground">{dict.detail.proRanges}</span>
             )}
           </div>
         </CardHeader>
@@ -128,12 +135,12 @@ export default async function StockPage({ params, searchParams }: PageProps<"/st
             <>
               <PriceChart data={points} positive={(periodChange ?? 0) >= 0} />
               <div>
-                <h3 className="mb-2 text-label font-medium text-muted-foreground">Volume negociado</h3>
+                <h3 className="mb-2 text-label font-medium text-muted-foreground">{dict.detail.tradedVolume}</h3>
                 <VolumeChart data={points} />
               </div>
             </>
           ) : (
-            <p className="py-16 text-center text-muted-foreground">Sem histórico para esse período.</p>
+            <p className="py-16 text-center text-muted-foreground">{dict.detail.noHistory}</p>
           )}
         </CardContent>
       </Card>
@@ -141,19 +148,19 @@ export default async function StockPage({ params, searchParams }: PageProps<"/st
       {history.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Histórico</CardTitle>
-            <CardDescription>Últimos {Math.min(HISTORY_ROWS, history.length)} pregões do período</CardDescription>
+            <CardTitle>{dict.detail.history}</CardTitle>
+            <CardDescription>{fmt(dict.detail.lastSessions, { n: Math.min(HISTORY_ROWS, history.length) })}</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
-                  <TableHead>Data</TableHead>
-                  <TableHead className="text-right">Abertura</TableHead>
-                  <TableHead className="text-right">Mínima</TableHead>
-                  <TableHead className="text-right">Máxima</TableHead>
-                  <TableHead className="text-right">Fechamento</TableHead>
-                  <TableHead className="text-right">Volume</TableHead>
+                  <TableHead>{dict.detail.date}</TableHead>
+                  <TableHead className="text-right">{dict.detail.open}</TableHead>
+                  <TableHead className="text-right">{dict.detail.low}</TableHead>
+                  <TableHead className="text-right">{dict.detail.high}</TableHead>
+                  <TableHead className="text-right">{dict.detail.close}</TableHead>
+                  <TableHead className="text-right">{dict.detail.volume}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -162,12 +169,12 @@ export default async function StockPage({ params, searchParams }: PageProps<"/st
                   .reverse()
                   .map((point) => (
                     <TableRow key={point.date}>
-                      <TableCell className="font-mono">{formatDate(point.date)}</TableCell>
-                      <TableCell className="text-right font-mono tabular-nums">{formatNumber(point.open)}</TableCell>
-                      <TableCell className="text-right font-mono tabular-nums">{formatNumber(point.low)}</TableCell>
-                      <TableCell className="text-right font-mono tabular-nums">{formatNumber(point.high)}</TableCell>
-                      <TableCell className="text-right font-mono font-semibold tabular-nums">{formatNumber(point.close)}</TableCell>
-                      <TableCell className="text-right font-mono tabular-nums text-muted-foreground">{formatCompact(point.volume)}</TableCell>
+                      <TableCell className="font-mono">{format.date(point.date)}</TableCell>
+                      <TableCell className="text-right font-mono tabular-nums">{format.number(point.open)}</TableCell>
+                      <TableCell className="text-right font-mono tabular-nums">{format.number(point.low)}</TableCell>
+                      <TableCell className="text-right font-mono tabular-nums">{format.number(point.high)}</TableCell>
+                      <TableCell className="text-right font-mono font-semibold tabular-nums">{format.number(point.close)}</TableCell>
+                      <TableCell className="text-right font-mono tabular-nums text-muted-foreground">{format.compact(point.volume)}</TableCell>
                     </TableRow>
                   ))}
               </TableBody>
@@ -179,19 +186,19 @@ export default async function StockPage({ params, searchParams }: PageProps<"/st
   );
 }
 
-function BackLink() {
+function BackLink({ label }: { label: string }) {
   return (
     <Link href="/stocks" className="inline-flex w-fit items-center gap-1 text-body-sm text-muted-foreground hover:text-foreground">
       <ArrowLeft className="size-(--size-icon-sm)" aria-hidden="true" />
-      Voltar ao mercado
+      {label}
     </Link>
   );
 }
 
 /** Links estilizados como o TabsList do DS — o período fica na URL e a busca roda no servidor. */
-function RangeTabs({ ticker, active, available }: { ticker: string; active: Range; available: Range[] }) {
+function RangeTabs({ ticker, active, available, dict }: { ticker: string; active: Range; available: Range[]; dict: StocksDictionary }) {
   return (
-    <nav aria-label="Período" className="inline-flex h-(--size-control-sm) items-center gap-1 rounded-md bg-muted p-1 text-muted-foreground">
+    <nav aria-label={dict.detail.rangeLabel} className="inline-flex h-(--size-control-sm) items-center gap-1 rounded-md bg-muted p-1 text-muted-foreground">
       {available.map((range) => (
         <Link
           key={range}
@@ -203,37 +210,27 @@ function RangeTabs({ ticker, active, available }: { ticker: string; active: Rang
             range === active && "bg-background text-foreground shadow-xs",
           )}
         >
-          {ranges[range].label}
+          {dict.detail.ranges[range]}
         </Link>
       ))}
     </nav>
   );
 }
 
-function QuoteUnavailable({ ticker, error }: { ticker: string; error: unknown }) {
+function QuoteUnavailable({ ticker, error, dict }: { ticker: string; error: unknown; dict: StocksDictionary }) {
   const missingToken = error instanceof BrapiError && error.code === "MISSING_TOKEN";
 
   return (
     <div className="flex flex-col gap-6">
-      <BackLink />
+      <BackLink label={dict.detail.back} />
       <Card className="mx-auto w-full max-w-xl">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <AlertTriangle className="size-(--size-icon-md) text-warning" aria-hidden="true" />
-            {missingToken ? `Histórico de ${ticker} precisa de token` : "Não foi possível carregar a cotação"}
+            {missingToken ? fmt(dict.detail.needsToken, { ticker }) : dict.detail.unavailable}
           </CardTitle>
           <CardDescription>
-            {missingToken ? (
-              <>
-                Sem token, a brapi só libera o detalhe de {FREE_TICKERS.join(", ")}. Crie um token gratuito em{" "}
-                <a href="https://brapi.dev/dashboard" className="text-primary underline-offset-4 hover:underline">
-                  brapi.dev
-                </a>{" "}
-                e defina <code className="font-mono text-foreground">BRAPI_TOKEN</code> no ambiente.
-              </>
-            ) : (
-              error instanceof Error ? error.message : "Tente novamente em instantes."
-            )}
+            {missingToken ? fmt(dict.detail.needsTokenDescription, { tickers: FREE_TICKERS.join(", ") }) : dict.detail.tryAgain}
           </CardDescription>
         </CardHeader>
         {missingToken && (

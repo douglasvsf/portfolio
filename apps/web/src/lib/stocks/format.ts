@@ -1,36 +1,28 @@
-const LOCALE = "pt-BR";
-
-const currency = new Intl.NumberFormat(LOCALE, { style: "currency", currency: "BRL" });
-const compact = new Intl.NumberFormat(LOCALE, { notation: "compact", maximumFractionDigits: 1 });
-const decimal = new Intl.NumberFormat(LOCALE, { maximumFractionDigits: 2 });
+import type { Locale } from "@/i18n/config";
 
 const DASH = "—";
+const TIME_ZONE = "America/Sao_Paulo";
 
-export function formatCurrency(value: number | null | undefined) {
-  return value == null ? DASH : currency.format(value);
+/**
+ * Formatadores do Kaiju Stocks para um idioma. A moeda é sempre BRL (B3) e o
+ * fuso é o de São Paulo — só a notação muda com o idioma.
+ */
+export function createFormatters(locale: Locale) {
+  const currency = new Intl.NumberFormat(locale, { style: "currency", currency: "BRL" });
+  const compact = new Intl.NumberFormat(locale, { notation: "compact", maximumFractionDigits: 1 });
+  const decimal = new Intl.NumberFormat(locale, { maximumFractionDigits: 2 });
+
+  return {
+    currency: (value: number | null | undefined) => (value == null ? DASH : currency.format(value)),
+    compact: (value: number | null | undefined) => (value == null ? DASH : compact.format(value)),
+    number: (value: number | null | undefined) => (value == null ? DASH : decimal.format(value)),
+    percent: (value: number | null | undefined) => (value == null ? DASH : `${value > 0 ? "+" : ""}${decimal.format(value)}%`),
+    integer: (value: number) => value.toLocaleString(locale),
+    date: (unixSeconds: number, options: Intl.DateTimeFormatOptions = { dateStyle: "short" }) =>
+      new Intl.DateTimeFormat(locale, { timeZone: TIME_ZONE, ...options }).format(unixSeconds * 1000),
+    dateTime: (iso: string) =>
+      new Intl.DateTimeFormat(locale, { timeZone: TIME_ZONE, dateStyle: "short", timeStyle: "short" }).format(new Date(iso)),
+  };
 }
 
-export function formatCompact(value: number | null | undefined) {
-  return value == null ? DASH : compact.format(value);
-}
-
-export function formatNumber(value: number | null | undefined) {
-  return value == null ? DASH : decimal.format(value);
-}
-
-export function formatPercent(value: number | null | undefined) {
-  if (value == null) return DASH;
-  return `${value > 0 ? "+" : ""}${decimal.format(value)}%`;
-}
-
-export function formatDate(unixSeconds: number, options: Intl.DateTimeFormatOptions = { dateStyle: "short" }) {
-  return new Intl.DateTimeFormat(LOCALE, { timeZone: "America/Sao_Paulo", ...options }).format(unixSeconds * 1000);
-}
-
-export function formatDateTime(iso: string) {
-  return new Intl.DateTimeFormat(LOCALE, {
-    timeZone: "America/Sao_Paulo",
-    dateStyle: "short",
-    timeStyle: "short",
-  }).format(new Date(iso));
-}
+export type Formatters = ReturnType<typeof createFormatters>;

@@ -1,8 +1,9 @@
 "use client";
 
 import { Cell, Pie, PieChart } from "recharts";
-import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@godzilla/ui";
-import { formatCompact } from "@/lib/stocks/format";
+import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, useLocale, type ChartConfig } from "@godzilla/ui";
+import type { Locale } from "@/i18n/config";
+import { createFormatters } from "@/lib/stocks/format";
 
 export interface SectorSlice {
   sector: string;
@@ -23,13 +24,14 @@ const colors = [
  * máximo 6 fatias (5 setores + "Outros") — uma cor da paleta para cada.
  */
 export function SectorChart({ data }: { data: SectorSlice[] }) {
+  const format = createFormatters(useLocale() as Locale);
   const config = Object.fromEntries(data.map((item) => [item.sector, { label: item.sector }])) satisfies ChartConfig;
 
   return (
     <ChartContainer config={config} className="aspect-auto h-80 w-full">
       <PieChart>
         <ChartTooltip
-          content={<ChartTooltipContent nameKey="sector" hideLabel valueFormatter={(v) => formatCompact(Number(v))} />}
+          content={<ChartTooltipContent nameKey="sector" hideLabel valueFormatter={(v) => format.compact(Number(v))} />}
         />
         <Pie data={data} dataKey="volume" nameKey="sector" innerRadius="55%" outerRadius="80%" paddingAngle={2} strokeWidth={0}>
           {data.map((item, index) => (
