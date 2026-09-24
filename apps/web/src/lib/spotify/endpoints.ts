@@ -40,9 +40,13 @@ export async function getRecentlyPlayed(token: string, limit = RECENTLY_PLAYED_L
   return data?.items ?? [];
 }
 
-/** Sem cache: o "now playing" precisa refletir o momento. `null` = nada tocando. */
-export async function getCurrentlyPlaying(token: string) {
-  return spotifyFetch<CurrentlyPlaying>("/me/player/currently-playing", token);
+/**
+ * Sem cache por padrão: o "now playing" precisa refletir o momento. No modo
+ * vitrine (muitos visitantes, uma conta) usa um cache curto para poupar a API.
+ * `null` = nada tocando.
+ */
+export async function getCurrentlyPlaying(token: string, revalidate = 0) {
+  return spotifyFetch<CurrentlyPlaying>("/me/player/currently-playing", token, { revalidate });
 }
 
 export async function getPlaybackState(token: string) {

@@ -1,20 +1,26 @@
 import "server-only";
 import { cache } from "react";
 import { cookies } from "next/headers";
-import { RECENTLY_PLAYED_LIMIT, TOP_LIMIT } from "@/config/spotify";
+import { CACHE_SECONDS, RECENTLY_PLAYED_LIMIT, TOP_LIMIT } from "@/config/spotify";
 import { getSpotifyConfig, isSpotifyConfigured, refreshAccessToken } from "./auth";
 import * as api from "./endpoints";
 import { DEMO_COOKIE, SESSION_COOKIE, isExpiring, sessionFromToken, unsealSession } from "./session";
 import * as mock from "./mock-data";
+import { getOwnerAccessToken, isOwnerConfigured } from "./owner";
 import { normalizeNowPlaying, type NowPlaying } from "./transform";
 import type { RecentlyPlayedItem, SpotifyArtist, SpotifyTrack, SpotifyUser, TimeRange } from "./types";
 
 /**
- * Fonte de dados da UI. As páginas não sabem se estão falando com a Spotify
- * real ou com o modo demo — só chamam `getSpotifySource()`.
+ * Fonte de dados da UI. As páginas não sabem de onde vêm os dados — só
+ * chamam `getSpotifySource()`:
+ * - `live`: conta do próprio visitante (OAuth);
+ * - `showcase`: estatísticas reais do dono do portfólio, para qualquer visitante;
+ * - `demo`: dados mockados (fallback quando a vitrine não está configurada).
  */
+export type SourceMode = "live" | "showcase" | "demo";
+
 export interface SpotifySource {
-  mode: "live" | "demo";
+  mode: SourceMode;
   getProfile(): Promise<SpotifyUser | null>;
   getTopArtists(range: TimeRange, limit?: number): Promise<SpotifyArtist[]>;
   getTopTracks(range: TimeRange, limit?: number): Promise<SpotifyTrack[]>;
@@ -31,19 +37,34 @@ export const demoSource: SpotifySource = {
   getNowPlaying: async () => normalizeNowPlaying(mock.mockCurrentlyPlaying()),
 };
 
-export function liveSource(accessToken: string): SpotifySource {
+export function liveSource(accessToken: string, mode: "live" | "showcase" = "live"): SpotifySource {
+  const nowPlayingCache = mode === "showcase" ? CACHE_SECONDS.showcaseNowPlaying : 0;
   return {
-    mode: "live",
+    mode,
     getProfile: () => api.getCurrentUser(accessToken),
     getTopArtists: (range, limit) => api.getTopArtists(accessToken, range, limit),
     getTopTracks: (range, limit) => api.getTopTracks(accessToken, range, limit),
     getRecentlyPlayed: (limit) => api.getRecentlyPlayed(accessToken, limit),
-    getNowPlaying: async () => normalizeNowPlaying(await api.getCurrentlyPlaying(accessToken)),
+    getNowPlaying: async () => normalizeNowPlaying(await api.getCurrentlyPlaying(accessToken, nowPlayingCache)),
   };
 }
 
-/** `MOCK_MODE=true` força o demo para todo mundo (útil em preview/CI). */
+/** `MOCK_MODE=true` força o demo mockado para todo mundo (útil em preview/CI). */
 export const isForcedMockMode = () => process.env.MOCK_MODE === "true";
+
+/** A vitrine está disponível? (dono configurado e mock não forçado) */
+export const isShowcaseAvailable = () => !isForcedMockMode() && isOwnerConfigured();
+
+/** Vitrine com os dados do dono; se o token dele falhar, cai para o demo mockado. */
+async function visitorSource(): Promise<SpotifySource> {
+  if (!isShowcaseAvailable()) return demoSource;
+  try {
+    return liveSource(await getOwnerAccessToken(), "showcase");
+  } catch (error) {
+    console.warn("[spotify] modo vitrine indisponível — usando dados mockados:", error instanceof Error ? error.message : error);
+    return demoSource;
+  }
+}
 
 /**
  * Resolve a fonte da requisição atual (memoizada por request). O proxy já
@@ -54,7 +75,7 @@ export const getSpotifySource = cache(async (): Promise<SpotifySource | null> =>
   if (isForcedMockMode()) return demoSource;
 
   const store = await cookies();
-  if (store.get(DEMO_COOKIE)?.value === "1") return demoSource;
+  if (store.get(DEMO_COOKIE)?.value === "1") return visitorSource();
   if (!isSpotifyConfigured()) return null;
 
   const config = getSpotifyConfig();

@@ -39,6 +39,8 @@ export const CACHE_SECONDS = {
   top: 300,
   recentlyPlayed: 30,
   profile: 3600,
+  /** Now playing no modo vitrine (todos os visitantes compartilham a conta do dono). */
+  showcaseNowPlaying: 10,
 } as const;
 
 /** Intervalo de atualização do "Now playing" no navegador. */
