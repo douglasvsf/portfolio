@@ -2,6 +2,8 @@ export interface Dictionary {
   loading: string;
   next: string;
   previous: string;
+  /** Prefixo do rótulo dos indicadores de carrossel ("Ir para o slide" + número). */
+  goToSlide: string;
   search: string;
   cancel: string;
   confirm: string;

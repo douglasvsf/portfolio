@@ -5,14 +5,14 @@ export interface LinkItem {
   href: string;
 }
 
-export interface SystemLink extends LinkItem {
+/** Sistema publicado junto com o site (seção "Sistemas"). */
+export interface SystemItem {
+  name: string;
   description: string;
-}
-
-/** Dropdown "Sistemas" do menu — apps publicados junto com o site. */
-export interface SystemsMenu {
-  label: string;
-  items: SystemLink[];
+  href: string;
+  /** Prévia (screenshot) em /public. */
+  image: string;
+  tags: string[];
 }
 
 export interface Photo {
@@ -54,7 +54,6 @@ export interface SiteContent {
     brand: string;
     skipToContent: string;
     links: LinkItem[];
-    systems: SystemsMenu;
   };
   hero: {
     prompt: string;
@@ -73,6 +72,7 @@ export interface SiteContent {
   projects: SectionCopy & { items: Project[] };
   experience: SectionCopy & { items: ExperienceItem[] };
   contact: SectionCopy & { links: ContactLink[] };
+  systems: SectionCopy & { items: SystemItem[]; openLabel: string };
   footer: {
     owner: string;
     rightsReserved: string;

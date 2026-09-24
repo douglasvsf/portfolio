@@ -1,5 +1,5 @@
 import type { SiteContent } from "./types";
-import { DESIGN_SYSTEM_LINK, EXPERIENCE, PROFILE_PHOTO, PROJECT_TAGS, SECTION_IDS, SKILL_ITEMS, contactLinks, navLinks, systemLinks } from "./shared";
+import { DESIGN_SYSTEM_LINK, EXPERIENCE, PROFILE_PHOTO, PROJECT_TAGS, SECTION_IDS, SKILL_ITEMS, contactLinks, navLinks, systemItems } from "./shared";
 
 export const enUS: SiteContent = {
   meta: {
@@ -16,15 +16,8 @@ export const enUS: SiteContent = {
       projects: "Projects",
       experience: "Experience",
       contact: "Contact",
+      systems: "Systems",
     }),
-    systems: {
-      label: "Systems",
-      items: systemLinks({
-        spotify: "Your Spotify stats: top artists, tracks, genres and what's playing now.",
-        stocks: "B3 stock quotes with charts for gainers, losers, sectors and history.",
-        designSystem: "The site's component library, documented in Storybook.",
-      }),
-    },
   },
   hero: {
     prompt: "$ whoami",
@@ -180,6 +173,16 @@ export const enUS: SiteContent = {
     title: "Contact",
     description: "Let's talk? These are the best ways to reach me.",
     links: contactLinks("Email"),
+  },
+  systems: {
+    title: "Systems",
+    description: "Products I built and shipped alongside this site — open them and try them out.",
+    openLabel: "Open system",
+    items: systemItems({
+      spotify: "Music stats dashboard with Spotify OAuth, Last.fm and a live showcase: top artists, tracks, genres and what's playing right now.",
+      stocks: "Near real-time B3 stock quotes: top gainers and losers, volume by sector, search across every stock and price history charts.",
+      designSystem: "The component library behind every system here — Atomic Design, accessible, with i18n and documented in Storybook.",
+    }),
   },
   footer: {
     owner: "Douglas Szapak",

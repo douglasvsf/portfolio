@@ -10,6 +10,7 @@ export const SECTION_IDS = {
   projects: "projects",
   experience: "experience",
   contact: "contact",
+  systems: "systems",
 } as const;
 
 export const CONTACT = {
@@ -20,24 +21,40 @@ export const CONTACT = {
 
 const s = SECTION_IDS;
 
-/**
- * Links do menu: as seções na ordem da página (cada idioma só fornece os
- * rótulos). Os sistemas embutidos no site ficam no dropdown de `systemLinks`.
- */
-export function navLinks(labels: Record<"about" | "skills" | "projects" | "experience" | "contact", string>) {
-  const sections = (["about", "skills", "projects", "experience", "contact"] as const).map((key) => ({
-    href: `#${s[key]}`,
-    label: labels[key],
-  }));
-  return sections;
+const NAV_SECTIONS = ["about", "skills", "projects", "experience", "contact", "systems"] as const;
+
+/** Links do menu: as seções na ordem da página (cada idioma só fornece os rótulos). */
+export function navLinks(labels: Record<(typeof NAV_SECTIONS)[number], string>) {
+  return NAV_SECTIONS.map((key) => ({ href: `#${s[key]}`, label: labels[key] }));
 }
 
-/** Itens do dropdown "Sistemas" — cada idioma só fornece as descrições. */
-export function systemLinks(descriptions: Record<"spotify" | "stocks" | "designSystem", string>) {
+/**
+ * Sistemas publicados junto com o site (seção "Sistemas"). Nome, link, prévia
+ * e tags são iguais em todos os idiomas — cada idioma só fornece a descrição.
+ */
+export function systemItems(descriptions: Record<"spotify" | "stocks" | "designSystem", string>) {
   return [
-    { ...SPOTIFY_LINK, description: descriptions.spotify },
-    { ...STOCKS_LINK, description: descriptions.stocks },
-    { ...DESIGN_SYSTEM_LINK, description: descriptions.designSystem },
+    {
+      name: "GODZILLA Spotify Stats",
+      href: SPOTIFY_LINK.href,
+      image: "/images/systems/spotify.webp",
+      description: descriptions.spotify,
+      tags: ["Next.js", "Spotify Web API", "OAuth PKCE", "Last.fm API", "Recharts"],
+    },
+    {
+      name: "Kaiju Stocks",
+      href: STOCKS_LINK.href,
+      image: "/images/systems/stocks.webp",
+      description: descriptions.stocks,
+      tags: ["Next.js", "Server Components", "brapi API", "Recharts"],
+    },
+    {
+      name: "Design System",
+      href: DESIGN_SYSTEM_LINK.href,
+      image: "/images/systems/design-system.webp",
+      description: descriptions.designSystem,
+      tags: ["React", "Radix UI", "Tailwind CSS", "Storybook"],
+    },
   ];
 }
 

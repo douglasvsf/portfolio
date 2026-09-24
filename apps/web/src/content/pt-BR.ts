@@ -1,5 +1,5 @@
 import type { SiteContent } from "./types";
-import { DESIGN_SYSTEM_LINK, EXPERIENCE, PROFILE_PHOTO, PROJECT_TAGS, SECTION_IDS, SKILL_ITEMS, contactLinks, navLinks, systemLinks } from "./shared";
+import { DESIGN_SYSTEM_LINK, EXPERIENCE, PROFILE_PHOTO, PROJECT_TAGS, SECTION_IDS, SKILL_ITEMS, contactLinks, navLinks, systemItems } from "./shared";
 
 export const ptBR: SiteContent = {
   meta: {
@@ -16,15 +16,8 @@ export const ptBR: SiteContent = {
       projects: "Projetos",
       experience: "Experiência",
       contact: "Contato",
+      systems: "Sistemas",
     }),
-    systems: {
-      label: "Sistemas",
-      items: systemLinks({
-        spotify: "Suas estatísticas do Spotify: top artistas, músicas, gêneros e o que está tocando.",
-        stocks: "Cotações da B3 com gráficos de altas, quedas, setores e histórico.",
-        designSystem: "Biblioteca de componentes do site, documentada no Storybook.",
-      }),
-    },
   },
   hero: {
     prompt: "$ whoami",
@@ -180,6 +173,16 @@ export const ptBR: SiteContent = {
     title: "Contato",
     description: "Vamos conversar? Esses são os melhores canais para me encontrar.",
     links: contactLinks("E-mail"),
+  },
+  systems: {
+    title: "Sistemas",
+    description: "Produtos que construí e publiquei junto com este site — é só abrir e usar.",
+    openLabel: "Abrir sistema",
+    items: systemItems({
+      spotify: "Dashboard de estatísticas musicais com OAuth da Spotify, Last.fm e vitrine ao vivo: top artistas, músicas, gêneros e o que está tocando agora.",
+      stocks: "Cotações da B3 em tempo quase real: maiores altas e quedas, volume por setor, busca em todas as ações e histórico com gráficos.",
+      designSystem: "A biblioteca de componentes que dá cara a todos os sistemas — Atomic Design, acessível, com i18n e documentada no Storybook.",
+    }),
   },
   footer: {
     owner: "Douglas Szapak",
