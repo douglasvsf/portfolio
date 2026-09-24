@@ -84,17 +84,11 @@ export function toRecentTrack(track: LastfmRecentTrack): SpotifyTrack {
 }
 
 /** A API devolve um objeto (não array) quando há um único item. */
-function asArray<T>(value: T[] | T | undefined): T[] {
-  if (!value) return [];
-  return Array.isArray(value) ? value : [value];
-}
-
-/** Separa o "tocando agora" (sem data) do histórico de scrobbles. */
-export function splitRecentTracks(tracks: LastfmRecentTrack[] | LastfmRecentTrack | undefined): {
+/** Separa o "tocando agora" (sem data) do histórico de scrobbles. O schema já normaliza a lista. */
+export function splitRecentTracks(items: LastfmRecentTrack[]): {
   nowPlaying: NowPlaying | null;
   history: RecentlyPlayedItem[];
 } {
-  const items = asArray(tracks);
   const current = items.find((track) => track["@attr"]?.nowplaying === "true");
   return {
     // O Last.fm não informa progresso nem duração — o player mostra só a faixa.

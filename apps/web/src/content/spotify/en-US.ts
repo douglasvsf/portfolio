@@ -188,6 +188,7 @@ export const enUS: SpotifyDictionary = {
     timeout: { title: "The request took too long", description: "The request timed out. Check your connection and try again." },
     network: { title: "Connection problem", description: "We couldn't reach the music API. Check your connection and try again." },
     not_found: { title: "User not found", description: "We couldn't find that Last.fm user. Check the username and try again." },
+    invalid_response: { title: "Unexpected response", description: "The music service answered in a format we didn't expect. We've logged the issue — please try again shortly." },
     unknown: { title: "Something went wrong", description: "An unexpected error happened while loading your stats. Please try again." },
     reconnect: "Reconnect Spotify",
     viewDemo: "View demo",

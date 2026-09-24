@@ -1,5 +1,7 @@
 import { SPOTIFY_SCOPES } from "@/config/spotify";
+import { ContractError, parseContract } from "@/lib/http/contract";
 import { SpotifyApiError, kindFromStatus } from "./errors";
+import { tokenSchema } from "./schemas";
 import type { TokenResponse } from "./types";
 
 /**
@@ -84,7 +86,14 @@ async function requestToken(config: SpotifyConfig, body: Record<string, string>)
     const kind = response.status === 400 ? "unauthorized" : kindFromStatus(response.status);
     throw new SpotifyApiError(kind, `Token endpoint respondeu ${response.status}`, response.status);
   }
-  return (await response.json()) as TokenResponse;
+  // Sem retry aqui de propósito: o código de autorização vale uma vez só.
+  const payload = await response.json().catch(() => null);
+  try {
+    return parseContract(tokenSchema, payload, "spotify token");
+  } catch (error) {
+    if (error instanceof ContractError) throw new SpotifyApiError("invalid_response", error.message, response.status);
+    throw error;
+  }
 }
 
 export function exchangeCodeForToken(config: SpotifyConfig, code: string, codeVerifier: string) {

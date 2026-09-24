@@ -5,6 +5,7 @@ const createJestConfig = nextJest({ dir: "./" });
 
 const config: Config = {
   testEnvironment: "node",
+  setupFiles: ["<rootDir>/jest.setup.ts"],
   testPathIgnorePatterns: ["<rootDir>/cypress/", "<rootDir>/.next/", "<rootDir>/node_modules/"],
 
   // Cobertura da camada de lógica (integrações, transformações, i18n). A UI é

@@ -1,0 +1,79 @@
+{
+  "indexes": [
+    {
+      "stock": "^BVSP",
+      "name": "IBOVESPA"
+    },
+    {
+      "stock": "IFIX.SA",
+      "name": "Índice de Fundos Imobiliários"
+    }
+  ],
+  "stocks": [
+    {
+      "stock": "B3SA3",
+      "name": "B3 S.A. - BRASIL. BOLSA. BALCÃO",
+      "close": 17.78,
+      "change": -1.44,
+      "volume": 25337600,
+      "market_cap": 87647221128,
+      "logo": "https://icons.brapi.dev/icons/B3SA3.svg",
+      "sector": "Finance",
+      "subsector": "Dados Financeiros e Bolsas de Valores",
+      "type": "stock",
+      "subType": "stock"
+    },
+    {
+      "stock": "COGN3",
+      "name": "COGNA EDUCAÇÃO S.A.",
+      "close": 2.23,
+      "change": -3.04,
+      "volume": 23220400,
+      "market_cap": 4740850756,
+      "logo": "https://icons.brapi.dev/icons/COGN3.svg",
+      "sector": "Commercial Services",
+      "subsector": "Serviços Educacionais",
+      "type": "stock",
+      "subType": "stock"
+    },
+    {
+      "stock": "RENT3",
+      "name": "LOCALIZA RENT A CAR S.A.",
+      "close": 38.64,
+      "change": 1.28,
+      "volume": 17894900,
+      "market_cap": 41062576246,
+      "logo": "https://icons.brapi.dev/icons/RENT3.svg",
+      "sector": "Finance",
+      "subsector": "Aluguel de Carros",
+      "type": "stock",
+      "subType": "stock"
+    }
+  ],
+  "availableSectors": [
+    "Retail Trade",
+    "Energy Minerals",
+    "Health Services"
+  ],
+  "availableStockTypes": [
+    "stock",
+    "fund",
+    "bdr"
+  ],
+  "availableSubTypeTypes": [
+    "stock",
+    "unit",
+    "fii",
+    "etf",
+    "fi-infra",
+    "fi-agro",
+    "fip",
+    "fidc",
+    "bdr"
+  ],
+  "currentPage": 1,
+  "totalPages": 260,
+  "itemsPerPage": 3,
+  "totalCount": 779,
+  "hasNextPage": true
+}

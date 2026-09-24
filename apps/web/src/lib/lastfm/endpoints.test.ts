@@ -49,8 +49,15 @@ describe("endpoints do Last.fm", () => {
     expect(result.history.map((item) => item.track.name)).toEqual(["Antes"]);
   });
 
-  it("resposta sem a lista esperada vira lista vazia", async () => {
-    respond({});
+  it("lista vazia ou com 1 item só (objeto) é normalizada", async () => {
+    respond({ topartists: {} });
     await expect(getTopArtists("rj", "medium_term")).resolves.toEqual([]);
+    respond({ topartists: { artist: { name: "Solo", playcount: 3, url: "u" } } });
+    await expect(getTopArtists("rj", "medium_term")).resolves.toEqual([expect.objectContaining({ name: "Solo", playcount: 3 })]);
+  });
+
+  it("resposta sem o envelope esperado quebra o contrato", async () => {
+    respond({});
+    await expect(getTopArtists("rj", "medium_term")).rejects.toMatchObject({ kind: "invalid_response" });
   });
 });

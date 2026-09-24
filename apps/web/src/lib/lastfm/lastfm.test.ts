@@ -1,5 +1,6 @@
 import { lastfmId, splitRecentTracks, toArtist, toImages, toTopTrack, toUser } from "./adapter";
 import { buildLastfmUrl, kindFromLastfmError, lastfmFetch } from "./client";
+import { userInfoSchema } from "./schemas";
 import { pickGenreTags, withLastfmGenres } from "./tags";
 import type { LastfmRecentTrack } from "./types";
 import { isValidLastfmUsername } from "./username";
@@ -63,8 +64,7 @@ describe("adapter Last.fm → tipos da UI", () => {
     expect(result.nowPlaying).toMatchObject({ isPlaying: true, durationMs: 0, track: { name: "Now", album: { name: "Album" } } });
     expect(result.history).toEqual([expect.objectContaining({ played_at: new Date(1_790_000_000_000).toISOString() })]);
 
-    expect(splitRecentTracks(played).history).toHaveLength(1);
-    expect(splitRecentTracks(undefined)).toEqual({ nowPlaying: null, history: [] });
+    expect(splitRecentTracks([]).history).toEqual([]);
   });
 });
 
@@ -128,13 +128,38 @@ describe("client", () => {
 
   it("erro no corpo (mesmo com HTTP 200) vira SpotifyApiError", async () => {
     global.fetch = jest.fn().mockResolvedValue(new Response(JSON.stringify({ error: 6, message: "User not found" })));
-    await expect(lastfmFetch("user.getinfo", { user: "nobody" })).rejects.toMatchObject({ kind: "not_found" });
+    await expect(lastfmFetch("user.getinfo", { user: "nobody" }, { schema: userInfoSchema })).rejects.toMatchObject({ kind: "not_found" });
+  });
+
+  it("falhas transitórias (5xx, rate limit 29) são repetidas; erro de negócio não", async () => {
+    const flaky = jest
+      .fn()
+      .mockResolvedValueOnce(new Response("oops", { status: 503 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ error: 29, message: "Rate limit" })))
+      .mockResolvedValue(new Response(JSON.stringify({ user: { name: "rj", url: "u" } })));
+    global.fetch = flaky;
+    await expect(lastfmFetch("user.getinfo", { user: "rj" }, { schema: userInfoSchema })).resolves.toMatchObject({ user: { name: "rj" } });
+    expect(flaky).toHaveBeenCalledTimes(3);
+
+    const notFound = jest.fn(async () => new Response(JSON.stringify({ error: 6, message: "User not found" })));
+    global.fetch = notFound as unknown as typeof fetch;
+    await expect(lastfmFetch("user.getinfo", { user: "x" }, { schema: userInfoSchema })).rejects.toMatchObject({ kind: "not_found" });
+    expect(notFound).toHaveBeenCalledTimes(1);
+  });
+
+  it("corpo que não é JSON ou fora do contrato vira invalid_response", async () => {
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+    global.fetch = jest.fn(async () => new Response("<html>")) as unknown as typeof fetch;
+    await expect(lastfmFetch("user.getinfo", { user: "x" }, { schema: userInfoSchema })).rejects.toMatchObject({ kind: "invalid_response" });
+    global.fetch = jest.fn(async () => new Response(JSON.stringify({ user: {} }))) as unknown as typeof fetch;
+    await expect(lastfmFetch("user.getinfo", { user: "x" }, { schema: userInfoSchema })).rejects.toMatchObject({ kind: "invalid_response" });
+    warn.mockRestore();
   });
 
   it("sem LASTFM_API_KEY não faz requisição", async () => {
     delete process.env.LASTFM_API_KEY;
     global.fetch = jest.fn();
-    await expect(lastfmFetch("user.getinfo", { user: "x" })).rejects.toThrow(/LASTFM_API_KEY/);
+    await expect(lastfmFetch("user.getinfo", { user: "x" }, { schema: userInfoSchema })).rejects.toThrow(/LASTFM_API_KEY/);
     expect(global.fetch).not.toHaveBeenCalled();
   });
 });

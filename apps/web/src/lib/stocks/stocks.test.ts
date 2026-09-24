@@ -1,6 +1,8 @@
 import { enUS } from "@/content/stocks/en-US";
 import { esES } from "@/content/stocks/es-ES";
 import { ptBR } from "@/content/stocks/pt-BR";
+import brapiQuote from "@/lib/__fixtures__/brapi-quote-petr4.json";
+import { contractReporter } from "@/lib/http/contract";
 import { BrapiError, availableRanges, getQuote, isFreeTicker, isRange, listStocks } from "./brapi";
 import { createFormatters } from "./format";
 import { sectorLabel } from "./sectors";
@@ -52,7 +54,7 @@ describe("brapi — requisições", () => {
   });
 
   it("pede o intervalo de vela certo para o período", async () => {
-    const fetchMock = jest.fn().mockResolvedValue(json({ results: [{ symbol: "PETR4" }] }));
+    const fetchMock = jest.fn().mockResolvedValue(json(brapiQuote));
     global.fetch = fetchMock;
 
     await getQuote("PETR4", "5y");
@@ -69,9 +71,31 @@ describe("brapi — requisições", () => {
     await expect(getQuote("XXXX9", "3mo")).rejects.toMatchObject({ code: "NOT_FOUND", status: 404 });
   });
 
-  it("resposta sem JSON vira erro com o status HTTP", async () => {
-    global.fetch = jest.fn().mockResolvedValue(new Response("<html>502</html>", { status: 502 }));
-    await expect(listStocks()).rejects.toMatchObject({ code: "UNKNOWN", status: 502 });
+  it("5xx sem JSON é repetido e, se persistir, vira UNAVAILABLE", async () => {
+    const fetchMock = jest.fn(async () => new Response("<html>502</html>", { status: 502 }));
+    global.fetch = fetchMock as unknown as typeof fetch;
+    await expect(listStocks()).rejects.toMatchObject({ code: "UNAVAILABLE", status: 502 });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it("falha de rede passageira se recupera no retry", async () => {
+    const fetchMock = jest.fn().mockRejectedValueOnce(new TypeError("fetch failed")).mockResolvedValue(json(brapiQuote));
+    global.fetch = fetchMock;
+    await expect(getQuote("PETR4", "5d")).resolves.toMatchObject({ symbol: "PETR4" });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("erro de negócio (4xx) não é repetido", async () => {
+    const fetchMock = jest.fn(async () => json({ error: true, message: "x", code: "MISSING_TOKEN" }, 401));
+    global.fetch = fetchMock as unknown as typeof fetch;
+    await expect(getQuote("BBAS3", "3mo")).rejects.toMatchObject({ code: "MISSING_TOKEN" });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("resposta fora do contrato vira INVALID_RESPONSE", async () => {
+    jest.spyOn(contractReporter, "report").mockImplementation(() => {});
+    global.fetch = jest.fn().mockResolvedValue(json({ results: [{ symbol: "PETR4" }] }));
+    await expect(getQuote("PETR4", "5d")).rejects.toMatchObject({ name: "BrapiError", code: "INVALID_RESPONSE" });
   });
 });
 

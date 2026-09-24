@@ -63,22 +63,3 @@ export interface LastfmErrorResponse {
   message: string;
 }
 
-export interface UserInfoResponse {
-  user: LastfmUser;
-}
-
-export interface TopArtistsResponse {
-  topartists: { artist: LastfmTopArtist[] };
-}
-
-export interface TopTracksResponse {
-  toptracks: { track: LastfmTopTrack[] };
-}
-
-export interface RecentTracksResponse {
-  recenttracks: { track: LastfmRecentTrack[] | LastfmRecentTrack };
-}
-
-export interface TopTagsResponse {
-  toptags: { tag: LastfmTag[] };
-}
