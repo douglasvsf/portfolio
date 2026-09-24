@@ -1,8 +1,10 @@
 "use client";
 
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
-import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@godzilla/ui";
-import { formatCompact, formatCurrency } from "@/lib/stocks/format";
+import { ChartContainer, ChartTooltip, ChartTooltipContent, useLocale, type ChartConfig } from "@godzilla/ui";
+import { useStocksDictionary } from "@/content/stocks";
+import type { Locale } from "@/i18n/config";
+import { createFormatters } from "@/lib/stocks/format";
 
 export interface PricePoint {
   /** Rótulo curto do eixo X (dd/mm ou mm/aa). */
@@ -13,14 +15,15 @@ export interface PricePoint {
   volume: number;
 }
 
-const priceConfig = { close: { label: "Fechamento", color: "hsl(var(--chart-1))" } } satisfies ChartConfig;
-const volumeConfig = { volume: { label: "Volume", color: "hsl(var(--chart-2))" } } satisfies ChartConfig;
 
 function tooltipDate(_: unknown, payload: readonly { payload?: PricePoint }[]) {
   return payload[0]?.payload?.date;
 }
 
 export function PriceChart({ data, positive }: { data: PricePoint[]; positive: boolean }) {
+  const dict = useStocksDictionary();
+  const format = createFormatters(useLocale() as Locale);
+  const priceConfig = { close: { label: dict.charts.close, color: "hsl(var(--chart-1))" } } satisfies ChartConfig;
   // A cor da linha acompanha o resultado do período (alta = marca, queda = destructive).
   const stroke = positive ? "var(--color-close)" : "hsl(var(--destructive))";
 
@@ -44,7 +47,7 @@ export function PriceChart({ data, positive }: { data: PricePoint[]; positive: b
         />
         <ChartTooltip
           content={
-            <ChartTooltipContent labelFormatter={tooltipDate} valueFormatter={(v) => formatCurrency(Number(v))} />
+            <ChartTooltipContent labelFormatter={tooltipDate} valueFormatter={(v) => format.currency(Number(v))} />
           }
         />
         <Area dataKey="close" type="monotone" stroke={stroke} strokeWidth={2} fill="url(#price-fill)" />
@@ -54,15 +57,18 @@ export function PriceChart({ data, positive }: { data: PricePoint[]; positive: b
 }
 
 export function VolumeChart({ data }: { data: PricePoint[] }) {
+  const dict = useStocksDictionary();
+  const format = createFormatters(useLocale() as Locale);
+  const volumeConfig = { volume: { label: dict.charts.volume, color: "hsl(var(--chart-2))" } } satisfies ChartConfig;
   return (
     <ChartContainer config={volumeConfig} className="aspect-auto h-48 w-full">
       <BarChart data={data} margin={{ left: 0, right: 8 }}>
         <CartesianGrid vertical={false} />
         <XAxis dataKey="label" tickLine={false} axisLine={false} minTickGap={32} />
-        <YAxis tickLine={false} axisLine={false} width={56} tickFormatter={(value: number) => formatCompact(value)} />
+        <YAxis tickLine={false} axisLine={false} width={56} tickFormatter={(value: number) => format.compact(value)} />
         <ChartTooltip
           content={
-            <ChartTooltipContent labelFormatter={tooltipDate} valueFormatter={(v) => formatCompact(Number(v))} />
+            <ChartTooltipContent labelFormatter={tooltipDate} valueFormatter={(v) => format.compact(Number(v))} />
           }
         />
         <Bar dataKey="volume" fill="var(--color-volume)" radius={[3, 3, 0, 0]} />

@@ -1,16 +1,19 @@
 "use client";
 
 import { Button, Card, CardDescription, CardFooter, CardHeader, CardTitle } from "@godzilla/ui";
+import { useStocksDictionary } from "@/content/stocks";
 
-export default function Error({ error, retry }: { error: Error & { digest?: string }; retry: () => void }) {
+/** Erro amigável — nunca mostra a mensagem técnica ao visitante. */
+export default function Error({ retry }: { error: Error & { digest?: string }; retry: () => void }) {
+  const { states } = useStocksDictionary();
   return (
     <Card className="mx-auto mt-12 w-full max-w-xl">
       <CardHeader>
-        <CardTitle>Não foi possível carregar o mercado</CardTitle>
-        <CardDescription>{error.message || "A brapi não respondeu. Tente novamente em instantes."}</CardDescription>
+        <CardTitle>{states.errorTitle}</CardTitle>
+        <CardDescription>{states.errorDescription}</CardDescription>
       </CardHeader>
       <CardFooter>
-        <Button onClick={() => retry()}>Tentar novamente</Button>
+        <Button onClick={() => retry()}>{states.retry}</Button>
       </CardFooter>
     </Card>
   );

@@ -1,8 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { Badge, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@godzilla/ui";
 import { FREE_TICKERS, hasToken, listStocks, sortFields, type ListedStock, type SortField } from "@/lib/stocks/brapi";
-import { formatCompact } from "@/lib/stocks/format";
+import { getStocksDictionary, type StocksDictionary } from "@/content/stocks";
+import { fmt } from "@/i18n/message";
+import { getRequestLocale } from "@/i18n/request";
+import { createFormatters } from "@/lib/stocks/format";
 import { sectorLabel } from "@/lib/stocks/sectors";
 import { MarketFilters } from "@/components/stocks/market-filters";
 import { MarketTable } from "@/components/stocks/market-table";
@@ -18,8 +22,16 @@ function pick(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
 
+export async function generateMetadata(): Promise<Metadata> {
+  const { meta } = getStocksDictionary(await getRequestLocale());
+  return { title: { absolute: meta.title }, description: meta.description };
+}
+
 export default async function MarketPage({ searchParams }: PageProps<"/stocks">) {
   const params = await searchParams;
+  const locale = await getRequestLocale();
+  const dict = getStocksDictionary(locale);
+  const format = createFormatters(locale);
   const sort = pick(params.sort);
   const query = {
     q: pick(params.q)?.trim() || undefined,
@@ -34,20 +46,21 @@ export default async function MarketPage({ searchParams }: PageProps<"/stocks">)
     listStocks({ sortBy: "volume", sortOrder: "desc", limit: LIQUID_UNIVERSE }),
   ]);
 
-  const summary = summarize(liquid.stocks);
+  const summary = summarize(liquid.stocks, dict);
+  const ofMostTraded = fmt(dict.market.ofMostTraded, { n: liquid.stocks.length });
 
   return (
     <div className="flex flex-col gap-8">
       <section className="flex flex-col gap-2">
         <h1 className="text-h2 font-bold tracking-tight">
-          Mercado <span className="text-primary text-glow">B3</span>
+          {dict.market.title} <span className="text-primary text-glow">B3</span>
         </h1>
         <p className="max-w-2xl text-body text-muted-foreground">
-          Panorama das {LIQUID_UNIVERSE} ações mais negociadas e consulta de todos os papéis listados.
+          {fmt(dict.market.subtitle, { n: LIQUID_UNIVERSE })}
         </p>
         {!hasToken && (
           <p className="flex flex-wrap items-center gap-2 text-body-sm text-muted-foreground">
-            Histórico disponível sem token para:
+            {dict.market.freeTickers}
             {FREE_TICKERS.map((ticker) => (
               <Link key={ticker} href={`/stocks/acao/${ticker}`}>
                 <Badge variant="tag" className="hover:border-primary hover:text-primary">
@@ -59,18 +72,22 @@ export default async function MarketPage({ searchParams }: PageProps<"/stocks">)
         )}
       </section>
 
-      <section aria-label="Resumo" className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard label="Em alta" value={String(summary.up)} hint={`de ${liquid.stocks.length} mais negociadas`} tone="success" />
-        <StatCard label="Em queda" value={String(summary.down)} hint={`de ${liquid.stocks.length} mais negociadas`} tone="destructive" />
-        <StatCard label="Variação média" value={<ChangeBadge value={summary.averageChange} className="text-body-sm" />} hint="média simples do dia" />
-        <StatCard label="Volume total" value={formatCompact(summary.totalVolume)} hint="ações negociadas" />
+      <section aria-label={dict.market.summaryLabel} className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <StatCard label={dict.market.up} value={String(summary.up)} hint={ofMostTraded} tone="success" />
+        <StatCard label={dict.market.down} value={String(summary.down)} hint={ofMostTraded} tone="destructive" />
+        <StatCard
+          label={dict.market.averageChange}
+          value={<ChangeBadge value={summary.averageChange} locale={locale} className="text-body-sm" />}
+          hint={dict.market.averageChangeHint}
+        />
+        <StatCard label={dict.market.totalVolume} value={format.compact(summary.totalVolume)} hint={dict.market.totalVolumeHint} />
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Maiores altas e quedas</CardTitle>
-            <CardDescription>Variação do dia entre as mais negociadas</CardDescription>
+            <CardTitle>{dict.market.moversTitle}</CardTitle>
+            <CardDescription>{dict.market.moversDescription}</CardDescription>
           </CardHeader>
           <CardContent>
             <MoversChart data={summary.movers} />
@@ -78,8 +95,8 @@ export default async function MarketPage({ searchParams }: PageProps<"/stocks">)
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Volume por setor</CardTitle>
-            <CardDescription>Participação no volume das mais negociadas</CardDescription>
+            <CardTitle>{dict.market.sectorsTitle}</CardTitle>
+            <CardDescription>{dict.market.sectorsDescription}</CardDescription>
           </CardHeader>
           <CardContent>
             <SectorChart data={summary.sectors} />
@@ -90,15 +107,15 @@ export default async function MarketPage({ searchParams }: PageProps<"/stocks">)
       <section className="flex flex-col gap-4">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="text-h3 font-semibold">Todas as ações</h2>
-            <p className="text-body-sm text-muted-foreground">Clique em uma ação para ver o histórico.</p>
+            <h2 className="text-h3 font-semibold">{dict.market.allStocks}</h2>
+            <p className="text-body-sm text-muted-foreground">{dict.market.allStocksHint}</p>
           </div>
           <Suspense>
             <MarketFilters sectors={table.availableSectors} />
           </Suspense>
         </div>
         <Card className="p-2">
-          <MarketTable data={table} query={query} />
+          <MarketTable data={table} query={query} dict={dict} locale={locale} />
         </Card>
       </section>
     </div>
@@ -126,7 +143,7 @@ function StatCard({
   );
 }
 
-function summarize(stocks: ListedStock[]) {
+function summarize(stocks: ListedStock[], dict: StocksDictionary) {
   const withChange = stocks.filter((stock): stock is ListedStock & { change: number } => stock.change != null);
   const byChange = [...withChange].sort((a, b) => b.change - a.change);
 
@@ -136,13 +153,13 @@ function summarize(stocks: ListedStock[]) {
 
   const volumeBySector = new Map<string, number>();
   for (const stock of stocks) {
-    const label = sectorLabel(stock.sector);
+    const label = sectorLabel(stock.sector, dict);
     volumeBySector.set(label, (volumeBySector.get(label) ?? 0) + (stock.volume ?? 0));
   }
   const ranked = [...volumeBySector].sort((a, b) => b[1] - a[1]);
   const others = ranked.slice(TOP_SECTORS).reduce((sum, [, volume]) => sum + volume, 0);
   const sectors = ranked.slice(0, TOP_SECTORS).map(([sector, volume]) => ({ sector, volume }));
-  if (others > 0) sectors.push({ sector: "Outros", volume: others });
+  if (others > 0) sectors.push({ sector: dict.market.others, volume: others });
 
   return {
     up: withChange.filter((stock) => stock.change > 0).length,

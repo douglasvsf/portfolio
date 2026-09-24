@@ -2,7 +2,10 @@ import Link from "next/link";
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ChevronsUpDown } from "@godzilla/icons";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, cn } from "@godzilla/ui";
 import type { ListParams, QuoteListResponse, SortField } from "@/lib/stocks/brapi";
-import { formatCompact, formatCurrency } from "@/lib/stocks/format";
+import type { StocksDictionary } from "@/content/stocks";
+import type { Locale } from "@/i18n/config";
+import { fmt } from "@/i18n/message";
+import { createFormatters } from "@/lib/stocks/format";
 import { sectorLabel } from "@/lib/stocks/sectors";
 import { ChangeBadge } from "./change-badge";
 import { StockLogo } from "./stock-logo";
@@ -20,15 +23,16 @@ function href(query: Query, changes: Partial<Query>) {
   return `/stocks?${params.toString()}`;
 }
 
-const columns: { field: SortField; label: string; align?: "right" }[] = [
-  { field: "name", label: "Ativo" },
-  { field: "close", label: "Preço", align: "right" },
-  { field: "change", label: "Dia", align: "right" },
-  { field: "volume", label: "Volume", align: "right" },
-  { field: "market_cap_basic", label: "Valor de mercado", align: "right" },
+const columns: { field: SortField; label: keyof StocksDictionary["table"]; align?: "right" }[] = [
+  { field: "name", label: "asset" },
+  { field: "close", label: "price", align: "right" },
+  { field: "change", label: "day", align: "right" },
+  { field: "volume", label: "volume", align: "right" },
+  { field: "market_cap_basic", label: "marketCap", align: "right" },
 ];
 
-export function MarketTable({ data, query }: { data: QuoteListResponse; query: Query }) {
+export function MarketTable({ data, query, dict, locale }: { data: QuoteListResponse; query: Query; dict: StocksDictionary; locale: Locale }) {
+  const format = createFormatters(locale);
   return (
     <div className="flex flex-col gap-4">
       <Table>
@@ -52,20 +56,20 @@ export function MarketTable({ data, query }: { data: QuoteListResponse; query: Q
                     })}
                     className={cn("inline-flex items-center gap-1 hover:text-foreground", active && "text-foreground")}
                   >
-                    {column.label}
+                    {dict.table[column.label]}
                     <Icon className="size-3.5" aria-hidden="true" />
                   </Link>
                 </TableHead>
               );
             })}
-            <TableHead className="hidden lg:table-cell">Setor</TableHead>
+            <TableHead className="hidden lg:table-cell">{dict.table.sector}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {data.stocks.length === 0 && (
             <TableRow>
               <TableCell colSpan={6} className="py-10 text-center text-muted-foreground">
-                Nenhuma ação encontrada para esse filtro.
+                {dict.table.empty}
               </TableCell>
             </TableRow>
           )}
@@ -80,31 +84,35 @@ export function MarketTable({ data, query }: { data: QuoteListResponse; query: Q
                   </span>
                 </Link>
               </TableCell>
-              <TableCell className="text-right font-mono tabular-nums">{formatCurrency(stock.close)}</TableCell>
+              <TableCell className="text-right font-mono tabular-nums">{format.currency(stock.close)}</TableCell>
               <TableCell className="text-right">
-                <ChangeBadge value={stock.change} />
+                <ChangeBadge value={stock.change} locale={locale} />
               </TableCell>
               <TableCell className="text-right font-mono tabular-nums text-muted-foreground">
-                {formatCompact(stock.volume)}
+                {format.compact(stock.volume)}
               </TableCell>
               <TableCell className="text-right font-mono tabular-nums text-muted-foreground">
-                {formatCompact(stock.market_cap)}
+                {format.compact(stock.market_cap)}
               </TableCell>
-              <TableCell className="hidden text-muted-foreground lg:table-cell">{sectorLabel(stock.sector)}</TableCell>
+              <TableCell className="hidden text-muted-foreground lg:table-cell">{sectorLabel(stock.sector, dict)}</TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
 
-      <nav aria-label="Paginação" className="flex items-center justify-between gap-4 text-body-sm text-muted-foreground">
+      <nav aria-label={dict.table.paginationLabel} className="flex items-center justify-between gap-4 text-body-sm text-muted-foreground">
         <span>
-          {data.totalCount.toLocaleString("pt-BR")} ativos · página {data.currentPage} de {Math.max(data.totalPages, 1)}
+          {fmt(dict.table.pagination, {
+            total: format.integer(data.totalCount),
+            page: data.currentPage,
+            pages: Math.max(data.totalPages, 1),
+          })}
         </span>
         <div className="flex gap-2">
-          <PageLink disabled={data.currentPage <= 1} href={href(query, { page: data.currentPage - 1 })} label="Anterior">
+          <PageLink disabled={data.currentPage <= 1} href={href(query, { page: data.currentPage - 1 })} label={dict.table.previous}>
             <ChevronLeft className="size-(--size-icon-sm)" aria-hidden="true" />
           </PageLink>
-          <PageLink disabled={!data.hasNextPage} href={href(query, { page: data.currentPage + 1 })} label="Próxima">
+          <PageLink disabled={!data.hasNextPage} href={href(query, { page: data.currentPage + 1 })} label={dict.table.next}>
             <ChevronRight className="size-(--size-icon-sm)" aria-hidden="true" />
           </PageLink>
         </div>

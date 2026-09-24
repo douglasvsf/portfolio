@@ -3,6 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { SearchInput, Spinner, cn } from "@godzilla/ui";
+import { useStocksDictionary } from "@/content/stocks";
 import { sectorLabel } from "@/lib/stocks/sectors";
 
 const SEARCH_DEBOUNCE_MS = 350;
@@ -14,6 +15,7 @@ export function MarketFilters({ sectors }: { sectors: string[] }) {
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState(searchParams.get("q") ?? "");
+  const dict = useStocksDictionary();
 
   function update(changes: Record<string, string>) {
     const params = new URLSearchParams(searchParams);
@@ -38,12 +40,12 @@ export function MarketFilters({ sectors }: { sectors: string[] }) {
         value={search}
         onChange={(event) => setSearch(event.target.value)}
         onClear={() => setSearch("")}
-        placeholder="Buscar ticker ou empresa"
-        aria-label="Buscar ações"
+        placeholder={dict.filters.searchPlaceholder}
+        aria-label={dict.filters.searchLabel}
         className="sm:w-80"
       />
       <select
-        aria-label="Filtrar por setor"
+        aria-label={dict.filters.sectorLabel}
         value={searchParams.get("sector") ?? ""}
         onChange={(event) => update({ sector: event.target.value })}
         className={cn(
@@ -51,10 +53,10 @@ export function MarketFilters({ sectors }: { sectors: string[] }) {
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         )}
       >
-        <option value="">Todos os setores</option>
+        <option value="">{dict.filters.allSectors}</option>
         {sectors
-          .map((sector) => ({ sector, label: sectorLabel(sector) }))
-          .sort((a, b) => a.label.localeCompare(b.label, "pt-BR"))
+          .map((sector) => ({ sector, label: sectorLabel(sector, dict) }))
+          .sort((a, b) => a.label.localeCompare(b.label))
           .map(({ sector, label }) => (
             <option key={sector} value={sector}>
               {label}

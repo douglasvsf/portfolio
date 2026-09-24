@@ -3,23 +3,29 @@ import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AppBrand, AppFooter, AppHeader, I18nProvider, appContainerClassName, appNavLinkClassName, cn } from "@godzilla/ui";
 import { BackToPortfolio } from "@/components/layout/back-to-portfolio";
+import { SystemLocaleSwitcher } from "@/components/layout/system-locale-switcher";
+import { getStocksDictionary } from "@/content/stocks";
+import { getRequestLocale } from "@/i18n/request";
 import "../globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
-export const metadata: Metadata = {
-  title: { default: "Kaiju Stocks — cotações da B3", template: "%s · Kaiju Stocks" },
-  description: "Consulte ações da B3, maiores altas e quedas, volume por setor e histórico de preços.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { meta } = getStocksDictionary(await getRequestLocale());
+  return { title: { default: meta.title, template: "%s · Kaiju Stocks" }, description: meta.description };
+}
 
-export default function RootLayout({ children }: LayoutProps<"/stocks">) {
+export default async function RootLayout({ children }: LayoutProps<"/stocks">) {
+  const locale = await getRequestLocale();
+  const dict = getStocksDictionary(locale);
+
   return (
-    <html lang="pt-BR" className={`dark ${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+    <html lang={locale} className={`dark ${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
-        <I18nProvider locale="pt-BR">
+        <I18nProvider locale={locale}>
           <AppHeader
-            skipToContent={{ label: "Pular para o conteúdo" }}
+            skipToContent={{ label: dict.layout.skipToContent }}
             brand={
               <AppBrand asChild>
                 <Link href="/stocks">
@@ -27,7 +33,12 @@ export default function RootLayout({ children }: LayoutProps<"/stocks">) {
                 </Link>
               </AppBrand>
             }
-            actions={<BackToPortfolio label="Voltar ao portfólio" shortLabel="Portfólio" />}
+            actions={
+              <div className="flex items-center gap-4 sm:gap-6">
+                <BackToPortfolio label={dict.layout.backToPortfolio} shortLabel={dict.layout.backShort} />
+                <SystemLocaleSwitcher locale={locale} />
+              </div>
+            }
           />
           <main id="content" className={cn(appContainerClassName, "flex-1 py-8")}>
             {children}
@@ -35,11 +46,11 @@ export default function RootLayout({ children }: LayoutProps<"/stocks">) {
           <AppFooter
             aside={
               <a href="https://brapi.dev" target="_blank" rel="noreferrer" className={appNavLinkClassName}>
-                Dados: brapi.dev
+                {dict.layout.dataSource}
               </a>
             }
           >
-            Cotações com atraso de até 15 minutos. Não é recomendação de investimento.
+            {dict.layout.footer}
           </AppFooter>
         </I18nProvider>
       </body>
