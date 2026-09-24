@@ -1,5 +1,5 @@
 import { Badge, Card, cn } from "@godzilla/ui";
-import { formatCompact, normalizeGenre } from "@/lib/spotify/transform";
+import { formatCompact, normalizeGenre, externalUrl } from "@/lib/spotify/transform";
 import type { SpotifyArtist } from "@/lib/spotify/types";
 import { CoverArt } from "../common/cover-art";
 import { SpotifyLink } from "../common/spotify-link";
@@ -8,6 +8,7 @@ const MAX_GENRES = 3;
 
 function Meta({ artist }: { artist: SpotifyArtist }) {
   const parts = [
+    artist.playcount !== undefined ? `${artist.playcount.toLocaleString("en-US")} plays` : null,
     artist.followers ? `${formatCompact(artist.followers.total)} followers` : null,
     artist.popularity !== undefined ? `Popularity ${artist.popularity}` : null,
   ].filter(Boolean);
@@ -51,7 +52,7 @@ export function ArtistRanking({ artists }: { artists: SpotifyArtist[] }) {
               </span>
               <CoverArt images={artist.images} seed={artist.id} alt={artist.name} size={112} variant="artist" className="relative" />
               <div className="relative flex flex-col items-center gap-2">
-                <SpotifyLink href={artist.external_urls.spotify} className="text-h4 font-semibold">
+                <SpotifyLink href={externalUrl(artist)} className="text-h4 font-semibold">
                   {artist.name}
                 </SpotifyLink>
                 <Meta artist={artist} />
@@ -69,7 +70,7 @@ export function ArtistRanking({ artists }: { artists: SpotifyArtist[] }) {
               <span className="w-7 text-right font-mono text-body-sm text-muted-foreground">#{index + 4}</span>
               <CoverArt images={artist.images} seed={artist.id} alt={artist.name} size={52} variant="artist" />
               <div className="flex min-w-0 flex-1 flex-col gap-1">
-                <SpotifyLink href={artist.external_urls.spotify} className="truncate font-semibold">
+                <SpotifyLink href={externalUrl(artist)} className="truncate font-semibold">
                   {artist.name}
                 </SpotifyLink>
                 <Meta artist={artist} />

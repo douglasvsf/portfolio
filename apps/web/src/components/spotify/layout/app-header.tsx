@@ -8,8 +8,8 @@ import type { SpotifyUser } from "@/lib/spotify/types";
 import { NavLinks } from "./nav-links";
 import { SpotifyBrand } from "./spotify-brand";
 
-const badges: Record<SourceMode, string | null> = { live: null, showcase: "Live showcase", demo: "Demo" };
-const logoutLabels: Record<SourceMode, string> = { live: "Logout", showcase: "Exit showcase", demo: "Exit demo" };
+const badges: Record<SourceMode, string | null> = { live: null, showcase: "Live showcase", lastfm: "Last.fm", demo: "Demo" };
+const logoutLabels: Record<SourceMode, string> = { live: "Logout", showcase: "Exit showcase", lastfm: "Exit Last.fm", demo: "Exit demo" };
 
 export function AppHeader({ user, mode }: { user: SpotifyUser | null; mode: SourceMode }) {
   const name = user?.display_name ?? "Spotify listener";

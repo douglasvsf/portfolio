@@ -9,6 +9,7 @@ export type SpotifyErrorKind =
   | "unavailable" // 5xx da Spotify
   | "timeout"
   | "network"
+  | "not_found" // usuário do Last.fm inexistente
   | "unknown";
 
 export class SpotifyApiError extends Error {
@@ -57,6 +58,10 @@ export const friendlyMessages: Record<SpotifyErrorKind, { title: string; descrip
   network: {
     title: "Connection problem",
     description: "We couldn't reach Spotify. Check your connection and try again.",
+  },
+  not_found: {
+    title: "User not found",
+    description: "We couldn't find that Last.fm user. Check the username and try again.",
   },
   unknown: {
     title: "Something went wrong",

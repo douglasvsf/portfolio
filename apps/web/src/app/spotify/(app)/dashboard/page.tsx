@@ -150,7 +150,7 @@ export default async function OverviewPage({ searchParams }: PageProps<"/spotify
               <CardTitle>Genre Distribution</CardTitle>
               <CardDescription className="flex items-start gap-1.5">
                 <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
-                Derived from the genres of your top {artists.length} artists — not your full listening history.
+                Derived from {source.genreSource ?? "the genres"} of your top {artists.length} artists — not your full listening history.
               </CardDescription>
             </CardHeader>
             <CardContent>

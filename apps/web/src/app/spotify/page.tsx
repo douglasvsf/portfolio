@@ -6,6 +6,8 @@ import { routes } from "@/config/spotify";
 import { mockCurrentlyPlaying, mockTopArtists, mockTopTracks } from "@/lib/spotify/mock-data";
 import { DEMO_COOKIE, SESSION_COOKIE } from "@/lib/spotify/session";
 import { isShowcaseAvailable } from "@/lib/spotify/source";
+import { isLastfmConfigured } from "@/lib/lastfm/client";
+import { LastfmForm } from "@/components/spotify/landing/lastfm-form";
 import { artistNames, formatDuration, genreDistribution, normalizeNowPlaying } from "@/lib/spotify/transform";
 import { GenreChart } from "@/components/spotify/charts/genre-chart";
 import { CoverArt } from "@/components/spotify/common/cover-art";
@@ -20,6 +22,14 @@ const loginErrors: Record<string, string> = {
     "This Spotify account isn't allow-listed. The app runs in Spotify's Development Mode (limited to invited users) — try the demo instead.",
   session_expired: "Your session ended. Connect Spotify again or explore the demo.",
   not_configured: "Spotify login isn't configured on this deployment yet — explore the demo instead.",
+};
+
+/** Erros da entrada pelo Last.fm — exibidos junto do formulário. */
+const lastfmErrors: Record<string, string> = {
+  lastfm_not_found: "We couldn't find that Last.fm user. Check the spelling.",
+  lastfm_private: "This Last.fm profile is private.",
+  lastfm_unavailable: "Last.fm isn't responding right now. Try again in a moment.",
+  lastfm_not_configured: "Last.fm isn't configured on this deployment yet.",
 };
 
 const features: { icon: LucideIcon; title: string; description: string }[] = [
@@ -37,6 +47,8 @@ const ctaSecondary =
 export default async function LandingPage({ searchParams }: PageProps<"/spotify">) {
   const error = (await searchParams).error;
   const errorMessage = typeof error === "string" ? loginErrors[error] : undefined;
+  const lastfmError = typeof error === "string" ? lastfmErrors[error] : undefined;
+  const showLastfm = isLastfmConfigured();
 
   const store = await cookies();
   const hasSession = Boolean(store.get(SESSION_COOKIE) || store.get(DEMO_COOKIE));
@@ -91,6 +103,11 @@ export default async function LandingPage({ searchParams }: PageProps<"/spotify"
               </a>
             </div>
             <p className="text-caption text-muted-foreground">Read-only access · we never post, follow or change anything on your account.</p>
+            {showLastfm && (
+              <a href="#lastfm" className="text-body-sm text-muted-foreground underline-offset-4 hover:text-primary hover:underline">
+                Not invited? Use your Last.fm username →
+              </a>
+            )}
           </div>
 
           {/* Prévia do dashboard (dados do demo) */}
@@ -135,6 +152,12 @@ export default async function LandingPage({ searchParams }: PageProps<"/spotify"
           </div>
         </section>
 
+        {showLastfm && (
+          <section className={cn(appContainerClassName, "pt-4")} aria-label="Use Last.fm">
+            <LastfmForm error={lastfmError} />
+          </section>
+        )}
+
         <section className="py-16" aria-labelledby="features-title">
           <div className={appContainerClassName}>
             <h2 id="features-title" className="mb-8 text-center text-h3 font-bold">
@@ -152,8 +175,9 @@ export default async function LandingPage({ searchParams }: PageProps<"/spotify"
               ))}
             </div>
             <p className="mx-auto mt-6 max-w-2xl text-center text-caption text-muted-foreground">
-              Stats are limited to what the Spotify Web API provides: top items for three time ranges and your last 50 plays.
-              This is not a full listening history or a Wrapped replacement.
+              Stats are limited to what the APIs provide: top items for three time ranges and your recent plays. Spotify
+              doesn&apos;t send genres to apps like this one — they come from Last.fm tags when available. This is not a
+              Wrapped replacement.
             </p>
           </div>
         </section>

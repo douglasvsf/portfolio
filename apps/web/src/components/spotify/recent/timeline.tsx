@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useSyncExternalStore } from "react";
-import { artistNames, groupByDay } from "@/lib/spotify/transform";
+import { artistNames, groupByDay, externalUrl } from "@/lib/spotify/transform";
 import type { RecentlyPlayedItem } from "@/lib/spotify/types";
 import { CoverArt } from "../common/cover-art";
 import { SpotifyLink } from "../common/spotify-link";
@@ -34,13 +34,14 @@ export function Timeline({ items }: { items: RecentlyPlayedItem[] }) {
                 <time dateTime={item.played_at} className="w-12 shrink-0 font-mono text-body-sm tabular-nums text-primary">
                   {time.format(new Date(item.played_at))}
                 </time>
-                <CoverArt images={item.track.album.images} seed={item.track.album.id} alt={`${item.track.album.name} cover`} size={44} />
+                <CoverArt images={item.track.album.images} seed={item.track.album.id} alt={`${item.track.album.name || item.track.name} cover`} size={44} />
                 <div className="flex min-w-0 flex-col">
-                  <SpotifyLink href={item.track.external_urls.spotify} className="truncate font-medium">
+                  <SpotifyLink href={externalUrl(item.track)} className="truncate font-medium">
                     {item.track.name}
                   </SpotifyLink>
                   <span className="truncate text-caption text-muted-foreground">
-                    {artistNames(item.track)} · {item.track.album.name}
+                    {artistNames(item.track)}
+                    {item.track.album.name && ` · ${item.track.album.name}`}
                   </span>
                 </div>
               </li>

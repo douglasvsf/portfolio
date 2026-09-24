@@ -16,6 +16,8 @@ export interface SpotifyImage {
 
 export interface ExternalUrls {
   spotify?: string;
+  /** Itens vindos do Last.fm apontam para a página deles lá. */
+  lastfm?: string;
 }
 
 export interface SpotifyArtistSimplified {
@@ -29,6 +31,8 @@ export interface SpotifyArtist extends SpotifyArtistSimplified {
   genres?: string[];
   popularity?: number;
   followers?: { total: number };
+  /** Só no Last.fm: quantas vezes o usuário ouviu no período. */
+  playcount?: number;
 }
 
 export interface SpotifyAlbum {
@@ -48,6 +52,8 @@ export interface SpotifyTrack {
   duration_ms: number;
   explicit: boolean;
   popularity?: number;
+  /** Só no Last.fm: quantas vezes o usuário ouviu no período. */
+  playcount?: number;
   album: SpotifyAlbum;
   artists: SpotifyArtistSimplified[];
   external_urls: ExternalUrls;

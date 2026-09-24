@@ -30,6 +30,10 @@ export default async function DashboardLayout({ children }: LayoutProps<"/spotif
             <>
               You&apos;re viewing <strong>{user?.display_name ?? "the owner"}&apos;s real Spotify stats</strong>, updated live.
             </>
+          ) : source.mode === "lastfm" ? (
+            <>
+              Stats from <strong>Last.fm</strong> for <strong>{user?.id ?? "this user"}</strong>, built from their scrobbles.
+            </>
           ) : (
             <>
               You&apos;re exploring <strong>demo data</strong>.

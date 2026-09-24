@@ -206,6 +206,11 @@ export function pickImage(images: SpotifyImage[] | undefined, size: number): str
   return (sorted.find((image) => (image.width ?? 0) >= size) ?? sorted.at(-1))?.url ?? null;
 }
 
+/** Link do item na fonte de origem (Spotify ou Last.fm). */
+export function externalUrl(item: { external_urls: { spotify?: string; lastfm?: string } }) {
+  return item.external_urls.spotify ?? item.external_urls.lastfm;
+}
+
 export function artistNames(track: SpotifyTrack) {
   return track.artists.map((artist) => artist.name).join(", ");
 }
