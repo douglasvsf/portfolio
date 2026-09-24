@@ -29,9 +29,11 @@ Live at **`/spotify`** in the portfolio (same deploy as the site): <https://doug
 | Top Tracks | Table (desktop) / compact cards (mobile): cover, track, artist, album, duration | `GET /me/top/tracks` |
 | Recently Played | Timeline of the last 50 plays, grouped by day in the visitor's time zone | `GET /me/player/recently-played` |
 | Now playing | Cover, progress bar that advances in real time, refreshed every 20 s | `GET /me/player/currently-playing` |
-| Genres | Donut chart **derived from the top artists' genres** (the chart says so) | from `/me/top/artists` |
+| Genres | Donut chart from **Last.fm tags** of the top artists; hidden when there's no genre data | `artist.getTopTags` (Last.fm) |
+| Eras | Top era card + "Your music by decade" chart from album release dates | `album.release_date` |
 | Periods | `4 weeks` · `6 months` · `1 year` (`short_term`, `medium_term`, `long_term`) | `time_range` |
 | Live showcase | Visitors see the **owner's real stats**, live, without logging in | owner's refresh token |
+| Last.fm | **Anyone** types a Last.fm username and sees their stats: plays per artist/track, scrobbles, now playing | Last.fm API |
 | Demo mode | The whole dashboard with mock data; fallback when the showcase isn't set up | — |
 
 ## Tech Stack
@@ -122,6 +124,16 @@ The "View Demo" button then becomes **"Explore Douglas's live stats"**. The acce
 
 > Everything the dashboard shows (top artists/tracks, the last 50 plays and what's playing now) becomes public. Only use this with your own account.
 
+## Last.fm (open to everyone)
+
+Spotify limits login to invited accounts, but **Last.fm has no such limit**: anyone who scrobbles their Spotify plays to Last.fm can type their username on the landing page (`/api/spotify/lastfm?username=…`, which also works as a shareable link).
+
+- Uses `user.getInfo`, `user.getTopArtists`, `user.getTopTracks` (periods `1month` / `6month` / `12month`) and `user.getRecentTracks` (history + now playing).
+- `lib/lastfm/adapter.ts` converts the responses into the same types as the Spotify integration, so every screen, chart and transformation works unchanged.
+- **Genres:** Spotify doesn't send genres to Development Mode apps. `lib/lastfm/tags.ts` fetches `artist.getTopTags` (7-day cache, max 5 concurrent calls), filters out noise ("seen live", countries, the artist's own name…) and fills in genres for **every** mode, Spotify included.
+- Last.fm's top tracks don't include album, duration or cover, and *now playing* has no progress, so the UI hides those columns and elements when the data is missing.
+- Needs `LASTFM_API_KEY` (free at <https://www.last.fm/api/account/create>). Without it, the Last.fm section doesn't show up.
+
 ## Environment Variables
 
 In `apps/web/.env.local` (template in [`apps/web/.env.example`](../apps/web/.env.example)):
@@ -131,6 +143,7 @@ SPOTIFY_CLIENT_ID=
 SPOTIFY_CLIENT_SECRET=
 SPOTIFY_REDIRECT_URI=http://127.0.0.1:3000/api/spotify/callback
 SPOTIFY_OWNER_REFRESH_TOKEN=   # optional: live showcase (see above)
+LASTFM_API_KEY=                # optional: Last.fm login + genres from tags
 MOCK_MODE=false   # true = everyone sees the mock demo
 ```
 
@@ -185,7 +198,7 @@ Without the variables, the app still works in demo mode, and "Connect Spotify" s
 
 - **Development Mode (Spotify, Feb/2026):** up to **5 users** allow-listed in the dashboard, and the app owner needs Premium. That's why the **live showcase** (owner's data) and the mock demo are how visitors explore the project. Opening it to everyone requires *Extended Quota Mode*, which Spotify only grants to companies.
 - In Development Mode, Spotify **no longer sends `popularity` or `followers`** for artists and tracks. The UI hides those fields (and the popularity chart) when they're missing. Demo mode includes them to show the full layout.
-- Genres come from the **top artists** (up to 50), not from your full history. Spotify may send an empty list, and the UI shows an empty state in that case.
+- **Spotify doesn't send genres** to Development Mode apps. Genres come from Last.fm tags (if configured) for the top 25 artists, not from your full history. Without data, the genre components disappear.
 - *Recently played* only goes up to the **last 50 plays**. The API offers no full history, and this project **is not a Wrapped** replacement.
 - *Now playing* ignores podcasts, ads and private sessions (the API sends no track in those cases).
 

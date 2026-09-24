@@ -10,6 +10,8 @@ import type { TokenResponse } from "./types";
 export const SESSION_COOKIE = "gss_session";
 export const OAUTH_COOKIE = "gss_oauth";
 export const DEMO_COOKIE = "gss_demo";
+/** Usuário do Last.fm escolhido pelo visitante (dado público, sem segredo). */
+export const LASTFM_COOKIE = "gss_lastfm";
 /** Valor do cookie de demo que ignora a vitrine e usa sempre os dados mockados. */
 export const DEMO_MOCK_VALUE = "mock";
 

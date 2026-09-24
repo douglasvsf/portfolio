@@ -8,6 +8,7 @@ import { getCurrentUser } from "@/lib/spotify/endpoints";
 import { SpotifyApiError } from "@/lib/spotify/errors";
 import {
   DEMO_COOKIE,
+  LASTFM_COOKIE,
   OAUTH_COOKIE,
   SESSION_COOKIE,
   sealSession,
@@ -50,6 +51,7 @@ export async function GET(request: NextRequest) {
     response.cookies.set(SESSION_COOKIE, sealSession(session, config.clientSecret), sessionCookieOptions);
     response.cookies.delete(OAUTH_COOKIE);
     response.cookies.delete(DEMO_COOKIE);
+    response.cookies.delete(LASTFM_COOKIE);
     return response;
   } catch (error) {
     return fail(error instanceof SpotifyApiError && error.kind === "forbidden" ? "not_allowlisted" : "auth_failed");

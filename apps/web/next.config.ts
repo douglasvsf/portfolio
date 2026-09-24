@@ -15,6 +15,8 @@ const nextConfig: NextConfig = {
       // Capas e fotos de artistas no /spotify (CDN da Spotify).
       { protocol: "https", hostname: "i.scdn.co" },
       { protocol: "https", hostname: "*.spotifycdn.com" },
+      // Capas do Last.fm.
+      { protocol: "https", hostname: "lastfm.freetls.fastly.net" },
     ],
   },
   async redirects() {

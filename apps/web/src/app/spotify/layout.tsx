@@ -25,12 +25,17 @@ export default function SpotifyRootLayout({ children }: LayoutProps<"/spotify">)
           {children}
           <AppFooter
             aside={
-              <a href="https://www.spotify.com" target="_blank" rel="noreferrer" className={appNavLinkClassName}>
-                Data provided by Spotify
-              </a>
+              <span className="flex gap-4">
+                <a href="https://www.spotify.com" target="_blank" rel="noreferrer" className={appNavLinkClassName}>
+                  Data by Spotify
+                </a>
+                <a href="https://www.last.fm" target="_blank" rel="noreferrer" className={appNavLinkClassName}>
+                  Powered by Last.fm
+                </a>
+              </span>
             }
           >
-            GODZILLA Spotify Stats is an independent project, not affiliated with or endorsed by Spotify.
+            GODZILLA Spotify Stats is an independent project, not affiliated with or endorsed by Spotify or Last.fm.
           </AppFooter>
         </I18nProvider>
       </body>

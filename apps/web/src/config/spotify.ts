@@ -11,6 +11,7 @@ export const routes = {
   recentlyPlayed: `${SPOTIFY_BASE_PATH}/recently-played`,
   login: "/api/spotify/login",
   demo: "/api/spotify/demo",
+  lastfm: "/api/spotify/lastfm",
   nowPlaying: "/api/spotify/now-playing",
 } as const;
 

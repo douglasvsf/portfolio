@@ -23,7 +23,12 @@ export default async function RecentlyPlayedPage() {
 
   return (
     <>
-      <PageHeader title="Recently Played" description="Your last 50 plays — the most Spotify's API makes available." />
+      <PageHeader
+        title="Recently Played"
+        description={
+          source.mode === "lastfm" ? "Your last 50 scrobbles on Last.fm." : "Your last 50 plays — the most Spotify's API makes available."
+        }
+      />
       {items.length === 0 ? (
         <Card>
           <EmptyState title="No listening history yet" description="Play some music on Spotify and your recent tracks will show up here." />

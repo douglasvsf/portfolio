@@ -4,7 +4,10 @@ import { cookies } from "next/headers";
 import { CACHE_SECONDS, RECENTLY_PLAYED_LIMIT, TOP_LIMIT } from "@/config/spotify";
 import { getSpotifyConfig, isSpotifyConfigured, refreshAccessToken } from "./auth";
 import * as api from "./endpoints";
-import { DEMO_COOKIE, DEMO_MOCK_VALUE, SESSION_COOKIE, isExpiring, sessionFromToken, unsealSession } from "./session";
+import * as lastfm from "@/lib/lastfm/endpoints";
+import { isLastfmConfigured } from "@/lib/lastfm/client";
+import { withLastfmGenres } from "@/lib/lastfm/tags";
+import { DEMO_COOKIE, DEMO_MOCK_VALUE, LASTFM_COOKIE, SESSION_COOKIE, isExpiring, sessionFromToken, unsealSession } from "./session";
 import * as mock from "./mock-data";
 import { getOwnerAccessToken, isOwnerConfigured } from "./owner";
 import { normalizeNowPlaying, type NowPlaying } from "./transform";
@@ -15,12 +18,15 @@ import type { RecentlyPlayedItem, SpotifyArtist, SpotifyTrack, SpotifyUser, Time
  * chamam `getSpotifySource()`:
  * - `live`: conta do próprio visitante (OAuth);
  * - `showcase`: estatísticas reais do dono do portfólio, para qualquer visitante;
+ * - `lastfm`: qualquer pessoa, pelo nome de usuário do Last.fm (sem limite de usuários);
  * - `demo`: dados mockados (fallback quando a vitrine não está configurada).
  */
-export type SourceMode = "live" | "showcase" | "demo";
+export type SourceMode = "live" | "showcase" | "lastfm" | "demo";
 
 export interface SpotifySource {
   mode: SourceMode;
+  /** De onde vêm os gêneros exibidos (a Spotify não envia em Development Mode). */
+  genreSource: "Last.fm tags" | "Spotify" | null;
   getProfile(): Promise<SpotifyUser | null>;
   getTopArtists(range: TimeRange, limit?: number): Promise<SpotifyArtist[]>;
   getTopTracks(range: TimeRange, limit?: number): Promise<SpotifyTrack[]>;
@@ -30,6 +36,7 @@ export interface SpotifySource {
 
 export const demoSource: SpotifySource = {
   mode: "demo",
+  genreSource: "Last.fm tags",
   getProfile: async () => mock.mockUser,
   getTopArtists: async (range, limit = TOP_LIMIT) => mock.mockTopArtists(range, limit),
   getTopTracks: async (range, limit = TOP_LIMIT) => mock.mockTopTracks(range, limit),
@@ -37,16 +44,43 @@ export const demoSource: SpotifySource = {
   getNowPlaying: async () => normalizeNowPlaying(mock.mockCurrentlyPlaying()),
 };
 
+/** Artistas da Spotify chegam sem gêneros — o Last.fm completa quando configurado. */
+async function spotifyArtistsWithGenres(accessToken: string, range: TimeRange, limit?: number) {
+  const artists = await api.getTopArtists(accessToken, range, limit);
+  const missingGenres = artists.some((artist) => !artist.genres?.length);
+  return missingGenres && isLastfmConfigured() ? withLastfmGenres(artists) : artists;
+}
+
 export function liveSource(accessToken: string, mode: "live" | "showcase" = "live"): SpotifySource {
   const nowPlayingCache = mode === "showcase" ? CACHE_SECONDS.showcaseNowPlaying : 0;
   return {
     mode,
+    genreSource: isLastfmConfigured() ? "Last.fm tags" : "Spotify",
     getProfile: () => api.getCurrentUser(accessToken),
-    getTopArtists: (range, limit) => api.getTopArtists(accessToken, range, limit),
+    getTopArtists: (range, limit) => spotifyArtistsWithGenres(accessToken, range, limit),
     getTopTracks: (range, limit) => api.getTopTracks(accessToken, range, limit),
     getRecentlyPlayed: (limit) => api.getRecentlyPlayed(accessToken, limit),
     getNowPlaying: async () => normalizeNowPlaying(await api.getCurrentlyPlaying(accessToken, nowPlayingCache)),
   };
+}
+
+/** Estatísticas de qualquer usuário do Last.fm (scrobbles), com gêneros pelas tags. */
+export function lastfmSource(username: string): SpotifySource {
+  return {
+    mode: "lastfm",
+    genreSource: "Last.fm tags",
+    getProfile: () => lastfm.getUserInfo(username),
+    getTopArtists: async (range, limit) => withLastfmGenres(await lastfm.getTopArtists(username, range, limit)),
+    getTopTracks: (range, limit) => lastfm.getTopTracks(username, range, limit),
+    getRecentlyPlayed: async (limit) => (await lastfm.getRecentTracks(username, limit)).history,
+    // "Tocando agora" vem do histórico recente; cache curto para refletir o momento.
+    getNowPlaying: async () => (await lastfm.getRecentTracks(username, 1, CACHE_SECONDS.showcaseNowPlaying)).nowPlaying,
+  };
+}
+
+/** Nome de usuário do Last.fm: 2–15 caracteres, começa com letra (regra do Last.fm). */
+export function isValidLastfmUsername(value: unknown): value is string {
+  return typeof value === "string" && /^[a-zA-Z][w-]{1,14}$/.test(value);
 }
 
 /** `MOCK_MODE=true` força o demo mockado para todo mundo (útil em preview/CI). */
@@ -75,6 +109,9 @@ export const getSpotifySource = cache(async (): Promise<SpotifySource | null> =>
   if (isForcedMockMode()) return demoSource;
 
   const store = await cookies();
+  const lastfmUser = store.get(LASTFM_COOKIE)?.value;
+  if (isLastfmConfigured() && isValidLastfmUsername(lastfmUser)) return lastfmSource(lastfmUser);
+
   const demoCookie = store.get(DEMO_COOKIE)?.value;
   if (demoCookie === DEMO_MOCK_VALUE) return demoSource;
   if (demoCookie === "1") return visitorSource();
