@@ -10,6 +10,8 @@ import type { TokenResponse } from "./types";
 export const SESSION_COOKIE = "gss_session";
 export const OAUTH_COOKIE = "gss_oauth";
 export const DEMO_COOKIE = "gss_demo";
+/** Valor do cookie de demo que ignora a vitrine e usa sempre os dados mockados. */
+export const DEMO_MOCK_VALUE = "mock";
 
 /** Renova o access token quando faltar menos que isso para expirar. */
 const REFRESH_MARGIN_MS = 60_000;

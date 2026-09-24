@@ -35,7 +35,10 @@ export interface SpotifyAlbum {
   id: string;
   name: string;
   images: SpotifyImage[];
+  /** "YYYY", "YYYY-MM" ou "YYYY-MM-DD" conforme release_date_precision. */
   release_date?: string;
+  release_date_precision?: "year" | "month" | "day";
+  album_type?: "album" | "single" | "compilation";
   external_urls: ExternalUrls;
 }
 
