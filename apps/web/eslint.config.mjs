@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Storybook gerado no build (pnpm design-system:build) — não é código-fonte.
+    "public/design-system/**",
   ]),
 ]);
 

@@ -1,11 +1,11 @@
 import type { SiteContent } from "./types";
-import { EXPERIENCE, PROJECT_TAGS, SECTION_IDS, SKILL_ITEMS, contactLinks, navLinks } from "./shared";
+import { DESIGN_SYSTEM_LINK, EXPERIENCE, PROFILE_PHOTO, PROJECT_TAGS, SECTION_IDS, SKILL_ITEMS, contactLinks, navLinks } from "./shared";
 
 export const ptBR: SiteContent = {
   meta: {
-    title: "Godzilla — Full Stack Developer",
+    title: "Douglas Szapak — Engenheiro de Software Full Stack Sênior",
     description:
-      "Portfolio pessoal de Douglas Vinicius Szapak Ferreira (Godzilla), engenheiro fullstack. Projetos, skills e experiência.",
+      "Douglas Szapak, engenheiro de software full stack sênior com 9+ anos em React, Next.js e Node.js. Veja projetos, experiência, skills e formas de contato.",
   },
   nav: {
     brand: "GODZILLA.DEV",
@@ -29,6 +29,7 @@ export const ptBR: SiteContent = {
   },
   about: {
     title: "Sobre mim",
+    photo: { ...PROFILE_PHOTO, alt: "Foto de Douglas Szapak sorrindo, ao ar livre" },
     paragraphs: [
       "Meu nome é Douglas Vinicius Szapak Ferreira — no mercado, também conhecido como Godzilla. Sou engenheiro de software full stack sênior, com mais de 9 anos construindo produtos web do levantamento de requisitos até a produção.",
       "Comecei desenvolvendo sistemas corporativos, APIs e integrações na Cristófoli. Depois cofundei a QualiCloud, onde fui sócio e líder técnico de uma equipe que criava produtos SaaS web e mobile. Na Pravaler, participei da modernização de um ecossistema legado com mais de 20 anos — migrando WordPress/PHP para Next.js, Node.js e TypeScript, ajudando a criar uma arquitetura BFF e escrevendo mais de 400 testes automatizados. Na Inoa, atuei como sênior no front-end de uma plataforma integrada a 16 módulos de back-end.",
@@ -173,7 +174,8 @@ export const ptBR: SiteContent = {
     links: contactLinks("E-mail"),
   },
   footer: {
-    owner: "Godzilla",
+    owner: "Douglas Szapak",
+    links: [DESIGN_SYSTEM_LINK],
     rightsReserved: "Todos os direitos reservados.",
   },
 };

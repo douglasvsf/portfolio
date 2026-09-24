@@ -34,7 +34,7 @@ const preview: Preview = {
   decorators: [
     withThemeByClassName({
       themes: { light: "", dark: "dark" },
-      defaultTheme: "light",
+      defaultTheme: "dark",
     }),
     (Story, context) => (
       <I18nProvider locale={context.globals.locale as Locale}>

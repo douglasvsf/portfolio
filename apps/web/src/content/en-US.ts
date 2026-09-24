@@ -1,11 +1,11 @@
 import type { SiteContent } from "./types";
-import { EXPERIENCE, PROJECT_TAGS, SECTION_IDS, SKILL_ITEMS, contactLinks, navLinks } from "./shared";
+import { DESIGN_SYSTEM_LINK, EXPERIENCE, PROFILE_PHOTO, PROJECT_TAGS, SECTION_IDS, SKILL_ITEMS, contactLinks, navLinks } from "./shared";
 
 export const enUS: SiteContent = {
   meta: {
-    title: "Godzilla — Full Stack Developer",
+    title: "Douglas Szapak — Senior Full Stack Software Engineer",
     description:
-      "Personal portfolio of Douglas Vinicius Szapak Ferreira (Godzilla), full stack engineer. Projects, skills and experience.",
+      "Douglas Szapak is a senior full stack software engineer with 9+ years of experience in React, Next.js and Node.js. Explore projects, experience and skills.",
   },
   nav: {
     brand: "GODZILLA.DEV",
@@ -29,6 +29,7 @@ export const enUS: SiteContent = {
   },
   about: {
     title: "About me",
+    photo: { ...PROFILE_PHOTO, alt: "Photo of Douglas Szapak smiling outdoors" },
     paragraphs: [
       "My name is Douglas Vinicius Szapak Ferreira — also known in the industry as Godzilla. I'm a senior full stack software engineer with 9+ years of experience building web products from requirements all the way to production.",
       "I started out building corporate systems, APIs and integrations at Cristófoli. Then I co-founded QualiCloud, where I was a partner and tech lead of a team building web and mobile SaaS products. At Pravaler, I took part in modernizing a 20+ year-old legacy ecosystem — migrating WordPress/PHP to Next.js, Node.js and TypeScript, helping design a BFF architecture and writing 400+ automated tests. At Inoa, I worked as a senior engineer on the frontend of a platform integrated with 16 backend modules.",
@@ -173,7 +174,8 @@ export const enUS: SiteContent = {
     links: contactLinks("Email"),
   },
   footer: {
-    owner: "Godzilla",
+    owner: "Douglas Szapak",
+    links: [DESIGN_SYSTEM_LINK],
     rightsReserved: "All rights reserved.",
   },
 };

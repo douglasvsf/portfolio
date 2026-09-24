@@ -38,7 +38,7 @@ export function SiteHeader({
         </a>
 
         <div className="flex items-center gap-6">
-          <nav className="hidden gap-8 font-mono text-body-sm text-muted-foreground md:flex">
+          <nav className="hidden gap-6 whitespace-nowrap font-mono text-body-sm text-muted-foreground lg:flex xl:gap-8">
             {links.map((link) => (
               <a key={link.href} href={link.href} className="transition-colors hover:text-primary">
                 {link.label}
