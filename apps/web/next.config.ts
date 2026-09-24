@@ -17,6 +17,7 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "*.spotifycdn.com" },
       // Capas do Last.fm.
       { protocol: "https", hostname: "lastfm.freetls.fastly.net" },
+      { protocol: "https", hostname: "lastfm-img.freetls.fastly.net" },
     ],
   },
   async redirects() {

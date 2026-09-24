@@ -1,9 +1,13 @@
+import type { z } from "zod";
+import { ContractError, parseContract } from "@/lib/http/contract";
+import { withRetry, type RetryDecision } from "@/lib/http/retry";
 import { SpotifyApiError, type SpotifyErrorKind } from "@/lib/spotify/errors";
 import type { LastfmErrorResponse } from "./types";
 
 /**
- * Único ponto de HTTP para a API do Last.fm. Os erros viram o mesmo
- * `SpotifyApiError` da integração Spotify, para a UI tratar tudo igual.
+ * Único ponto de HTTP para a API do Last.fm: timeout, cache, retry e
+ * validação do contrato. Os erros viram o mesmo `SpotifyApiError` da
+ * integração Spotify, para a UI tratar tudo igual.
  */
 
 const API_BASE = "https://ws.audioscrobbler.com/2.0/";
@@ -33,17 +37,16 @@ export function buildLastfmUrl(method: string, params: Record<string, string | n
   return url.toString();
 }
 
-export async function lastfmFetch<T>(
-  method: string,
-  params: Record<string, string | number | undefined>,
-  { revalidate = 0 }: { revalidate?: number } = {},
-): Promise<T> {
-  const apiKey = process.env.LASTFM_API_KEY;
-  if (!apiKey) throw new SpotifyApiError("unknown", "LASTFM_API_KEY não configurada");
+/** Falhas transitórias (rede, timeout, 5xx e o rate limit do Last.fm, que não manda Retry-After). */
+export function retryableLastfmError(error: unknown): RetryDecision {
+  if (!(error instanceof SpotifyApiError)) return { retry: false };
+  return { retry: ["network", "timeout", "unavailable", "rate_limited"].includes(error.kind) };
+}
 
+async function requestOnce(method: string, url: string, revalidate: number): Promise<unknown> {
   let response: Response;
   try {
-    response = await fetch(buildLastfmUrl(method, params, apiKey), {
+    response = await fetch(url, {
       signal: AbortSignal.timeout(TIMEOUT_MS),
       ...(revalidate > 0 ? { next: { revalidate } } : { cache: "no-store" as const }),
     });
@@ -52,12 +55,33 @@ export async function lastfmFetch<T>(
     throw new SpotifyApiError(timedOut ? "timeout" : "network", `Falha de rede em ${method}`);
   }
 
-  const body = (await response.json().catch(() => null)) as (T & Partial<LastfmErrorResponse>) | null;
+  // O Last.fm responde erros de negócio com HTTP 200 e { error, message } no corpo.
+  const body = (await response.json().catch(() => null)) as (Partial<LastfmErrorResponse> & Record<string, unknown>) | null;
   if (body && typeof body.error === "number") {
     throw new SpotifyApiError(kindFromLastfmError(body.error), `Last.fm ${method}: ${body.message}`, response.status);
   }
-  if (!response.ok || !body) {
+  if (!response.ok) {
     throw new SpotifyApiError(response.status >= 500 ? "unavailable" : "unknown", `Last.fm respondeu ${response.status}`, response.status);
   }
+  if (!body) throw new SpotifyApiError("invalid_response", `JSON inválido em ${method}`, response.status);
   return body;
+}
+
+export async function lastfmFetch<Schema extends z.ZodType>(
+  method: string,
+  params: Record<string, string | number | undefined>,
+  { schema, revalidate = 0 }: { schema: Schema; revalidate?: number },
+): Promise<z.output<Schema>> {
+  const apiKey = process.env.LASTFM_API_KEY;
+  if (!apiKey) throw new SpotifyApiError("unknown", "LASTFM_API_KEY não configurada");
+
+  const url = buildLastfmUrl(method, params, apiKey);
+  const body = await withRetry(() => requestOnce(method, url, revalidate), { retryable: retryableLastfmError });
+
+  try {
+    return parseContract(schema, body, `lastfm ${method}`);
+  } catch (error) {
+    if (error instanceof ContractError) throw new SpotifyApiError("invalid_response", error.message, 200);
+    throw error;
+  }
 }

@@ -188,6 +188,7 @@ export const esES: SpotifyDictionary = {
     timeout: { title: "La solicitud tardó demasiado", description: "Se agotó el tiempo. Revisa tu conexión e inténtalo de nuevo." },
     network: { title: "Problema de conexión", description: "No pudimos contactar con la API de música. Revisa tu conexión e inténtalo de nuevo." },
     not_found: { title: "Usuario no encontrado", description: "No encontramos ese usuario de Last.fm. Revisa el nombre e inténtalo de nuevo." },
+    invalid_response: { title: "Respuesta inesperada", description: "El servicio de música respondió en un formato que no esperábamos. Ya registramos el problema: inténtalo de nuevo en unos instantes." },
     unknown: { title: "Algo salió mal", description: "Ocurrió un error inesperado al cargar tus estadísticas. Inténtalo de nuevo." },
     reconnect: "Reconectar Spotify",
     viewDemo: "Ver demo",

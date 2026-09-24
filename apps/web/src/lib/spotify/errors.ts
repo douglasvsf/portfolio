@@ -10,6 +10,7 @@ export type SpotifyErrorKind =
   | "timeout"
   | "network"
   | "not_found" // usuário do Last.fm inexistente
+  | "invalid_response" // a API respondeu fora do contrato esperado (mudou o formato)
   | "unknown";
 
 export class SpotifyApiError extends Error {

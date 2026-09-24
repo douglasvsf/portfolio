@@ -1,6 +1,6 @@
 import type { SpotifyArtist } from "@/lib/spotify/types";
 import { lastfmFetch } from "./client";
-import type { TopTagsResponse } from "./types";
+import { topTagsSchema } from "./schemas";
 
 /**
  * Gêneros a partir das tags do Last.fm (artist.getTopTags). A Spotify não
@@ -39,12 +39,12 @@ export function pickGenreTags(tags: { name: string; count: number }[], artistNam
 }
 
 export async function getArtistGenres(artistName: string): Promise<string[]> {
-  const data = await lastfmFetch<TopTagsResponse>(
+  const data = await lastfmFetch(
     "artist.gettoptags",
     { artist: artistName, autocorrect: 1 },
-    { revalidate: TAGS_CACHE_SECONDS },
+    { schema: topTagsSchema, revalidate: TAGS_CACHE_SECONDS },
   );
-  return pickGenreTags(data.toptags?.tag ?? [], artistName);
+  return pickGenreTags(data.toptags.tag, artistName);
 }
 
 /** Executa `task` sobre os itens com no máximo `limit` chamadas simultâneas. */

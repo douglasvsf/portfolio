@@ -1,4 +1,8 @@
 import "server-only";
+import type { z } from "zod";
+import { ContractError, parseContract } from "@/lib/http/contract";
+import { withRetry, type RetryDecision } from "@/lib/http/retry";
+import { quoteListSchema, quoteResultsSchema } from "./schemas";
 
 /**
  * Cliente mínimo da brapi (https://brapi.dev) — API pública de cotações da B3.
@@ -8,10 +12,14 @@ import "server-only";
  *
  * Sem token, `/quote/list` funciona para todos os ativos, mas `/quote/{ticker}`
  * só responde para os tickers de teste abaixo.
+ *
+ * Falhas transitórias (rede, timeout, 5xx, 429) têm retry com backoff e toda
+ * resposta passa pelo contrato em `schemas.ts`.
  */
 
 const BASE_URL = "https://brapi.dev/api";
 const REVALIDATE_SECONDS = 300;
+const TIMEOUT_MS = 8000;
 
 export const FREE_TICKERS = ["PETR4", "VALE3", "ITUB4", "MGLU3"] as const;
 
@@ -28,22 +36,55 @@ export class BrapiError extends Error {
   }
 }
 
-async function request<T>(path: string, params: Record<string, string | number | undefined> = {}): Promise<T> {
+const TRANSIENT_CODES = new Set(["NETWORK", "TIMEOUT", "UNAVAILABLE", "RATE_LIMITED"]);
+
+export function retryableBrapiError(error: unknown): RetryDecision {
+  return { retry: error instanceof BrapiError && TRANSIENT_CODES.has(error.code) };
+}
+
+function codeFromStatus(status: number) {
+  if (status === 429) return "RATE_LIMITED";
+  if (status >= 500) return "UNAVAILABLE";
+  return "UNKNOWN";
+}
+
+async function requestOnce(url: URL): Promise<unknown> {
+  const headers: HeadersInit = {};
+  if (process.env.BRAPI_TOKEN) headers.Authorization = `Bearer ${process.env.BRAPI_TOKEN}`;
+
+  let response: Response;
+  try {
+    response = await fetch(url, { headers, signal: AbortSignal.timeout(TIMEOUT_MS), next: { revalidate: REVALIDATE_SECONDS } });
+  } catch (error) {
+    const timedOut = error instanceof DOMException && error.name === "TimeoutError";
+    throw new BrapiError(timedOut ? "Tempo esgotado na brapi" : "Falha de rede na brapi", timedOut ? "TIMEOUT" : "NETWORK", 0);
+  }
+  const body = await response.json().catch(() => null);
+
+  if (!response.ok || body?.error) {
+    throw new BrapiError(body?.message ?? `Erro ${response.status} na brapi`, body?.code ?? codeFromStatus(response.status), response.status);
+  }
+  if (body === null) throw new BrapiError("Resposta sem JSON da brapi", "INVALID_RESPONSE", response.status);
+  return body;
+}
+
+async function request<Schema extends z.ZodType>(
+  path: string,
+  schema: Schema,
+  params: Record<string, string | number | undefined> = {},
+): Promise<z.output<Schema>> {
   const url = new URL(`${BASE_URL}${path}`);
   for (const [key, value] of Object.entries(params)) {
     if (value !== undefined && value !== "") url.searchParams.set(key, String(value));
   }
 
-  const headers: HeadersInit = {};
-  if (process.env.BRAPI_TOKEN) headers.Authorization = `Bearer ${process.env.BRAPI_TOKEN}`;
-
-  const response = await fetch(url, { headers, next: { revalidate: REVALIDATE_SECONDS } });
-  const body = await response.json().catch(() => null);
-
-  if (!response.ok || body?.error) {
-    throw new BrapiError(body?.message ?? `Erro ${response.status} na brapi`, body?.code ?? "UNKNOWN", response.status);
+  const body = await withRetry(() => requestOnce(url), { retryable: retryableBrapiError });
+  try {
+    return parseContract(schema, body, `brapi ${path}`);
+  } catch (error) {
+    if (error instanceof ContractError) throw new BrapiError(error.message, "INVALID_RESPONSE", 200);
+    throw error;
   }
-  return body as T;
 }
 
 // ---- /quote/list --------------------------------------------------------
@@ -82,7 +123,7 @@ export interface ListParams {
 }
 
 export function listStocks({ limit = 20, page = 1, ...params }: ListParams = {}) {
-  return request<QuoteListResponse>("/quote/list", { type: "stock", limit, page, ...params });
+  return request("/quote/list", quoteListSchema, { type: "stock", limit, page, ...params });
 }
 
 // ---- /quote/{ticker} ----------------------------------------------------
@@ -152,7 +193,7 @@ export function availableRanges(ticker: string): Range[] {
 }
 
 export async function getQuote(ticker: string, range: Range) {
-  const { results } = await request<{ results: Quote[] }>(`/quote/${encodeURIComponent(ticker)}`, {
+  const { results } = await request(`/quote/${encodeURIComponent(ticker)}`, quoteResultsSchema, {
     range,
     interval: ranges[range].interval,
   });

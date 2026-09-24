@@ -1,23 +1,27 @@
 import { CACHE_SECONDS, RECENTLY_PLAYED_LIMIT, TOP_LIMIT } from "@/config/spotify";
 import { spotifyFetch } from "./client";
-import type {
-  CurrentlyPlaying,
-  PlaybackState,
-  RecentlyPlayedResponse,
-  SpotifyUser,
-  TimeRange,
-  TopArtistsResponse,
-  TopTracksResponse,
-} from "./types";
+import {
+  currentlyPlayingSchema,
+  playbackStateSchema,
+  recentlyPlayedSchema,
+  topArtistsSchema,
+  topTracksSchema,
+  userSchema,
+} from "./schemas";
+import type { TimeRange } from "./types";
 
-/** Endpoints da Spotify Web API usados pelo app — cada um com sua política de cache. */
+/**
+ * Endpoints da Spotify Web API usados pelo app — cada um com seu contrato
+ * (schemas.ts) e sua política de cache.
+ */
 
 export async function getCurrentUser(token: string) {
-  return spotifyFetch<SpotifyUser>("/me", token, { revalidate: CACHE_SECONDS.profile });
+  return spotifyFetch("/me", token, { schema: userSchema, revalidate: CACHE_SECONDS.profile });
 }
 
 export async function getTopArtists(token: string, timeRange: TimeRange, limit = TOP_LIMIT) {
-  const data = await spotifyFetch<TopArtistsResponse>("/me/top/artists", token, {
+  const data = await spotifyFetch("/me/top/artists", token, {
+    schema: topArtistsSchema,
     params: { time_range: timeRange, limit },
     revalidate: CACHE_SECONDS.top,
   });
@@ -25,7 +29,8 @@ export async function getTopArtists(token: string, timeRange: TimeRange, limit =
 }
 
 export async function getTopTracks(token: string, timeRange: TimeRange, limit = TOP_LIMIT) {
-  const data = await spotifyFetch<TopTracksResponse>("/me/top/tracks", token, {
+  const data = await spotifyFetch("/me/top/tracks", token, {
+    schema: topTracksSchema,
     params: { time_range: timeRange, limit },
     revalidate: CACHE_SECONDS.top,
   });
@@ -33,7 +38,8 @@ export async function getTopTracks(token: string, timeRange: TimeRange, limit = 
 }
 
 export async function getRecentlyPlayed(token: string, limit = RECENTLY_PLAYED_LIMIT) {
-  const data = await spotifyFetch<RecentlyPlayedResponse>("/me/player/recently-played", token, {
+  const data = await spotifyFetch("/me/player/recently-played", token, {
+    schema: recentlyPlayedSchema,
     params: { limit },
     revalidate: CACHE_SECONDS.recentlyPlayed,
   });
@@ -46,9 +52,9 @@ export async function getRecentlyPlayed(token: string, limit = RECENTLY_PLAYED_L
  * `null` = nada tocando.
  */
 export async function getCurrentlyPlaying(token: string, revalidate = 0) {
-  return spotifyFetch<CurrentlyPlaying>("/me/player/currently-playing", token, { revalidate });
+  return spotifyFetch("/me/player/currently-playing", token, { schema: currentlyPlayingSchema, revalidate });
 }
 
 export async function getPlaybackState(token: string) {
-  return spotifyFetch<PlaybackState>("/me/player", token);
+  return spotifyFetch("/me/player", token, { schema: playbackStateSchema });
 }
