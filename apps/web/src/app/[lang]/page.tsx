@@ -33,9 +33,9 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
         <SkillsSection id={SECTION_IDS.skills} index="02" {...skills} />
         <ProjectsSection id={SECTION_IDS.projects} index="03" {...projects} />
         <ExperienceSection id={SECTION_IDS.experience} index="04" {...experience} />
-        <ContactSection id={SECTION_IDS.contact} index="05" {...contact} />
-        <SystemsSection id={SECTION_IDS.systems} index="06" {...systems} />
-        <EngineeringSection id={SECTION_IDS.engineering} index="07" {...engineering} />
+        <SystemsSection id={SECTION_IDS.systems} index="05" {...systems} />
+        <EngineeringSection id={SECTION_IDS.engineering} index="06" {...engineering} />
+        <ContactSection id={SECTION_IDS.contact} index="07" {...contact} />
       </main>
       <SiteFooter {...footer} />
     </>

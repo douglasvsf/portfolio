@@ -22,7 +22,7 @@ export const CONTACT = {
 
 const s = SECTION_IDS;
 
-const NAV_SECTIONS = ["about", "skills", "projects", "experience", "contact", "systems", "engineering"] as const;
+const NAV_SECTIONS = ["about", "skills", "projects", "experience", "systems", "engineering", "contact"] as const;
 
 /** Links do menu: as seções na ordem da página (cada idioma só fornece os rótulos). */
 export function navLinks(labels: Record<(typeof NAV_SECTIONS)[number], string>) {
