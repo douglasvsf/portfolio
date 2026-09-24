@@ -22,6 +22,7 @@ const listedStock: z.ZodType<ListedStock> = z.object({
   logo: maybeString,
   sector: maybeString,
   type: z.string().catch("stock"),
+  subType: maybeString.optional(),
 });
 
 export const quoteListSchema: z.ZodType<QuoteListResponse> = z.object({

@@ -181,7 +181,7 @@ export const enUS: SiteContent = {
     openLabel: "Open",
     items: systemItems({
       spotify: "Music stats dashboard with Spotify OAuth, Last.fm and a live showcase: top artists, tracks, genres and what's playing right now.",
-      stocks: "Near real-time B3 stock quotes: top gainers and losers, volume by sector, search across every stock and price history charts.",
+      stocks: "Near real-time B3 quotes, price history charts and a portfolio tracker with average price, dividends, a CDI benchmark and B3 spreadsheet import.",
       designSystem: "The component library behind every system here — Atomic Design, accessible, with i18n and documented in Storybook.",
     }),
   },

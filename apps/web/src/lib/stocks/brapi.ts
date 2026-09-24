@@ -99,6 +99,8 @@ export interface ListedStock {
   logo: string | null;
   sector: string | null;
   type: string;
+  /** "fii", "etf", "stock"… — ausente em alguns ativos. */
+  subType?: string | null;
 }
 
 export interface QuoteListResponse {
@@ -114,6 +116,8 @@ export const sortFields = ["name", "close", "change", "volume", "market_cap_basi
 export type SortField = (typeof sortFields)[number];
 
 export interface ListParams {
+  /** Classe na brapi: ações ("stock", padrão), fundos — FIIs e ETFs — ("fund") ou BDRs ("bdr"). */
+  type?: "stock" | "fund" | "bdr";
   search?: string;
   sector?: string;
   sortBy?: SortField;

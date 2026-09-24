@@ -3,7 +3,7 @@
     "collect": {
       "startServerCommand": "pnpm start",
       "startServerReadyPattern": "Ready",
-      "url": ["http://localhost:3000/pt-BR", "http://localhost:3000/spotify", "http://localhost:3000/stocks"],
+      "url": ["http://localhost:3000/pt-BR", "http://localhost:3000/spotify", "http://localhost:3000/stocks", "http://localhost:3000/stocks/carteira"],
       "numberOfRuns": 1
     },
     "assert": {

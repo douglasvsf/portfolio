@@ -12,6 +12,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "fixtures:b3": "node scripts/b3-fixture.mjs",
     "cypress:open": "cypress open",
     "cypress:run": "cypress run",
     "test:e2e": "start-server-and-test dev http://localhost:3000 cypress:run",
@@ -27,6 +28,7 @@
     "next": "16.3.4",
     "react": "19.2.8",
     "react-dom": "19.2.8",
+    "read-excel-file": "^9.3.10",
     "recharts": "^3.10.1",
     "server-only": "^0.0.1",
     "zod": "^4.6.5"
@@ -44,6 +46,7 @@
     "jest": "^30.5.1",
     "start-server-and-test": "^3.0.12",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "write-excel-file": "^4.1.1"
   }
 }

@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { AppBrand, AppFooter, AppHeader, I18nProvider, appContainerClassName, appNavLinkClassName, cn } from "@godzilla/ui";
 import { BackToPortfolio } from "@/components/layout/back-to-portfolio";
 import { SystemLocaleSwitcher } from "@/components/layout/system-locale-switcher";
+import { StocksNav } from "@/components/stocks/stocks-nav";
 import { SITE_URL } from "@/config/site";
 import { getStocksDictionary } from "@/content/stocks";
 import { getRequestLocale } from "@/i18n/request";
@@ -38,6 +39,12 @@ export default async function RootLayout({ children }: LayoutProps<"/stocks">) {
               <div className="flex items-center gap-4 sm:gap-6">
                 <BackToPortfolio label={dict.layout.backToPortfolio} />
                 <SystemLocaleSwitcher locale={locale} />
+              </div>
+            }
+            // Segunda linha, como no Spotify Stats: com as bandeiras, a barra principal ficaria apertada no mobile.
+            below={
+              <div className="border-t border-border">
+                <StocksNav className={cn(appContainerClassName, "overflow-x-auto py-3 [scrollbar-width:none]")} />
               </div>
             }
           />

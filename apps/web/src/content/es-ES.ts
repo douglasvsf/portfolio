@@ -181,7 +181,7 @@ export const esES: SiteContent = {
     openLabel: "Abrir",
     items: systemItems({
       spotify: "Dashboard de estadísticas musicales con OAuth de Spotify, Last.fm y vitrina en vivo: artistas, canciones, géneros y lo que suena ahora.",
-      stocks: "Cotizaciones de la B3 casi en tiempo real: mayores alzas y bajas, volumen por sector, búsqueda en todas las acciones e historial con gráficos.",
+      stocks: "Cotizaciones de la B3 casi en tiempo real, historial con gráficos y una cartera con precio medio, dividendos, comparación con el CDI e importación de la hoja de la B3.",
       designSystem: "La biblioteca de componentes detrás de todos los sistemas: Atomic Design, accesible, con i18n y documentada en Storybook.",
     }),
   },
