@@ -1,6 +1,7 @@
 import type { ExperienceItem } from "@portfolio/shared";
 import { Badge, Typography } from "@godzilla/ui";
 import { Section, type SectionProps } from "@/components/layout/section";
+import { Stagger, StaggerItem } from "@/components/motion/motion";
 
 export interface ExperienceSectionProps extends Omit<SectionProps, "children"> {
   items: ExperienceItem[];
@@ -9,17 +10,17 @@ export interface ExperienceSectionProps extends Omit<SectionProps, "children"> {
 export function ExperienceSection({ items, ...section }: ExperienceSectionProps) {
   return (
     <Section tone="muted" {...section}>
-      <ol className="flex flex-col gap-12 border-l border-input pl-8">
+      <Stagger as="ol" stagger={0.12} className="flex flex-col gap-12 border-l border-input pl-8">
         {items.map((item) => (
-          <li key={`${item.company}-${item.period}`} className="relative">
+          <StaggerItem as="li" key={`${item.company}-${item.period}`} className="relative">
             <span
               className="absolute -left-[39px] top-1.5 size-3 rounded-full bg-primary shadow-glow-sm"
               aria-hidden="true"
             />
             <ExperienceEntry item={item} />
-          </li>
+          </StaggerItem>
         ))}
-      </ol>
+      </Stagger>
     </Section>
   );
 }

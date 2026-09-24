@@ -3,6 +3,7 @@ import { Linkedin, Mail } from "@godzilla/icons";
 import { Card } from "@godzilla/ui";
 import type { ContactIcon, ContactLink } from "@/content/types";
 import { Section, type SectionProps } from "@/components/layout/section";
+import { Stagger, StaggerItem } from "@/components/motion/motion";
 
 const icons: Record<ContactIcon, LucideIcon> = {
   mail: Mail,
@@ -16,12 +17,12 @@ export interface ContactSectionProps extends Omit<SectionProps, "children"> {
 export function ContactSection({ links, ...section }: ContactSectionProps) {
   return (
     <Section {...section}>
-      <ul className="flex flex-col gap-4 sm:flex-row sm:flex-wrap">
+      <Stagger as="ul" className="flex flex-col gap-4 sm:flex-row sm:flex-wrap">
         {links.map((link) => {
           const Icon = icons[link.icon];
           const external = link.href.startsWith("http");
           return (
-            <li key={link.href} className="min-w-[220px] flex-1">
+            <StaggerItem as="li" key={link.href} className="min-w-[220px] flex-1">
               <a
                 href={link.href}
                 {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
@@ -37,10 +38,10 @@ export function ContactSection({ links, ...section }: ContactSectionProps) {
                   </span>
                 </Card>
               </a>
-            </li>
+            </StaggerItem>
           );
         })}
-      </ul>
+      </Stagger>
     </Section>
   );
 }

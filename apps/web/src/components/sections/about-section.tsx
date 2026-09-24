@@ -1,7 +1,8 @@
 import Image from "next/image";
-import { Card, Typography, cn } from "@godzilla/ui";
+import { Typography, cn } from "@godzilla/ui";
 import type { Fact, Photo } from "@/content/types";
 import { Section, type SectionProps } from "@/components/layout/section";
+import { Reveal, Stagger, StaggerItem } from "@/components/motion/motion";
 
 export interface AboutSectionProps extends Omit<SectionProps, "children"> {
   photo?: Photo;
@@ -13,25 +14,30 @@ export function AboutSection({ photo, paragraphs, facts, ...section }: AboutSect
   return (
     <Section {...section}>
       <div className={cn("grid items-start gap-12", photo && "md:grid-cols-[minmax(0,280px)_1fr]")}>
-        {photo ? <ProfilePhoto photo={photo} /> : null}
+        {photo ? (
+          <Reveal>
+            <ProfilePhoto photo={photo} />
+          </Reveal>
+        ) : null}
 
-        <div className="flex flex-col gap-4">
+        <Reveal delay={0.1} className="flex flex-col gap-4">
           {paragraphs.map((paragraph) => (
             <Typography key={paragraph} variant="body-lg" className="text-muted-foreground">
               {paragraph}
             </Typography>
           ))}
-        </div>
+        </Reveal>
       </div>
 
-      <dl className="mt-12 grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3">
+      {/* O item animado é o próprio card: mantém dl > div > dt/dd válido. */}
+      <Stagger as="dl" className="mt-12 grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-3">
         {facts.map((fact) => (
-          <Card key={fact.label} className="p-5">
+          <StaggerItem key={fact.label} className="rounded-lg border border-border bg-card text-card-foreground shadow-xs p-5">
             <dt className="font-mono text-caption uppercase tracking-wider text-muted-foreground">{fact.label}</dt>
             <dd className="mt-2 text-h4 font-semibold text-primary">{fact.value}</dd>
-          </Card>
+          </StaggerItem>
         ))}
-      </dl>
+      </Stagger>
     </Section>
   );
 }

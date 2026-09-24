@@ -1,6 +1,7 @@
 import type { SkillGroup } from "@portfolio/shared";
 import { Badge } from "@godzilla/ui";
 import { Section, type SectionProps } from "@/components/layout/section";
+import { Stagger, StaggerItem } from "@/components/motion/motion";
 
 export interface SkillsSectionProps extends Omit<SectionProps, "children"> {
   groups: SkillGroup[];
@@ -9,9 +10,9 @@ export interface SkillsSectionProps extends Omit<SectionProps, "children"> {
 export function SkillsSection({ groups, ...section }: SkillsSectionProps) {
   return (
     <Section tone="muted" {...section}>
-      <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+      <Stagger className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
         {groups.map((group) => (
-          <div key={group.category} className="flex flex-col gap-4">
+          <StaggerItem key={group.category} className="flex flex-col gap-4">
             <h3 className="font-mono text-body-sm font-semibold uppercase tracking-wider text-primary">
               {group.category}
             </h3>
@@ -22,9 +23,9 @@ export function SkillsSection({ groups, ...section }: SkillsSectionProps) {
                 </li>
               ))}
             </ul>
-          </div>
+          </StaggerItem>
         ))}
-      </div>
+      </Stagger>
     </Section>
   );
 }

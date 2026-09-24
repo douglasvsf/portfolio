@@ -1,5 +1,6 @@
 import type { HTMLAttributes, ReactNode } from "react";
 import { SectionHeading, cn } from "@godzilla/ui";
+import { Reveal } from "@/components/motion/motion";
 
 export interface SectionProps extends Omit<HTMLAttributes<HTMLElement>, "title"> {
   /** Âncora da seção (usada pelo menu: `#${id}`). */
@@ -24,7 +25,9 @@ export function Section({ id, index, title, description, tone = "default", class
       {...props}
     >
       <div className="mx-auto max-w-6xl px-6 py-24">
-        <SectionHeading index={index} title={title} description={description} titleId={titleId} />
+        <Reveal>
+          <SectionHeading index={index} title={title} description={description} titleId={titleId} />
+        </Reveal>
         {children}
       </div>
     </section>

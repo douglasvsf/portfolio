@@ -15,6 +15,7 @@ import {
 } from "@godzilla/icons";
 import { Badge, Button, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@godzilla/ui";
 import { Section, type SectionProps } from "@/components/layout/section";
+import { Reveal, Stagger, StaggerItem } from "@/components/motion/motion";
 import type { EngineeringItem, EngineeringKey, Fact, LinkItem } from "@/content/types";
 
 const ICONS: Record<EngineeringKey, LucideIcon> = {
@@ -55,26 +56,28 @@ export function EngineeringSection({
 }: EngineeringSectionProps) {
   return (
     <Section {...section}>
-      <dl className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
+      <Stagger as="dl" className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
         {stats.map((stat) => (
-          <Card key={stat.label} className="flex flex-col-reverse gap-2 p-5">
+          <StaggerItem key={stat.label} className="rounded-lg border border-border bg-card text-card-foreground shadow-xs flex flex-col-reverse gap-2 p-5">
             <dt className="text-body-sm text-muted-foreground">{stat.label}</dt>
             <dd className="font-mono text-h3 font-semibold text-primary">{stat.value}</dd>
-          </Card>
+          </StaggerItem>
         ))}
-      </dl>
+      </Stagger>
 
-      <Pipeline label={pipelineLabel} steps={pipeline} />
+      <Reveal>
+        <Pipeline label={pipelineLabel} steps={pipeline} />
+      </Reveal>
 
-      <ul className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <Stagger as="ul" className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {items.map((item) => (
-          <li key={item.key}>
+          <StaggerItem as="li" key={item.key}>
             <EngineeringCard item={item} codeLabel={codeLabel} />
-          </li>
+          </StaggerItem>
         ))}
-      </ul>
+      </Stagger>
 
-      <div className="mt-12 flex flex-wrap justify-center gap-3">
+      <Reveal className="mt-12 flex flex-wrap justify-center gap-3">
         <Button asChild variant="outline">
           <a href={repoCta.href} target="_blank" rel="noopener noreferrer">
             <CodeXml aria-hidden="true" />
@@ -87,7 +90,7 @@ export function EngineeringSection({
             {actionsCta.label}
           </a>
         </Button>
-      </div>
+      </Reveal>
     </Section>
   );
 }

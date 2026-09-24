@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Geist, Geist_Mono } from "next/font/google";
 import { I18nProvider } from "@godzilla/ui";
+import { MotionProvider } from "@/components/motion/motion";
 import { getContent } from "@/content";
 import { SITE_URL } from "@/config/site";
 import { DEFAULT_LOCALE, isLocale, locales } from "@/i18n/config";
@@ -58,7 +59,9 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[la
   return (
     <html lang={lang} className={`dark ${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
-        <I18nProvider locale={lang}>{children}</I18nProvider>
+        <I18nProvider locale={lang}>
+          <MotionProvider>{children}</MotionProvider>
+        </I18nProvider>
       </body>
     </html>
   );

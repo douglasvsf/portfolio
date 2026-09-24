@@ -2,6 +2,7 @@ import type { Project } from "@portfolio/shared";
 import { Badge, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, cn } from "@godzilla/ui";
 import { ExternalLink } from "@godzilla/icons";
 import { Section, type SectionProps } from "@/components/layout/section";
+import { Stagger, StaggerItem } from "@/components/motion/motion";
 
 export interface ProjectsSectionProps extends Omit<SectionProps, "children"> {
   items: Project[];
@@ -10,13 +11,13 @@ export interface ProjectsSectionProps extends Omit<SectionProps, "children"> {
 export function ProjectsSection({ items, ...section }: ProjectsSectionProps) {
   return (
     <Section {...section}>
-      <ul className="grid gap-6 md:grid-cols-2">
+      <Stagger as="ul" className="grid gap-6 md:grid-cols-2">
         {items.map((project) => (
-          <li key={project.name}>
+          <StaggerItem as="li" key={project.name}>
             <ProjectCard project={project} />
-          </li>
+          </StaggerItem>
         ))}
-      </ul>
+      </Stagger>
     </Section>
   );
 }

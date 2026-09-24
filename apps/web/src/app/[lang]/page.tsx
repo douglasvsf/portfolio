@@ -9,6 +9,7 @@ import { ExperienceSection } from "@/components/sections/experience-section";
 import { ContactSection } from "@/components/sections/contact-section";
 import { SystemsSection } from "@/components/sections/systems-section";
 import { EngineeringSection } from "@/components/sections/engineering-section";
+import { ScrollProgress } from "@/components/motion/motion";
 import { SECTION_IDS, getContent } from "@/content";
 import { isLocale } from "@/i18n/config";
 
@@ -20,6 +21,7 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
 
   return (
     <>
+      <ScrollProgress />
       <SiteHeader
         brand={nav.brand}
         brandHref={`#${SECTION_IDS.hero}`}
