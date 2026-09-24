@@ -1,6 +1,6 @@
 import { Badge, cn } from "@godzilla/ui";
 import { TrendingDown, TrendingUp } from "@godzilla/icons";
-import { formatPercent } from "@/lib/format";
+import { formatPercent } from "@/lib/stocks/format";
 
 export function ChangeBadge({ value, className }: { value: number | null | undefined; className?: string }) {
   if (value == null) return <Badge variant="outline">—</Badge>;

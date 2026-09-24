@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { Badge, Card, CardContent, CardDescription, CardHeader, CardTitle } from "@godzilla/ui";
-import { FREE_TICKERS, hasToken, listStocks, sortFields, type ListedStock, type SortField } from "@/lib/brapi";
-import { formatCompact } from "@/lib/format";
-import { sectorLabel } from "@/lib/sectors";
-import { MarketFilters } from "@/components/market-filters";
-import { MarketTable } from "@/components/market-table";
-import { MoversChart } from "@/components/movers-chart";
-import { SectorChart } from "@/components/sector-chart";
-import { ChangeBadge } from "@/components/change-badge";
+import { FREE_TICKERS, hasToken, listStocks, sortFields, type ListedStock, type SortField } from "@/lib/stocks/brapi";
+import { formatCompact } from "@/lib/stocks/format";
+import { sectorLabel } from "@/lib/stocks/sectors";
+import { MarketFilters } from "@/components/stocks/market-filters";
+import { MarketTable } from "@/components/stocks/market-table";
+import { MoversChart } from "@/components/stocks/movers-chart";
+import { SectorChart } from "@/components/stocks/sector-chart";
+import { ChangeBadge } from "@/components/stocks/change-badge";
 
 /** Universo usado nos painéis: as ações mais negociadas do dia (evita papéis sem liquidez). */
 const LIQUID_UNIVERSE = 100;
@@ -18,7 +18,7 @@ function pick(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
 
-export default async function MarketPage({ searchParams }: PageProps<"/">) {
+export default async function MarketPage({ searchParams }: PageProps<"/stocks">) {
   const params = await searchParams;
   const sort = pick(params.sort);
   const query = {
@@ -49,7 +49,7 @@ export default async function MarketPage({ searchParams }: PageProps<"/">) {
           <p className="flex flex-wrap items-center gap-2 text-body-sm text-muted-foreground">
             Histórico disponível sem token para:
             {FREE_TICKERS.map((ticker) => (
-              <Link key={ticker} href={`/acao/${ticker}`}>
+              <Link key={ticker} href={`/stocks/acao/${ticker}`}>
                 <Badge variant="tag" className="hover:border-primary hover:text-primary">
                   {ticker}
                 </Badge>

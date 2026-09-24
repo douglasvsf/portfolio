@@ -2,7 +2,7 @@
 
 import { Cell, Pie, PieChart } from "recharts";
 import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@godzilla/ui";
-import { formatCompact } from "@/lib/format";
+import { formatCompact } from "@/lib/stocks/format";
 
 export interface SectorSlice {
   sector: string;

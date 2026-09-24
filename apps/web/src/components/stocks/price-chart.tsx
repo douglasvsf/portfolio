@@ -2,7 +2,7 @@
 
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@godzilla/ui";
-import { formatCompact, formatCurrency } from "@/lib/format";
+import { formatCompact, formatCurrency } from "@/lib/stocks/format";
 
 export interface PricePoint {
   /** Rótulo curto do eixo X (dd/mm ou mm/aa). */

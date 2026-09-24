@@ -7,6 +7,11 @@ const nextConfig: NextConfig = {
   // O Storybook do Design System é gerado em public/design-system (ver
   // "build" no package.json). Ele usa caminhos relativos, então a URL precisa
   // apontar para dentro da pasta — /design-system sozinho quebraria os assets.
+  images: {
+    // Logos das empresas no /stocks, servidos pela brapi (SVG).
+    dangerouslyAllowSVG: true,
+    remotePatterns: [{ protocol: "https", hostname: "icons.brapi.dev" }],
+  },
   async redirects() {
     return [{ source: "/design-system", destination: "/design-system/index.html", permanent: false }];
   },
