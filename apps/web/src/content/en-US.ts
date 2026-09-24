@@ -16,7 +16,7 @@ export const enUS: SiteContent = {
       projects: "Projects",
       experience: "Experience",
       contact: "Contact",
-      systems: "Systems",
+      systems: "Products",
     }),
   },
   hero: {
@@ -175,9 +175,9 @@ export const enUS: SiteContent = {
     links: contactLinks("Email"),
   },
   systems: {
-    title: "Systems",
-    description: "Products I built and shipped alongside this site — open them and try them out.",
-    openLabel: "Open system",
+    title: "Products",
+    description: "Built and shipped alongside this site — open them and try them out.",
+    openLabel: "Open",
     items: systemItems({
       spotify: "Music stats dashboard with Spotify OAuth, Last.fm and a live showcase: top artists, tracks, genres and what's playing right now.",
       stocks: "Near real-time B3 stock quotes: top gainers and losers, volume by sector, search across every stock and price history charts.",

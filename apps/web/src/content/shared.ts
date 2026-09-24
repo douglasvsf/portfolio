@@ -10,7 +10,7 @@ export const SECTION_IDS = {
   projects: "projects",
   experience: "experience",
   contact: "contact",
-  systems: "systems",
+  systems: "products",
 } as const;
 
 export const CONTACT = {
@@ -29,7 +29,7 @@ export function navLinks(labels: Record<(typeof NAV_SECTIONS)[number], string>) 
 }
 
 /**
- * Sistemas publicados junto com o site (seção "Sistemas"). Nome, link, prévia
+ * Sistemas publicados junto com o site (seção "Produtos"). Nome, link, prévia
  * e tags são iguais em todos os idiomas — cada idioma só fornece a descrição.
  */
 export function systemItems(descriptions: Record<"spotify" | "stocks" | "designSystem", string>) {
