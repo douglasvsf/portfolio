@@ -53,6 +53,13 @@
   --input: 220 13% 80%;
   --ring: 90 80% 26%;
 
+  /* Paleta de gráficos — séries categóricas (chart-1 = marca) */
+  --chart-1: 90 80% 30%;
+  --chart-2: 199 89% 38%;
+  --chart-3: 271 60% 50%;
+  --chart-4: 38 92% 42%;
+  --chart-5: 340 75% 48%;
+
   /* Fontes — apps sobrescrevem com a fonte carregada (ex.: next/font) */
   --font-family-sans: ui-sans-serif, system-ui, sans-serif;
   --font-family-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -119,6 +126,12 @@
   --border: 220 10% 18%;
   --input: 220 9% 26%;
   --ring: 87 100% 62%;
+
+  --chart-1: 87 100% 62%;
+  --chart-2: 199 89% 60%;
+  --chart-3: 271 80% 72%;
+  --chart-4: 38 92% 58%;
+  --chart-5: 340 82% 66%;
 }
 
 @theme inline {
@@ -156,6 +169,13 @@
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
+
+  /* Gráficos → gera fill-chart-1, stroke-chart-2, bg-chart-3, etc. */
+  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-5: hsl(var(--chart-5));
 
   /* Fontes → gera font-sans e font-mono */
   --font-sans: var(--font-family-sans);

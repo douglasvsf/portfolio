@@ -33,6 +33,13 @@ localmente, prontos para evoluir.
 - API REST
 - MongoDB + Mongoose (`@nestjs/mongoose`)
 
+**Kaiju Stocks** (`apps/stocks`)
+
+- Next.js 16 consumindo `@godzilla/ui` (Card, Table, Chart, Badge, SearchInput)
+- Cotações via [brapi](https://brapi.dev), buscadas no servidor com cache de 5 min
+- Gráficos com Recharts, através do `Chart` do Design System (padrão shadcn/ui)
+- `pnpm dev:stocks` → http://localhost:3002. Sem `BRAPI_TOKEN` a listagem funciona inteira, mas o histórico só sai para PETR4, VALE3, ITUB4 e MGLU3 — token grátis em brapi.dev (ver `apps/stocks/.env.example`)
+
 **Banco de dados**
 
 - MongoDB, rodando localmente via Docker Compose
@@ -75,6 +82,12 @@ localmente, prontos para evoluir.
 │   │   │   └── main.ts
 │   │   └── .env.example
 │   │
+│   ├── stocks/             # Kaiju Stocks — cotações da B3 (Next.js + brapi + Recharts)
+│   │   └── src/
+│   │       ├── app/            # / (mercado) e /acao/[ticker] (detalhe + histórico)
+│   │       ├── components/     # Tabela, filtros e gráficos (Chart do DS)
+│   │       └── lib/            # Cliente da brapi (server-only) e formatadores pt-BR
+│   │
 │   ├── storybook/          # Documentação viva do Design System
 │   │   └── .storybook/         # main.ts, preview.tsx (tema, i18n, a11y)
 │   │
@@ -87,7 +100,7 @@ localmente, prontos para evoluir.
 │   │   └── src/
 │   │       ├── atoms/          # Button, Input, Label, Checkbox, Switch, Badge, Avatar, Spinner, Separator, Typography
 │   │       ├── molecules/      # FormField, SearchInput
-│   │       ├── organisms/      # Card, Dialog, Tabs, Toast
+│   │       ├── organisms/      # Card, Chart (Recharts), Dialog, Table, Tabs, Toast
 │   │       ├── theme/          # ThemeProvider (light/dark/system)
 │   │       ├── lib/            # cn() (clsx + tailwind-merge)
 │   │       └── styles/         # globals.css (importa os tokens)
