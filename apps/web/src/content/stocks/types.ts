@@ -136,7 +136,7 @@ export interface PortfolioDictionary {
     byClass: string;
     byClassDescription: string;
     others: string;
-    classes: { stock: string; fii: string; etf: string; bdr: string; other: string };
+    classes: { stock: string; fii: string; etf: string; bdr: string; crypto: string; other: string };
   };
   tabs: { positions: string; transactions: string };
   positions: {
@@ -174,6 +174,7 @@ export interface PortfolioDictionary {
     ticker: string;
     tickerPlaceholder: string;
     tickerInvalid: string;
+    tickerHint: string;
     date: string;
     dateInvalid: string;
     quantity: string;
@@ -210,5 +211,6 @@ export interface PortfolioDictionary {
     missing: string;
     /** {time} */
     updatedAt: string;
+    cryptoSource: string;
   };
 }

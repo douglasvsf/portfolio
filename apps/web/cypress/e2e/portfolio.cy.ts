@@ -11,6 +11,8 @@ const QUOTES = {
     MXRF11: { price: 9, change: -0.1, name: "MXRF11", logo: null, sector: "Miscellaneous", assetClass: "fii" },
     BOVA11: { price: 180, change: -0.6, name: "BOVA11", logo: null, sector: "Miscellaneous", assetClass: "etf" },
     TAEE11: { price: 41, change: 0.2, name: "TAESA", logo: null, sector: "Utilities", assetClass: "stock" },
+    BTC: { price: 438526, change: 0.6, name: "Bitcoin", logo: null, sector: null, assetClass: "crypto" },
+    ETH: { price: 23000, change: -1.1, name: "Ethereum", logo: null, sector: null, assetClass: "crypto" },
   },
   missing: [],
   cdi: { from: "2025-01-15", to: "2026-09-23", percent: 25.5, days: 425 },
@@ -47,7 +49,7 @@ describe("Carteira", () => {
     cy.contains("button", "Adicionar operação").click();
     cy.get("[role=dialog]").within(() => {
       cy.contains("button", "Adicionar").click();
-      cy.contains("Use o código de negociação").should("be.visible");
+      cy.contains("Use o código da B3").should("be.visible");
 
       cy.contains("label", "Ativo").click();
       cy.focused().type("taee11");
@@ -65,6 +67,24 @@ describe("Carteira", () => {
       const saved = JSON.parse(win.localStorage.getItem("kaiju-stocks:portfolio") ?? "{}");
       expect(saved.transactions).to.have.length(1);
     });
+  });
+
+  it("aceita cripto com frações e credita a CoinGecko", () => {
+    cy.contains("button", "Adicionar operação").click();
+    cy.get("[role=dialog]").within(() => {
+      cy.contains("label", "Ativo").click();
+      cy.focused().type("btc");
+      cy.contains("label", "Quantidade").click();
+      cy.focused().type("0,0015");
+      cy.contains("label", "Preço unitário").click();
+      cy.focused().type("400000");
+      cy.contains("button", "Adicionar").click();
+    });
+
+    // 0,0015 × 438.526 = 657,79
+    cy.contains("tr", "BTC").should((row) => shouldShow(row, "0,0015", "R$ 400.000,00", "R$ 657,79"));
+    cy.contains("tr", "BTC").find("a").should("not.exist"); // cripto não tem página de detalhe
+    cy.contains("a", "Preços de cripto: CoinGecko").should("have.attr", "href", "https://www.coingecko.com/");
   });
 
   it("importa a planilha de Movimentação da B3", () => {

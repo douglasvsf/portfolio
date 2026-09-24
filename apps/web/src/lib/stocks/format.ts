@@ -11,11 +11,17 @@ export function createFormatters(locale: Locale) {
   const currency = new Intl.NumberFormat(locale, { style: "currency", currency: "BRL" });
   const compact = new Intl.NumberFormat(locale, { notation: "compact", maximumFractionDigits: 1 });
   const decimal = new Intl.NumberFormat(locale, { maximumFractionDigits: 2 });
+  // Cripto: frações de moeda (0,0015 BTC) e preços abaixo de R$ 1 (tokens) precisam de mais casas.
+  const quantity = new Intl.NumberFormat(locale, { maximumFractionDigits: 8 });
+  const smallCurrency = new Intl.NumberFormat(locale, { style: "currency", currency: "BRL", minimumSignificantDigits: 2, maximumSignificantDigits: 4 });
 
   return {
     currency: (value: number | null | undefined) => (value == null ? DASH : currency.format(value)),
     compact: (value: number | null | undefined) => (value == null ? DASH : compact.format(value)),
     number: (value: number | null | undefined) => (value == null ? DASH : decimal.format(value)),
+    quantity: (value: number | null | undefined) => (value == null ? DASH : quantity.format(value)),
+    /** Preço unitário: 2 casas, ou até 4 algarismos significativos abaixo de R$ 1. */
+    price: (value: number | null | undefined) => (value == null ? DASH : Math.abs(value) > 0 && Math.abs(value) < 1 ? smallCurrency.format(value) : currency.format(value)),
     percent: (value: number | null | undefined) => (value == null ? DASH : `${value > 0 ? "+" : ""}${decimal.format(value)}%`),
     integer: (value: number) => value.toLocaleString(locale),
     date: (unixSeconds: number, options: Intl.DateTimeFormatOptions = { dateStyle: "short" }) =>

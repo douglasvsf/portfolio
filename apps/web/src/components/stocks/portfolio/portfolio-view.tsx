@@ -23,6 +23,7 @@ import type { Locale } from "@/i18n/config";
 import { fmt } from "@/i18n/message";
 import { demoTransactions } from "@/lib/portfolio/demo";
 import { computePositions, toSlices, valuePortfolio, type PortfolioSummary } from "@/lib/portfolio/positions";
+import { marketOf } from "@/lib/portfolio/schema";
 import { usePortfolio } from "@/lib/portfolio/store";
 import { createFormatters } from "@/lib/stocks/format";
 import { AllocationChart } from "./allocation-chart";
@@ -82,7 +83,7 @@ export function PortfolioView() {
             </div>
           )}
 
-          <MarketStatus market={market} />
+          <MarketStatus market={market} hasCrypto={openTickers.some((ticker) => marketOf(ticker) === "crypto")} />
           <Summary summary={valued.summary} cdi={market.cdi} loading={market.status === "loading" && !market.updatedAt} />
 
           {valued.open.length > 0 && <Allocation positions={valued.open} />}
@@ -128,7 +129,7 @@ export function PortfolioView() {
   );
 }
 
-function MarketStatus({ market }: { market: MarketData }) {
+function MarketStatus({ market, hasCrypto }: { market: MarketData; hasCrypto: boolean }) {
   const { market: copy } = useStocksDictionary().portfolio;
   const locale = useLocale() as Locale;
 
@@ -144,6 +145,12 @@ function MarketStatus({ market }: { market: MarketData }) {
         <p>{fmt(copy.updatedAt, { time: new Intl.DateTimeFormat(locale, { timeStyle: "short" }).format(new Date(market.updatedAt)) })}</p>
       )}
       {market.missing.length > 0 && <p className="text-warning">{fmt(copy.missing, { tickers: market.missing.join(", ") })}</p>}
+      {/* Atribuição exigida pelo plano gratuito da CoinGecko. */}
+      {hasCrypto && (
+        <a href="https://www.coingecko.com/" target="_blank" rel="noopener noreferrer" className="self-start underline-offset-4 hover:text-primary hover:underline">
+          {copy.cryptoSource}
+        </a>
+      )}
     </div>
   );
 }

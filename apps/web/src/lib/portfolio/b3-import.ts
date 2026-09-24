@@ -1,4 +1,4 @@
-import { newTransactionId, TICKER_PATTERN, transactionSchema, type Transaction } from "./schema";
+import { B3_TICKER_PATTERN, newTransactionId, transactionSchema, type Transaction } from "./schema";
 
 /**
  * Importa as planilhas da Área do Investidor da B3 (investidor.b3.com.br).
@@ -131,7 +131,7 @@ function tickerFromProduct(value: unknown) {
 /** Mercado fracionário usa o sufixo F (PETR4F): é o mesmo ativo. */
 export function normalizeTicker(value: unknown) {
   const ticker = String(value ?? "").trim().toUpperCase().replace(/(\d)F$/, "$1");
-  return TICKER_PATTERN.test(ticker) ? ticker : null;
+  return B3_TICKER_PATTERN.test(ticker) ? ticker : null;
 }
 
 /** Aceita número, "1.234,56", "R$ 38,50" e "-" (vira NaN, barrado pelo schema). */

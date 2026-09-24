@@ -1,4 +1,4 @@
-import type { Transaction } from "./schema";
+import { marketOf, type Transaction } from "./schema";
 
 /**
  * Cálculo da carteira a partir das operações — funções puras, sem rede.
@@ -104,7 +104,7 @@ export interface MarketQuote {
   assetClass?: AssetClass;
 }
 
-export type AssetClass = "stock" | "fii" | "etf" | "bdr" | "other";
+export type AssetClass = "stock" | "fii" | "etf" | "bdr" | "crypto" | "other";
 
 export interface ValuedPosition extends Position {
   price: number | null;
@@ -183,8 +183,9 @@ export function valuePortfolio(positions: readonly Position[], quotes: Readonly<
   };
 }
 
-/** Sem dado da brapi: FIIs e ETFs terminam em 11, BDRs em 32–35/39. */
+/** Sem cotação: cripto pelo formato; na B3, FIIs e ETFs terminam em 11, BDRs em 32–35/39. */
 export function guessAssetClass(ticker: string): AssetClass {
+  if (marketOf(ticker) === "crypto") return "crypto";
   if (/(3[2-5]|39)$/.test(ticker)) return "bdr";
   if (/11$/.test(ticker)) return "fii";
   if (/\d$/.test(ticker)) return "stock";

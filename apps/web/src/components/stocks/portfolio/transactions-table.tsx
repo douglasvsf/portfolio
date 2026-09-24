@@ -54,8 +54,8 @@ export function TransactionsTable({ transactions, onRemove }: { transactions: re
                 <Badge variant={KIND_VARIANT[transaction.kind]}>{copy.kinds[transaction.kind]}</Badge>
               </TableCell>
               <TableCell className="font-mono font-semibold">{transaction.ticker}</TableCell>
-              <TableCell className="text-right font-mono tabular-nums">{"quantity" in transaction ? format.number(transaction.quantity) : "—"}</TableCell>
-              <TableCell className="text-right font-mono tabular-nums">{trade ? format.currency(transaction.price) : "—"}</TableCell>
+              <TableCell className="text-right font-mono tabular-nums">{"quantity" in transaction ? format.quantity(transaction.quantity) : "—"}</TableCell>
+              <TableCell className="text-right font-mono tabular-nums">{trade ? format.price(transaction.price) : "—"}</TableCell>
               <TableCell className="text-right font-mono tabular-nums">{format.currency(total)}</TableCell>
               <TableCell className="text-right">
                 <Button

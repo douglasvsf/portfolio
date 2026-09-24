@@ -19,6 +19,8 @@ const nextConfig: NextConfig = {
       // Capas do Last.fm.
       { protocol: "https", hostname: "lastfm.freetls.fastly.net" },
       { protocol: "https", hostname: "lastfm-img.freetls.fastly.net" },
+      // Ícones de cripto na carteira do /stocks (CoinGecko).
+      { protocol: "https", hostname: "coin-images.coingecko.com" },
     ],
   },
   async redirects() {

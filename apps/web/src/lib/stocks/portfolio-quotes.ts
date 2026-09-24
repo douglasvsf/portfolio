@@ -1,4 +1,6 @@
 import "server-only";
+import { getCryptoQuotes } from "@/lib/crypto/coingecko";
+import { marketOf } from "@/lib/portfolio/schema";
 import type { AssetClass, MarketQuote } from "@/lib/portfolio/positions";
 import { listStocks, type ListedStock } from "./brapi";
 
@@ -8,7 +10,8 @@ import { listStocks, type ListedStock } from "./brapi";
  * chamadas em fila. Em vez disso, baixamos a lista inteira de ações e de
  * fundos (2 chamadas, ~200 KB cada) e deixamos no Data Cache do Next: todos
  * os visitantes compartilham as mesmas 2 requisições a cada 5 minutos.
- * BDRs só são buscados se a carteira tiver algum.
+ * BDRs só são buscados se a carteira tiver algum; cripto vem da CoinGecko,
+ * com a mesma ideia (ver lib/crypto/coingecko.ts).
  */
 
 const UNIVERSE_LIMIT = 2000;
@@ -37,9 +40,11 @@ async function universe(type: "stock" | "fund" | "bdr") {
   return stocks;
 }
 
-export async function getPortfolioQuotes(tickers: readonly string[]) {
-  const wanted = new Set(tickers);
+async function getB3Quotes(tickers: readonly string[]) {
   const quotes: Record<string, MarketQuote> = {};
+  if (tickers.length === 0) return quotes;
+
+  const wanted = new Set(tickers);
   const collect = (stocks: ListedStock[]) => {
     for (const stock of stocks) if (wanted.has(stock.stock) && !quotes[stock.stock]) quotes[stock.stock] = toQuote(stock);
   };
@@ -47,8 +52,16 @@ export async function getPortfolioQuotes(tickers: readonly string[]) {
   // Em sequência: o plano gratuito recusa requisições simultâneas.
   collect(await universe("stock"));
   collect(await universe("fund"));
-
   if (tickers.some((ticker) => !quotes[ticker])) collect(await universe("bdr"));
+  return quotes;
+}
 
+export async function getPortfolioQuotes(tickers: readonly string[]) {
+  const b3 = tickers.filter((ticker) => marketOf(ticker) === "b3");
+  const crypto = tickers.filter((ticker) => marketOf(ticker) === "crypto");
+
+  // Fontes diferentes: podem rodar em paralelo.
+  const [b3Quotes, cryptoResult] = await Promise.all([getB3Quotes(b3), getCryptoQuotes(crypto)]);
+  const quotes = { ...b3Quotes, ...cryptoResult.quotes };
   return { quotes, missing: tickers.filter((ticker) => !quotes[ticker]) };
 }

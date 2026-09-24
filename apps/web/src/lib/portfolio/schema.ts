@@ -8,7 +8,24 @@ import { resilientArray } from "@/lib/http/contract";
  */
 
 /** Código de negociação da B3: PETR4, MXRF11, BOVA11, AAPL34… */
-export const TICKER_PATTERN = /^[A-Z]{4}\d{1,2}$/;
+export const B3_TICKER_PATTERN = /^[A-Z]{4}\d{1,2}$/;
+/** Símbolo de cripto: BTC, ETH, SOL, USDT… (pelo menos uma letra). */
+export const CRYPTO_SYMBOL_PATTERN = /^(?=.*[A-Z])[A-Z0-9]{2,10}$/;
+/** Qualquer ativo da carteira. O formato da B3 tem prioridade — ver `marketOf`. */
+export const TICKER_PATTERN = new RegExp(`${B3_TICKER_PATTERN.source}|${CRYPTO_SYMBOL_PATTERN.source}`);
+
+export type Market = "b3" | "crypto";
+
+/** PETR4 → "b3"; BTC → "crypto". Nenhum símbolo de cripto relevante tem o formato da B3. */
+export function marketOf(ticker: string): Market {
+  return B3_TICKER_PATTERN.test(ticker) ? "b3" : "crypto";
+}
+
+/** Normaliza o que o usuário digitou: maiúsculas, sem espaços e sem o F do fracionário. */
+export function normalizeAssetCode(value: unknown) {
+  const code = String(value ?? "").trim().toUpperCase().replace(/^([A-Z]{4}\d{1,2})F$/, "$1");
+  return TICKER_PATTERN.test(code) ? code : null;
+}
 
 const ticker = z
   .string()

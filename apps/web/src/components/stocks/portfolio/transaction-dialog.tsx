@@ -18,8 +18,8 @@ import {
 } from "@godzilla/ui";
 import { useStocksDictionary } from "@/content/stocks";
 import type { Locale } from "@/i18n/config";
-import { normalizeTicker, parseNumber } from "@/lib/portfolio/b3-import";
-import { isValidIsoDate, newTransactionId, type Transaction } from "@/lib/portfolio/schema";
+import { parseNumber } from "@/lib/portfolio/b3-import";
+import { isValidIsoDate, newTransactionId, normalizeAssetCode, type Transaction } from "@/lib/portfolio/schema";
 import { createFormatters } from "@/lib/stocks/format";
 
 type FormKind = "buy" | "sell" | "income";
@@ -66,7 +66,7 @@ export function TransactionDialog({ onAdd }: { onAdd: (transaction: Transaction)
 
   function submit(event: FormEvent) {
     event.preventDefault();
-    const ticker = normalizeTicker(values.ticker);
+    const ticker = normalizeAssetCode(values.ticker);
     const amount = parseNumber(values.amount);
     const positive = (value: number) => Number.isFinite(value) && value > 0;
 
@@ -118,7 +118,7 @@ export function TransactionDialog({ onAdd }: { onAdd: (transaction: Transaction)
               <option value="income">{transactions.kinds.income}</option>
             </select>
           </FormField>
-          <FormField label={form.ticker} error={errors.ticker} required>
+          <FormField label={form.ticker} description={form.tickerHint} error={errors.ticker} required>
             <Input
               value={values.ticker}
               onChange={set("ticker")}

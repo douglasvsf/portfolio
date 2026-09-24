@@ -1,7 +1,7 @@
 import { normalizeTicker, parseB3Rows, parseDate, parseNumber } from "./b3-import";
 import { demoTransactions } from "./demo";
 import { computePositions, guessAssetClass, toSlices, valuePortfolio } from "./positions";
-import { portfolioSchema, transactionFingerprint, type Transaction } from "./schema";
+import { marketOf, normalizeAssetCode, portfolioSchema, transactionFingerprint, type Transaction } from "./schema";
 import { mergeTransactions, parsePortfolio } from "./store";
 import { contractReporter } from "@/lib/http/contract";
 
@@ -108,6 +108,7 @@ describe("valorização da carteira", () => {
     expect(guessAssetClass("PETR4")).toBe("stock");
     expect(guessAssetClass("BOVA11")).toBe("fii");
     expect(guessAssetClass("AAPL34")).toBe("bdr");
+    expect(guessAssetClass("BTC")).toBe("crypto");
   });
 
   it("fatias dos gráficos: as maiores + outros", () => {
@@ -199,6 +200,24 @@ describe("importação da planilha da B3", () => {
     expect(parseDate("ontem")).toBe("");
     expect(normalizeTicker(" petr4f ")).toBe("PETR4");
     expect(normalizeTicker("Tesouro")).toBeNull();
+  });
+});
+
+describe("ativos: B3 e cripto", () => {
+  it("normaliza o que o usuário digita e identifica o mercado", () => {
+    expect(normalizeAssetCode(" petr4f ")).toBe("PETR4");
+    expect(normalizeAssetCode("btc")).toBe("BTC");
+    expect(normalizeAssetCode("usdt")).toBe("USDT");
+    expect(normalizeAssetCode("1000")).toBeNull();
+    expect(normalizeAssetCode("tesouro selic")).toBeNull();
+    expect(marketOf("MXRF11")).toBe("b3");
+    expect(marketOf("ETH")).toBe("crypto");
+  });
+
+  it("frações de cripto entram no preço médio", () => {
+    const [position] = computePositions([buy("BTC", "2025-03-10", 0.01, 490000), buy("BTC", "2025-06-01", 0.005, 580000)]);
+    expect(position.quantity).toBeCloseTo(0.015);
+    expect(position.averagePrice).toBeCloseTo(520000);
   });
 });
 

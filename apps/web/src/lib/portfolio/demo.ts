@@ -5,7 +5,7 @@ type DemoEntry =
   | [date: string, kind: "income", ticker: string, amount: number];
 
 /**
- * Carteira de exemplo para quem visita o portfólio: ações, FII e ETF, com
+ * Carteira de exemplo para quem visita o portfólio: ações, FII, ETF e cripto, com
  * uma venda (lucro realizado) e proventos. Preços aproximados da época.
  */
 const ENTRIES: DemoEntry[] = [
@@ -13,8 +13,10 @@ const ENTRIES: DemoEntry[] = [
   ["2025-01-20", "buy", "MXRF11", 300, 9.35],
   ["2025-02-10", "buy", "VALE3", 50, 56.8],
   ["2025-03-05", "buy", "ITUB4", 80, 33.1],
+  ["2025-03-10", "buy", "BTC", 0.01, 490000],
   ["2025-04-22", "buy", "WEGE3", 40, 45.3],
   ["2025-06-02", "buy", "BOVA11", 30, 128.4],
+  ["2025-06-18", "buy", "ETH", 0.25, 14200],
   ["2025-07-14", "buy", "PETR4", 50, 31.9],
   ["2025-09-15", "income", "MXRF11", 27],
   ["2025-10-15", "income", "MXRF11", 27],

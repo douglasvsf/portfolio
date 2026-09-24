@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { AlertTriangle } from "@godzilla/icons";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, cn, useLocale } from "@godzilla/ui";
@@ -8,6 +9,7 @@ import { StockLogo } from "@/components/stocks/stock-logo";
 import { useStocksDictionary } from "@/content/stocks";
 import type { Locale } from "@/i18n/config";
 import type { ValuedPosition } from "@/lib/portfolio/positions";
+import { marketOf } from "@/lib/portfolio/schema";
 import { createFormatters } from "@/lib/stocks/format";
 
 export function signedTone(value: number | null | undefined) {
@@ -38,7 +40,7 @@ export function PositionsTable({ positions }: { positions: ValuedPosition[] }) {
         {positions.map((position) => (
           <TableRow key={position.ticker}>
             <TableCell>
-              <Link href={`/stocks/acao/${position.ticker}`} className="group flex items-center gap-3">
+              <AssetLink ticker={position.ticker}>
                 <StockLogo src={position.logo} ticker={position.ticker} />
                 <span className="flex flex-col">
                   <span className="flex items-center gap-1.5 font-mono font-semibold group-hover:text-primary">
@@ -52,11 +54,11 @@ export function PositionsTable({ positions }: { positions: ValuedPosition[] }) {
                   </span>
                   <span className="max-w-48 truncate text-caption text-muted-foreground">{position.name ?? (position.hasQuote ? "" : copy.noQuote)}</span>
                 </span>
-              </Link>
+              </AssetLink>
             </TableCell>
-            <TableCell className="text-right font-mono tabular-nums">{format.number(position.quantity)}</TableCell>
-            <TableCell className="text-right font-mono tabular-nums">{format.currency(position.averagePrice)}</TableCell>
-            <TableCell className="text-right font-mono tabular-nums">{format.currency(position.price)}</TableCell>
+            <TableCell className="text-right font-mono tabular-nums">{format.quantity(position.quantity)}</TableCell>
+            <TableCell className="text-right font-mono tabular-nums">{format.price(position.averagePrice)}</TableCell>
+            <TableCell className="text-right font-mono tabular-nums">{format.price(position.price)}</TableCell>
             <TableCell className="text-right">
               <ChangeBadge value={position.change} locale={locale} />
             </TableCell>
@@ -76,6 +78,17 @@ export function PositionsTable({ positions }: { positions: ValuedPosition[] }) {
         ))}
       </TableBody>
     </Table>
+  );
+}
+
+/** Ações e fundos abrem o detalhe do Kaiju Stocks; cripto não tem página própria. */
+function AssetLink({ ticker, children }: { ticker: string; children: ReactNode }) {
+  const className = "group flex items-center gap-3";
+  if (marketOf(ticker) === "crypto") return <span className={className}>{children}</span>;
+  return (
+    <Link href={`/stocks/acao/${ticker}`} className={className}>
+      {children}
+    </Link>
   );
 }
 

@@ -1,8 +1,13 @@
+import { getCryptoQuotes } from "../crypto/coingecko";
+import type { MarketQuote } from "../portfolio/positions";
 import { listStocks, type ListedStock } from "./brapi";
 import { getPortfolioQuotes } from "./portfolio-quotes";
 
 jest.mock("server-only", () => ({}));
 jest.mock("./brapi", () => ({ listStocks: jest.fn() }));
+jest.mock("../crypto/coingecko", () => ({ getCryptoQuotes: jest.fn() }));
+
+const crypto = jest.mocked(getCryptoQuotes);
 
 const list = jest.mocked(listStocks);
 const stock = (ticker: string, type: string, subType: string | null, close = 10): ListedStock => ({
@@ -16,6 +21,11 @@ const universes: Record<string, ListedStock[]> = {
 
 beforeEach(() => {
   list.mockReset();
+  crypto.mockReset();
+  crypto.mockImplementation(async (symbols) => ({
+    quotes: (symbols.includes("BTC") ? { BTC: { price: 438526, change: 0.6, assetClass: "crypto" } } : {}) as Record<string, MarketQuote>,
+    missing: symbols.filter((symbol) => symbol !== "BTC"),
+  }));
   list.mockImplementation(async ({ type = "stock" } = {}) => ({ stocks: universes[type], availableSectors: [], currentPage: 1, totalPages: 1, totalCount: 1, hasNextPage: false }));
 });
 
@@ -34,4 +44,18 @@ it("só busca BDRs quando falta algum ticker; o que não existir volta em `missi
   expect(list).toHaveBeenLastCalledWith(expect.objectContaining({ type: "bdr" }));
   expect(quotes.AAPL34).toMatchObject({ assetClass: "bdr" });
   expect(missing).toEqual(["XXXX3"]);
+});
+
+it("separa B3 e cripto: carteira só de cripto nem consulta a brapi", async () => {
+  const { quotes, missing } = await getPortfolioQuotes(["BTC", "DOGEX"]);
+  expect(list).not.toHaveBeenCalled();
+  expect(crypto).toHaveBeenCalledWith(["BTC", "DOGEX"]);
+  expect(quotes.BTC).toMatchObject({ assetClass: "crypto" });
+  expect(missing).toEqual(["DOGEX"]);
+});
+
+it("carteira mista junta as duas fontes", async () => {
+  const { quotes } = await getPortfolioQuotes(["PETR4", "BTC"]);
+  expect(crypto).toHaveBeenCalledWith(["BTC"]);
+  expect(Object.keys(quotes).sort()).toEqual(["BTC", "PETR4"]);
 });
