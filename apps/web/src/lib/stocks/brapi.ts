@@ -135,6 +135,22 @@ export function isRange(value: unknown): value is Range {
   return typeof value === "string" && value in ranges;
 }
 
+/** Períodos liberados pelo plano gratuito da brapi (com token) para qualquer ação. */
+const FREE_PLAN_RANGES: readonly Range[] = ["5d", "1mo", "3mo"];
+
+export function isFreeTicker(ticker: string) {
+  return (FREE_TICKERS as readonly string[]).includes(ticker);
+}
+
+/**
+ * Períodos que funcionam para o ativo: os tickers de teste liberam tudo; os
+ * demais, com token do plano gratuito, só até 3 meses (1A/5A exigem o Pro).
+ */
+export function availableRanges(ticker: string): Range[] {
+  const all = Object.keys(ranges) as Range[];
+  return isFreeTicker(ticker) ? all : all.filter((range) => FREE_PLAN_RANGES.includes(range));
+}
+
 export async function getQuote(ticker: string, range: Range) {
   const { results } = await request<{ results: Quote[] }>(`/quote/${encodeURIComponent(ticker)}`, {
     range,
