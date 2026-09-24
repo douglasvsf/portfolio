@@ -11,7 +11,6 @@
     "dev": "concurrently -n web,api -c blue,green \"pnpm --filter web dev\" \"pnpm --filter api dev\"",
     "dev:web": "pnpm --filter web dev",
     "dev:api": "pnpm --filter api dev",
-    "dev:stocks": "pnpm --filter stocks dev",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "test": "turbo run test",

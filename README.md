@@ -33,12 +33,13 @@ localmente, prontos para evoluir.
 - API REST
 - MongoDB + Mongoose (`@nestjs/mongoose`)
 
-**Kaiju Stocks** (`apps/stocks`)
+**Kaiju Stocks** (`apps/web` → rota `/stocks`)
 
-- Next.js 16 consumindo `@godzilla/ui` (Card, Table, Chart, Badge, SearchInput)
+- Sistema embutido no site, publicado no mesmo deploy (como o `/design-system`): `localhost:3000/stocks`
+- Consome `@godzilla/ui` (Card, Table, Chart, Badge, SearchInput); layout raiz próprio em `src/app/stocks/`
 - Cotações via [brapi](https://brapi.dev), buscadas no servidor com cache de 5 min
 - Gráficos com Recharts, através do `Chart` do Design System (padrão shadcn/ui)
-- `pnpm dev:stocks` → http://localhost:3002. Sem `BRAPI_TOKEN` a listagem funciona inteira, mas o histórico só sai para PETR4, VALE3, ITUB4 e MGLU3 — token grátis em brapi.dev (ver `apps/stocks/.env.example`)
+- Sem `BRAPI_TOKEN` a listagem funciona inteira, mas o histórico só sai para PETR4, VALE3, ITUB4 e MGLU3 — token grátis em brapi.dev (ver `apps/web/.env.example`)
 
 **Banco de dados**
 
@@ -64,7 +65,7 @@ localmente, prontos para evoluir.
 │   │   │   ├── fixtures/       # Dados de apoio para os testes (quando houver)
 │   │   │   └── support/        # Setup global do Cypress
 │   │   ├── src/
-│   │   │   ├── app/            # Rotas (App Router)
+│   │   │   ├── app/            # Rotas (App Router): [lang]/ (portfólio) e stocks/ (Kaiju Stocks)
 │   │   │   ├── components/     # Componentes de UI, layout e seções
 │   │   │   └── lib/            # Integração com a API (com teste unitário)
 │   │   ├── jest.config.ts
@@ -81,12 +82,6 @@ localmente, prontos para evoluir.
 │   │   │   ├── app.module.ts
 │   │   │   └── main.ts
 │   │   └── .env.example
-│   │
-│   ├── stocks/             # Kaiju Stocks — cotações da B3 (Next.js + brapi + Recharts)
-│   │   └── src/
-│   │       ├── app/            # / (mercado) e /acao/[ticker] (detalhe + histórico)
-│   │       ├── components/     # Tabela, filtros e gráficos (Chart do DS)
-│   │       └── lib/            # Cliente da brapi (server-only) e formatadores pt-BR
 │   │
 │   ├── storybook/          # Documentação viva do Design System
 │   │   └── .storybook/         # main.ts, preview.tsx (tema, i18n, a11y)

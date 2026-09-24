@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ChevronsUpDown } from "@godzilla/icons";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, cn } from "@godzilla/ui";
-import type { ListParams, QuoteListResponse, SortField } from "@/lib/brapi";
-import { formatCompact, formatCurrency } from "@/lib/format";
-import { sectorLabel } from "@/lib/sectors";
+import type { ListParams, QuoteListResponse, SortField } from "@/lib/stocks/brapi";
+import { formatCompact, formatCurrency } from "@/lib/stocks/format";
+import { sectorLabel } from "@/lib/stocks/sectors";
 import { ChangeBadge } from "./change-badge";
 import { StockLogo } from "./stock-logo";
 
@@ -17,7 +17,7 @@ function href(query: Query, changes: Partial<Query>) {
   params.set("sort", next.sortBy);
   params.set("order", next.sortOrder);
   if (next.page > 1) params.set("page", String(next.page));
-  return `/?${params.toString()}`;
+  return `/stocks?${params.toString()}`;
 }
 
 const columns: { field: SortField; label: string; align?: "right" }[] = [
@@ -72,7 +72,7 @@ export function MarketTable({ data, query }: { data: QuoteListResponse; query: Q
           {data.stocks.map((stock) => (
             <TableRow key={stock.stock} className="relative">
               <TableCell>
-                <Link href={`/acao/${stock.stock}`} className="flex items-center gap-3 after:absolute after:inset-0">
+                <Link href={`/stocks/acao/${stock.stock}`} className="flex items-center gap-3 after:absolute after:inset-0">
                   <StockLogo src={stock.logo} ticker={stock.stock} />
                   <span className="flex flex-col">
                     <span className="font-mono font-semibold">{stock.stock}</span>

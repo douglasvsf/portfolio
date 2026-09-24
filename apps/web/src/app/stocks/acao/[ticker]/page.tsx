@@ -16,21 +16,21 @@ import {
   TableRow,
   cn,
 } from "@godzilla/ui";
-import { BrapiError, FREE_TICKERS, getQuote, isRange, ranges, type HistoricalPrice, type Range } from "@/lib/brapi";
-import { formatCompact, formatCurrency, formatDate, formatDateTime, formatNumber, formatPercent } from "@/lib/format";
-import { ChangeBadge } from "@/components/change-badge";
-import { StockLogo } from "@/components/stock-logo";
-import { PriceChart, VolumeChart, type PricePoint } from "@/components/price-chart";
+import { BrapiError, FREE_TICKERS, getQuote, isRange, ranges, type HistoricalPrice, type Range } from "@/lib/stocks/brapi";
+import { formatCompact, formatCurrency, formatDate, formatDateTime, formatNumber, formatPercent } from "@/lib/stocks/format";
+import { ChangeBadge } from "@/components/stocks/change-badge";
+import { StockLogo } from "@/components/stocks/stock-logo";
+import { PriceChart, VolumeChart, type PricePoint } from "@/components/stocks/price-chart";
 
 const HISTORY_ROWS = 15;
 const TICKER_PATTERN = /^[A-Z0-9]{4,8}$/;
 
-export async function generateMetadata({ params }: PageProps<"/acao/[ticker]">): Promise<Metadata> {
+export async function generateMetadata({ params }: PageProps<"/stocks/acao/[ticker]">): Promise<Metadata> {
   const { ticker } = await params;
   return { title: ticker.toUpperCase() };
 }
 
-export default async function StockPage({ params, searchParams }: PageProps<"/acao/[ticker]">) {
+export default async function StockPage({ params, searchParams }: PageProps<"/stocks/acao/[ticker]">) {
   const ticker = (await params).ticker.toUpperCase();
   if (!TICKER_PATTERN.test(ticker)) notFound();
 
@@ -174,7 +174,7 @@ export default async function StockPage({ params, searchParams }: PageProps<"/ac
 
 function BackLink() {
   return (
-    <Link href="/" className="inline-flex w-fit items-center gap-1 text-body-sm text-muted-foreground hover:text-foreground">
+    <Link href="/stocks" className="inline-flex w-fit items-center gap-1 text-body-sm text-muted-foreground hover:text-foreground">
       <ArrowLeft className="size-(--size-icon-sm)" aria-hidden="true" />
       Voltar ao mercado
     </Link>
@@ -188,7 +188,7 @@ function RangeTabs({ ticker, active }: { ticker: string; active: Range }) {
       {(Object.keys(ranges) as Range[]).map((range) => (
         <Link
           key={range}
-          href={`/acao/${ticker}?range=${range}`}
+          href={`/stocks/acao/${ticker}?range=${range}`}
           scroll={false}
           aria-current={range === active ? "page" : undefined}
           className={cn(
@@ -234,7 +234,7 @@ function QuoteUnavailable({ ticker, error }: { ticker: string; error: unknown })
             {FREE_TICKERS.map((free) => (
               <Link
                 key={free}
-                href={`/acao/${free}`}
+                href={`/stocks/acao/${free}`}
                 className="rounded-full border border-input px-3 py-1 font-mono text-caption text-muted-foreground hover:border-primary hover:text-primary"
               >
                 {free}

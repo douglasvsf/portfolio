@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { SearchInput, Spinner, cn } from "@godzilla/ui";
-import { sectorLabel } from "@/lib/sectors";
+import { sectorLabel } from "@/lib/stocks/sectors";
 
 const SEARCH_DEBOUNCE_MS = 350;
 

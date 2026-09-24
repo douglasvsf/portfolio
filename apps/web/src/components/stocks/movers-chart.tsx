@@ -2,7 +2,7 @@
 
 import { Bar, BarChart, CartesianGrid, Cell, XAxis, YAxis } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@godzilla/ui";
-import { formatPercent } from "@/lib/format";
+import { formatPercent } from "@/lib/stocks/format";
 
 const config = { change: { label: "Variação" } } satisfies ChartConfig;
 
