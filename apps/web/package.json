@@ -14,7 +14,9 @@
     "test:coverage": "jest --coverage",
     "cypress:open": "cypress open",
     "cypress:run": "cypress run",
-    "test:e2e": "start-server-and-test dev http://localhost:3000 cypress:run"
+    "test:e2e": "start-server-and-test dev http://localhost:3000 cypress:run",
+    "test:e2e:ci": "start-server-and-test start http://localhost:3000/pt-BR cypress:run",
+    "lighthouse": "lhci autorun"
   },
   "dependencies": {
     "@godzilla/i18n": "workspace:^",
@@ -28,6 +30,7 @@
     "server-only": "^0.0.1"
   },
   "devDependencies": {
+    "@lhci/cli": "^0.15",
     "@tailwindcss/postcss": "^4",
     "@types/jest": "^30.0.0",
     "@types/node": "^20",

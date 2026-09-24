@@ -4,39 +4,123 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
+# Um push novo cancela o pipeline anterior do mesmo branch.
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
+env:
+  NEXT_TELEMETRY_DISABLED: 1
+  TURBO_TELEMETRY_DISABLED: 1
+
 jobs:
-  ci:
-    name: Install → Lint → Typecheck → Test → Build
+  quality:
+    name: Lint · Typecheck
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
+      - run: pnpm install --frozen-lockfile
+        env:
+          CYPRESS_INSTALL_BINARY: 0
       - name: Lint
         run: pnpm lint
-
       - name: Typecheck
         run: pnpm typecheck
 
-      - name: Test
-        run: pnpm test
+  unit:
+    name: Unit tests · Coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+        env:
+          CYPRESS_INSTALL_BINARY: 0
 
+      - name: Tests (Design System, API)
+        run: pnpm turbo run test --filter=!web
+
+      # Web: testes + cobertura com mínimo configurado no jest.config.ts.
+      - name: Tests + coverage (web)
+        run: pnpm --filter web test:coverage
+
+      - name: Coverage summary
+        if: always()
+        run: |
+          node -e '
+            const fs = require("fs");
+            const file = "apps/web/coverage/coverage-summary.json";
+            if (!fs.existsSync(file)) process.exit(0);
+            const total = JSON.parse(fs.readFileSync(file, "utf8")).total;
+            const rows = ["statements", "branches", "functions", "lines"]
+              .map((key) => `| ${key} | ${total[key].pct}% | ${total[key].covered}/${total[key].total} |`);
+            const md = ["### Cobertura (apps/web — lib, i18n, content)", "", "| Métrica | % | Cobertos |", "|---|---|---|", ...rows, ""].join("\n");
+            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, md);
+          '
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-web
+          path: apps/web/coverage
+          retention-days: 7
+
+  e2e:
+    name: Build · E2E · Lighthouse
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Cache Cypress binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/Cypress
+          key: cypress-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter web exec cypress install
+
+      # Build de produção do site (inclui o Storybook publicado em /design-system).
       - name: Build
-        run: pnpm build
+        run: pnpm turbo run build --filter=web
+
+      # E2E contra o build de produção (next start), não contra o dev server.
+      - name: E2E (Cypress)
+        run: pnpm --filter web test:e2e:ci
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: cypress-screenshots
+          path: apps/web/cypress/screenshots
+          retention-days: 7
+
+      # Acessibilidade e SEO precisam de nota máxima; performance só avisa
+      # (varia com a máquina do runner e com a latência das APIs externas).
+      - name: Lighthouse CI
+        working-directory: apps/web
+        run: pnpm lighthouse
+        env:
+          LHCI_BUILD_CONTEXT__CURRENT_HASH: ${{ github.sha }}
