@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { routes } from "@/config/spotify";
+import { requestOrigin } from "@/lib/spotify/request-origin";
 import { exchangeCodeForToken, getSpotifyConfig, isSpotifyConfigured } from "@/lib/spotify/auth";
 import { decrypt } from "@/lib/spotify/crypto";
 import { getCurrentUser } from "@/lib/spotify/endpoints";
@@ -24,7 +25,7 @@ function sameString(a: string, b: string) {
 /** Retorno do OAuth: valida o state, troca o code por tokens, valida o token e cria a sessão. */
 export async function GET(request: NextRequest) {
   const fail = (reason: string) => {
-    const response = NextResponse.redirect(new URL(`${routes.landing}?error=${reason}`, request.url));
+    const response = NextResponse.redirect(new URL(`${routes.landing}?error=${reason}`, requestOrigin(request)));
     response.cookies.delete(OAUTH_COOKIE);
     return response;
   };
@@ -45,7 +46,7 @@ export async function GET(request: NextRequest) {
     // Valida o token recém-emitido (e se a conta está liberada no app) antes de criar a sessão.
     await getCurrentUser(session.accessToken);
 
-    const response = NextResponse.redirect(new URL(routes.dashboard, request.url));
+    const response = NextResponse.redirect(new URL(routes.dashboard, requestOrigin(request)));
     response.cookies.set(SESSION_COOKIE, sealSession(session, config.clientSecret), sessionCookieOptions);
     response.cookies.delete(OAUTH_COOKIE);
     response.cookies.delete(DEMO_COOKIE);
