@@ -16,7 +16,7 @@ import {
   TableRow,
   cn,
 } from "@godzilla/ui";
-import { BrapiError, FREE_TICKERS, getQuote, isRange, ranges, type HistoricalPrice, type Range } from "@/lib/stocks/brapi";
+import { BrapiError, FREE_TICKERS, availableRanges, getQuote, isRange, ranges, type HistoricalPrice, type Range } from "@/lib/stocks/brapi";
 import { formatCompact, formatCurrency, formatDate, formatDateTime, formatNumber, formatPercent } from "@/lib/stocks/format";
 import { ChangeBadge } from "@/components/stocks/change-badge";
 import { StockLogo } from "@/components/stocks/stock-logo";
@@ -35,7 +35,9 @@ export default async function StockPage({ params, searchParams }: PageProps<"/st
   if (!TICKER_PATTERN.test(ticker)) notFound();
 
   const rangeParam = (await searchParams).range;
-  const range: Range = isRange(rangeParam) ? rangeParam : "3mo";
+  const allowed = availableRanges(ticker);
+  // Período fora do plano (ex.: ?range=5y numa ação paga) cai para 3 meses.
+  const range: Range = isRange(rangeParam) && allowed.includes(rangeParam) ? rangeParam : "3mo";
 
   let quote;
   try {
@@ -114,7 +116,12 @@ export default async function StockPage({ params, searchParams }: PageProps<"/st
               )}
             </CardDescription>
           </div>
-          <RangeTabs ticker={ticker} active={range} />
+          <div className="flex flex-col items-start gap-1 sm:items-end">
+            <RangeTabs ticker={ticker} active={range} available={allowed} />
+            {allowed.length < Object.keys(ranges).length && (
+              <span className="text-caption text-muted-foreground">1A e 5A disponíveis no plano Pro da brapi</span>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
           {points.length > 1 ? (
@@ -182,10 +189,10 @@ function BackLink() {
 }
 
 /** Links estilizados como o TabsList do DS — o período fica na URL e a busca roda no servidor. */
-function RangeTabs({ ticker, active }: { ticker: string; active: Range }) {
+function RangeTabs({ ticker, active, available }: { ticker: string; active: Range; available: Range[] }) {
   return (
     <nav aria-label="Período" className="inline-flex h-(--size-control-sm) items-center gap-1 rounded-md bg-muted p-1 text-muted-foreground">
-      {(Object.keys(ranges) as Range[]).map((range) => (
+      {available.map((range) => (
         <Link
           key={range}
           href={`/stocks/acao/${ticker}?range=${range}`}
