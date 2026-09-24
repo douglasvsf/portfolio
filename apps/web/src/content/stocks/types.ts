@@ -80,6 +80,22 @@ export interface StocksDictionary {
     ranges: Record<"5d" | "1mo" | "3mo" | "1y" | "5y", string>;
   };
   charts: { change: string; close: string; volume: string };
+  crypto: {
+    title: string;
+    description: string;
+    moversTitle: string;
+    /** {n} = quantas moedas entram no ranking de variação. */
+    moversDescription: string;
+    topTitle: string;
+    topDescription: string;
+    rank: string;
+    asset: string;
+    price: string;
+    change: string;
+    marketCap: string;
+    source: string;
+    track: string;
+  };
   states: { notFound: string; backToMarket: string; errorTitle: string; errorDescription: string; retry: string };
   portfolio: PortfolioDictionary;
   noSector: string;

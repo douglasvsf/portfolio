@@ -1,4 +1,4 @@
-import { getCryptoQuotes, isCoingeckoConfigured } from "./coingecko";
+import { getCryptoQuotes, getTopCoins, isCoingeckoConfigured } from "./coingecko";
 
 jest.mock("server-only", () => ({}));
 
@@ -45,6 +45,14 @@ describe("CoinGecko", () => {
     expect(missing).toEqual(["NAOEXISTE"]);
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("1 item(s) descartado(s)"));
     warn.mockRestore();
+  });
+
+  it("lista completa para o Mercado: ranking, valor de mercado e volume; sem chave, null", async () => {
+    global.fetch = jest.fn(async () => new Response(JSON.stringify([coin("bitcoin", "btc", 438526, { market_cap: 8.8e12, market_cap_rank: 1, total_volume: 1.9e11 })]))) as unknown as typeof fetch;
+    await expect(getTopCoins()).resolves.toEqual([expect.objectContaining({ symbol: "btc", market_cap: 8.8e12, market_cap_rank: 1, total_volume: 1.9e11 })]);
+
+    delete process.env.COINGECKO_API_KEY;
+    await expect(getTopCoins()).resolves.toBeNull();
   });
 
   it("CoinGecko fora do ar ou respondendo lixo: preços viram `missing`, sem derrubar a carteira", async () => {

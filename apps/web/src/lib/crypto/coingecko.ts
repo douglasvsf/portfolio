@@ -29,7 +29,12 @@ const coinSchema = z.object({
   image: z.string().nullable().catch(null),
   current_price: z.number().nonnegative(),
   price_change_percentage_24h: z.number().nullable().catch(null),
+  market_cap: z.number().nullable().catch(null),
+  market_cap_rank: z.number().int().positive().nullable().catch(null),
+  total_volume: z.number().nullable().catch(null),
 });
+
+export type Coin = z.output<typeof coinSchema>;
 
 const marketsSchema = resilientArray(coinSchema, "coingecko /coins/markets");
 
@@ -64,21 +69,30 @@ async function fetchMarkets(apiKey: string) {
 }
 
 /**
+ * As 250 maiores moedas por valor de mercado, em reais (já em cache). Sem
+ * chave ou com a CoinGecko fora do ar, `null` — quem chama decide o que
+ * esconder. Serve a carteira e a seção de cripto do Mercado.
+ */
+export async function getTopCoins(): Promise<Coin[] | null> {
+  const apiKey = process.env.COINGECKO_API_KEY;
+  if (!apiKey) return null;
+  try {
+    return await fetchMarkets(apiKey);
+  } catch (error) {
+    if (error instanceof CoingeckoError || error instanceof ContractError) return null;
+    throw error;
+  }
+}
+
+/**
  * Cotação por símbolo (BTC, ETH…). Símbolos repetidos ficam com a moeda de
  * maior valor de mercado — a lista já vem nessa ordem. Sem chave ou com a
  * CoinGecko fora do ar, tudo volta em `missing` (a tela mostra pelo custo).
  */
 export async function getCryptoQuotes(symbols: readonly string[]): Promise<{ quotes: Record<string, MarketQuote>; missing: string[] }> {
-  const apiKey = process.env.COINGECKO_API_KEY;
-  if (!apiKey || symbols.length === 0) return { quotes: {}, missing: [...symbols] };
-
-  let coins: z.output<typeof marketsSchema>;
-  try {
-    coins = await fetchMarkets(apiKey);
-  } catch (error) {
-    if (error instanceof CoingeckoError || error instanceof ContractError) return { quotes: {}, missing: [...symbols] };
-    throw error;
-  }
+  if (symbols.length === 0) return { quotes: {}, missing: [] };
+  const coins = await getTopCoins();
+  if (!coins) return { quotes: {}, missing: [...symbols] };
 
   const wanted = new Set(symbols);
   const quotes: Record<string, MarketQuote> = {};

@@ -13,6 +13,7 @@ import { MarketTable } from "@/components/stocks/market-table";
 import { MoversChart } from "@/components/stocks/movers-chart";
 import { SectorChart } from "@/components/stocks/sector-chart";
 import { ChangeBadge } from "@/components/stocks/change-badge";
+import { CryptoSection, CryptoSectionSkeleton } from "@/components/stocks/crypto-section";
 
 /** Universo usado nos painéis: as ações mais negociadas do dia (evita papéis sem liquidez). */
 const LIQUID_UNIVERSE = 100;
@@ -103,6 +104,11 @@ export default async function MarketPage({ searchParams }: PageProps<"/stocks">)
           </CardContent>
         </Card>
       </section>
+
+      {/* Streaming: a seção de cripto (CoinGecko) não segura o resto da página. */}
+      <Suspense fallback={<CryptoSectionSkeleton />}>
+        <CryptoSection dict={dict} locale={locale} />
+      </Suspense>
 
       <section className="flex flex-col gap-4">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
