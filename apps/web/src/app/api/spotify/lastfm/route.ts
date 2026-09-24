@@ -5,7 +5,7 @@ import { getUserInfo } from "@/lib/lastfm/endpoints";
 import { SpotifyApiError } from "@/lib/spotify/errors";
 import { requestOrigin } from "@/lib/spotify/request-origin";
 import { DEMO_COOKIE, LASTFM_COOKIE, demoCookieOptions } from "@/lib/spotify/session";
-import { isValidLastfmUsername } from "@/lib/spotify/source";
+import { isValidLastfmUsername } from "@/lib/lastfm/username";
 
 /**
  * Entra no dashboard com um usuário do Last.fm: /api/spotify/lastfm?username=xxx.

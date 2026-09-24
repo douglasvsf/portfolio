@@ -123,6 +123,7 @@ export function musicProfile(artists: SpotifyArtist[], tracks: SpotifyTrack[]): 
   const dated = tracks.filter((track) => releaseYear(track) !== null);
   const byRelease = [...dated].sort((a, b) => (a.album.release_date ?? "").localeCompare(b.album.release_date ?? ""));
   const timed = tracks.filter((track) => track.duration_ms > 0);
+  const explicitKnown = tracks.filter((track) => track.explicit !== undefined);
 
   return {
     artistsAnalyzed: artists.length,
@@ -132,7 +133,7 @@ export function musicProfile(artists: SpotifyArtist[], tracks: SpotifyTrack[]): 
     topDecade: decades.reduce<DecadeSlice | null>((best, slice) => (!best || slice.tracks > best.tracks ? slice : best), null),
     newestTrack: byRelease.at(-1) ?? null,
     oldestTrack: byRelease[0] ?? null,
-    explicitShare: tracks.length ? tracks.filter((track) => track.explicit).length / tracks.length : null,
+    explicitShare: explicitKnown.length ? explicitKnown.filter((track) => track.explicit).length / explicitKnown.length : null,
     topArtist: artists[0] ?? null,
     topTrack: tracks[0] ?? null,
     averageTrackMs: timed.length ? timed.reduce((sum, track) => sum + track.duration_ms, 0) / timed.length : null,

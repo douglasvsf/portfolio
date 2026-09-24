@@ -114,6 +114,11 @@ describe("musicProfile", () => {
     expect(profile.topDecade?.decade).toBe("2010s");
   });
 
+  it("não inventa % de explícitas quando a fonte não informa (Last.fm)", () => {
+    const unknown = { ...track("1", ["a"]), explicit: undefined };
+    expect(musicProfile([], [unknown]).explicitShare).toBeNull();
+  });
+
   it("lida com respostas vazias", () => {
     expect(musicProfile([], [])).toEqual({
       artistsAnalyzed: 0,
