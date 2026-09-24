@@ -1,14 +1,15 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
-import { AlertCircle, ArrowLeft, ArrowRight, BarChart3, History, ListMusic, Mic2, Play, type LucideIcon } from "@godzilla/icons";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@godzilla/ui";
+import { AlertCircle, ArrowRight, BarChart3, History, ListMusic, Mic2, Play, type LucideIcon } from "@godzilla/icons";
+import { AppHeader, Card, CardContent, CardDescription, CardHeader, CardTitle, appContainerClassName, cn } from "@godzilla/ui";
 import { routes } from "@/config/spotify";
 import { mockCurrentlyPlaying, mockTopArtists, mockTopTracks } from "@/lib/spotify/mock-data";
 import { DEMO_COOKIE, SESSION_COOKIE } from "@/lib/spotify/session";
 import { artistNames, formatDuration, genreDistribution, normalizeNowPlaying } from "@/lib/spotify/transform";
 import { GenreChart } from "@/components/spotify/charts/genre-chart";
 import { CoverArt } from "@/components/spotify/common/cover-art";
-import { Brand } from "@/components/spotify/layout/brand";
+import { BackToPortfolio } from "@/components/layout/back-to-portfolio";
+import { SpotifyBrand } from "@/components/spotify/layout/spotify-brand";
 
 const loginErrors: Record<string, string> = {
   access_denied: "You cancelled the Spotify authorization. Connect again whenever you're ready.",
@@ -46,18 +47,15 @@ export default async function LandingPage({ searchParams }: PageProps<"/spotify"
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-4 px-4">
-        <Brand />
-        <Link href="/" className="inline-flex items-center gap-1.5 text-body-sm text-muted-foreground transition-colors hover:text-primary">
-          <ArrowLeft className="size-(--size-icon-sm)" aria-hidden="true" />
-          <span className="hidden sm:inline">Back to portfolio</span>
-          <span className="sm:hidden">Portfolio</span>
-        </Link>
-      </header>
+      <AppHeader
+        skipToContent={{ label: "Skip to content" }}
+        brand={<SpotifyBrand href={routes.landing} />}
+        actions={<BackToPortfolio label="Back to portfolio" shortLabel="Portfolio" />}
+      />
 
       <main id="content" className="flex flex-1 flex-col">
-        <section className="bg-aura relative px-4 pb-16 pt-12 sm:pt-20">
-          <div className="mx-auto flex max-w-6xl flex-col items-center gap-6 text-center">
+        <section className="bg-aura relative pb-16 pt-12 sm:pt-20">
+          <div className={cn(appContainerClassName, "flex flex-col items-center gap-6 text-center")}>
             {errorMessage && (
               <p role="alert" className="flex max-w-xl items-start gap-2 rounded-md border border-warning/40 bg-warning/10 px-4 py-3 text-left text-body-sm">
                 <AlertCircle className="mt-0.5 size-(--size-icon-sm) shrink-0 text-warning" aria-hidden="true" />
@@ -93,7 +91,7 @@ export default async function LandingPage({ searchParams }: PageProps<"/spotify"
           </div>
 
           {/* Prévia do dashboard (dados do demo) */}
-          <div className="mx-auto mt-14 grid max-w-5xl gap-4 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]" aria-label="Dashboard preview">
+          <div className={cn(appContainerClassName, "mt-14 grid max-w-5xl gap-4 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]")} aria-label="Dashboard preview">
             <Card className="shadow-glow">
               <CardHeader>
                 <CardTitle>Genre Distribution</CardTitle>
@@ -134,8 +132,8 @@ export default async function LandingPage({ searchParams }: PageProps<"/spotify"
           </div>
         </section>
 
-        <section className="px-4 py-16" aria-labelledby="features-title">
-          <div className="mx-auto max-w-6xl">
+        <section className="py-16" aria-labelledby="features-title">
+          <div className={appContainerClassName}>
             <h2 id="features-title" className="mb-8 text-center text-h3 font-bold">
               Everything the Spotify API can tell you
             </h2>
@@ -157,7 +155,7 @@ export default async function LandingPage({ searchParams }: PageProps<"/spotify"
           </div>
         </section>
 
-        <section className="px-4 pb-20">
+        <section className={cn(appContainerClassName, "pb-20")}>
           <Card className="bg-aura mx-auto flex max-w-4xl flex-col items-center gap-5 px-6 py-12 text-center">
             <h2 className="text-h3 font-bold">Connect your Spotify</h2>
             <p className="max-w-md text-muted-foreground">See your own top artists, tracks and genres in seconds — or explore with demo data first.</p>

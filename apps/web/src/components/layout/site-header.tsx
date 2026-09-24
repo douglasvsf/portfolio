@@ -1,3 +1,4 @@
+import { AppBrand, AppHeader, appNavLinkClassName } from "@godzilla/ui";
 import type { LinkItem, SystemsMenu as SystemsMenuContent } from "@/content/types";
 import type { Locale } from "@/i18n/config";
 import { LanguageSwitcher } from "./language-switcher";
@@ -27,33 +28,20 @@ export function SiteHeader({
   contentId = "content",
 }: SiteHeaderProps) {
   return (
-    <header className="sticky top-0 z-(--z-sticky) border-b border-border bg-background/80 backdrop-blur">
-      <a
-        href={`#${contentId}`}
-        className="sr-only rounded-md bg-primary px-4 py-2 font-mono text-body-sm text-primary-foreground focus:not-sr-only focus:absolute focus:left-4 focus:top-3"
-      >
-        {skipToContent}
-      </a>
-
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-6">
-        <a href={brandHref} className="flex items-center gap-2 font-mono text-body-sm font-semibold tracking-widest">
-          <span className="size-2 animate-pulse-slow rounded-full bg-primary shadow-glow-sm" aria-hidden="true" />
-          {brand}
-        </a>
-
-        <div className="flex items-center gap-6">
-          <nav className="hidden gap-6 whitespace-nowrap font-mono text-body-sm text-muted-foreground lg:flex xl:gap-8">
-            {links.map((link) => (
-              <a key={link.href} href={link.href} className="transition-colors hover:text-primary">
-                {link.label}
-              </a>
-            ))}
-            <SystemsMenu {...systems} />
-          </nav>
-
-          <LanguageSwitcher locale={locale} />
-        </div>
-      </div>
-    </header>
+    <AppHeader
+      skipToContent={{ label: skipToContent, href: `#${contentId}` }}
+      brand={<AppBrand href={brandHref}>{brand}</AppBrand>}
+      nav={
+        <nav className="hidden gap-6 whitespace-nowrap font-mono text-body-sm text-muted-foreground lg:flex xl:gap-8">
+          {links.map((link) => (
+            <a key={link.href} href={link.href} className={appNavLinkClassName}>
+              {link.label}
+            </a>
+          ))}
+          <SystemsMenu {...systems} />
+        </nav>
+      }
+      actions={<LanguageSwitcher locale={locale} />}
+    />
   );
 }

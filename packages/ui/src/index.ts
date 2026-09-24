@@ -23,6 +23,7 @@ export * from "./molecules/search-input";
 export * from "./molecules/section-heading";
 
 // Organisms
+export * from "./organisms/app-shell";
 export * from "./organisms/card";
 export * from "./organisms/chart";
 export * from "./organisms/dialog";

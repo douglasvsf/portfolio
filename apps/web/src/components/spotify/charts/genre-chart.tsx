@@ -10,8 +10,8 @@ const colors = [
   "hsl(var(--chart-3))",
   "hsl(var(--chart-4))",
   "hsl(var(--chart-5))",
-  "hsl(141 40% 30%)",
-  "hsl(145 50% 75%)",
+  "hsl(var(--chart-1) / 0.5)",
+  "hsl(var(--chart-2) / 0.5)",
   "hsl(var(--muted-foreground))",
 ];
 

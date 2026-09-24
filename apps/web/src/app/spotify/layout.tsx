@@ -1,6 +1,6 @@
-import type { Metadata, Viewport } from "next";
+import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { I18nProvider } from "@godzilla/ui";
+import { AppFooter, I18nProvider, appNavLinkClassName } from "@godzilla/ui";
 import "../globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -17,21 +17,21 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image", title, description },
 };
 
-export const viewport: Viewport = { themeColor: "#0B0B0B", colorScheme: "dark" };
-
 export default function SpotifyRootLayout({ children }: LayoutProps<"/spotify">) {
   return (
-    <html lang="en" className={`dark theme-spotify ${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+    <html lang="en" className={`dark ${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
         <I18nProvider locale="en-US">
           {children}
-          <footer className="border-t border-border px-4 py-6 text-center text-caption text-muted-foreground">
-            Data provided by{" "}
-            <a href="https://www.spotify.com" className="text-foreground underline-offset-4 hover:underline" rel="noreferrer" target="_blank">
-              Spotify
-            </a>
-            . GODZILLA Spotify Stats is an independent project, not affiliated with or endorsed by Spotify.
-          </footer>
+          <AppFooter
+            aside={
+              <a href="https://www.spotify.com" target="_blank" rel="noreferrer" className={appNavLinkClassName}>
+                Data provided by Spotify
+              </a>
+            }
+          >
+            GODZILLA Spotify Stats is an independent project, not affiliated with or endorsed by Spotify.
+          </AppFooter>
         </I18nProvider>
       </body>
     </html>

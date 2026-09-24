@@ -18,7 +18,7 @@ Live at **`/spotify`** in the portfolio (same deploy as the site): <https://port
 
 - **Product:** landing page → Spotify OAuth → dashboard with Overview, Top Artists, Top Tracks and Recently Played.
 - **Stack:** Next.js (App Router) and nothing else in production. No database, no Redis, no separate server. Sessions are encrypted cookies.
-- **UI:** built with the portfolio's own Design System (`@godzilla/ui`, shadcn/ui on Radix + Tailwind), with a Spotify-inspired *skin*. It uses the same components with different tokens.
+- **UI:** built with the portfolio's own Design System (`@godzilla/ui`, shadcn/ui on Radix + Tailwind). It uses the same palette and the same `AppHeader`/`AppFooter` shell as the portfolio and Kaiju Stocks.
 
 ## Features
 
@@ -51,7 +51,7 @@ apps/web/src/
 │   │   ├── layout.tsx            # own root layout (theme, SEO, attribution)
 │   │   ├── page.tsx              # landing page
 │   │   ├── actions.ts            # Server Action: logout / exit demo
-│   │   ├── spotify.css           # Design System token "skin"
+│   │   ├── spotify.css           # app-specific effects (aura, equalizer)
 │   │   └── (app)/                # authenticated area (session or demo)
 │   │       ├── layout.tsx        # header + navigation + auth guard
 │   │       ├── dashboard/        # Overview   (page + loading skeleton)

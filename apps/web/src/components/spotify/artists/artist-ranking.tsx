@@ -46,7 +46,7 @@ export function ArtistRanking({ artists }: { artists: SpotifyArtist[] }) {
               )}
             >
               {index === 0 && <div className="bg-aura pointer-events-none absolute inset-0" aria-hidden="true" />}
-              <span className={cn("relative font-mono text-h3 font-bold", index === 0 ? "text-neon" : "text-muted-foreground")}>
+              <span className={cn("relative font-mono text-h3 font-bold", index === 0 ? "text-primary" : "text-muted-foreground")}>
                 #{index + 1}
               </span>
               <CoverArt images={artist.images} seed={artist.id} alt={artist.name} size={112} variant="artist" className="relative" />

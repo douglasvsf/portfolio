@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
-import { I18nProvider } from "@godzilla/ui";
-import { ArrowLeft, TrendingUp } from "@godzilla/icons";
+import { AppBrand, AppFooter, AppHeader, I18nProvider, appContainerClassName, appNavLinkClassName, cn } from "@godzilla/ui";
+import { BackToPortfolio } from "@/components/layout/back-to-portfolio";
 import "../globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -16,33 +16,31 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/stocks">) {
   return (
     <html lang="pt-BR" className={`dark ${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="flex min-h-full flex-col bg-grid">
+      <body className="flex min-h-full flex-col">
         <I18nProvider locale="pt-BR">
-          <header className="sticky top-0 z-(--z-sticky) border-b border-border bg-background/85 backdrop-blur">
-            <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-4">
-              <Link href="/stocks" className="flex items-center gap-2 font-mono text-body-sm font-semibold">
-                <TrendingUp className="size-(--size-icon-md) text-primary" aria-hidden="true" />
-                <span>
-                  kaiju<span className="text-primary">/stocks</span>
-                </span>
-              </Link>
-              <Link
-                href="/"
-                className="inline-flex items-center gap-1.5 font-mono text-body-sm text-muted-foreground transition-colors hover:text-primary"
-              >
-                <ArrowLeft className="size-(--size-icon-sm)" aria-hidden="true" />
-                Voltar ao portfólio
-              </Link>
-            </div>
-          </header>
-          <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">{children}</main>
-          <footer className="border-t border-border py-6 text-center text-caption text-muted-foreground">
-            Dados:{" "}
-            <a href="https://brapi.dev" className="underline-offset-4 hover:text-foreground hover:underline">
-              brapi.dev
-            </a>{" "}
-            · Cotações com atraso de até 15 minutos. Não é recomendação de investimento.
-          </footer>
+          <AppHeader
+            skipToContent={{ label: "Pular para o conteúdo" }}
+            brand={
+              <AppBrand asChild>
+                <Link href="/stocks">
+                  KAIJU<span className="text-primary">/STOCKS</span>
+                </Link>
+              </AppBrand>
+            }
+            actions={<BackToPortfolio label="Voltar ao portfólio" shortLabel="Portfólio" />}
+          />
+          <main id="content" className={cn(appContainerClassName, "flex-1 py-8")}>
+            {children}
+          </main>
+          <AppFooter
+            aside={
+              <a href="https://brapi.dev" target="_blank" rel="noreferrer" className={appNavLinkClassName}>
+                Dados: brapi.dev
+              </a>
+            }
+          >
+            Cotações com atraso de até 15 minutos. Não é recomendação de investimento.
+          </AppFooter>
         </I18nProvider>
       </body>
     </html>
