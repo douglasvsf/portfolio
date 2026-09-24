@@ -37,6 +37,8 @@ export {
   Plus,
   Search,
   Sun,
+  TrendingDown,
+  TrendingUp,
   User,
   X,
 } from "lucide-react";
