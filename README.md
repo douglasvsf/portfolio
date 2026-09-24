@@ -1,16 +1,48 @@
 # Godzilla — Portfolio
 
-Portfolio pessoal full stack, com identidade visual dark/tecnológica inspirada em
-kaiju. Este repositório é a base do projeto: frontend e backend funcionando
-localmente, prontos para evoluir.
+[![CI](https://github.com/douglasvsf/portfolio/actions/workflows/ci.yml/badge.svg)](https://github.com/douglasvsf/portfolio/actions/workflows/ci.yml)
+![Lighthouse a11y](https://img.shields.io/badge/Lighthouse%20a11y-100-brightgreen)
+![Lighthouse SEO](https://img.shields.io/badge/Lighthouse%20SEO-100-brightgreen)
+![Cobertura](https://img.shields.io/badge/cobertura%20(lib)-%E2%89%A580%25-brightgreen)
+![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=nextdotjs)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
 
-> Estágio atual: fundação do projeto — estrutura, identidade visual, testes
-> (Jest + Cypress) e o conteúdo da homepage (skills, projetos, experiência)
-> persistido em MongoDB e servido pela API — mais um Design System interno
-> completo (`@godzilla/ui`: Atomic Design, tokens, dark mode, i18n, a11y,
-> Storybook) construído no mesmo monorepo, ainda não consumido pela homepage.
-> Sem autenticação, painel admin ou outras funcionalidades de negócio ainda —
-> isso vem em etapas futuras.
+Portfolio pessoal full stack, com identidade visual dark/tecnológica inspirada em
+kaiju — **https://douglas-szapak.vercel.app**
+
+Além do portfólio (pt-BR / en-US / es-ES), o mesmo deploy publica produtos
+completos, todos construídos sobre o Design System interno `@godzilla/ui`:
+
+| Produto | Rota | O que demonstra |
+|---|---|---|
+| **GODZILLA Spotify Stats** | `/spotify` | OAuth (Authorization Code + PKCE) no servidor, sessão em cookie cifrado, integração com Spotify e Last.fm, modo vitrine e demo — ver [docs](docs/godzilla-spotify-stats.md) |
+| **Kaiju Stocks** | `/stocks` | Cotações da B3 (brapi) com Server Components, cache e gráficos |
+| **Design System** | `/design-system` | Storybook do `@godzilla/ui` (Atomic Design, tokens, a11y, i18n) |
+
+## Qualidade e CI
+
+Todo push na `main` e todo PR passam pelo [pipeline](.github/workflows/ci.yml),
+em três jobs paralelos:
+
+| Job | O que verifica | Reprova se… |
+|---|---|---|
+| **Lint · Typecheck** | ESLint e `tsc` em todos os pacotes (o web gera os tipos de rota do Next antes) | houver qualquer erro |
+| **Unit tests · Coverage** | Vitest (Design System, com axe) e Jest (API e web) | um teste falhar ou a cobertura da camada de lógica (`lib`, `i18n`, `content`) cair abaixo de 80% |
+| **Build · E2E · Lighthouse** | build de produção → Cypress contra `next start` → Lighthouse CI em 3 páginas | um fluxo E2E quebrar, ou acessibilidade/SEO < 100, ou boas práticas < 95 (performance só avisa) |
+
+- O resumo de cobertura aparece na página de cada execução; relatórios, prints de
+  falha do Cypress e os links do Lighthouse ficam como artefatos.
+- Testes E2E não dependem das credenciais da Spotify (usam o modo demo) e
+  repetem até 2× em caso de instabilidade de API externa.
+- O **Dependabot** abre um PR semanal agrupado com as atualizações de dependências.
+
+Para rodar o mesmo pipeline localmente:
+
+```bash
+pnpm lint && pnpm typecheck && pnpm test
+pnpm --filter web test:coverage
+pnpm build && pnpm --filter web test:e2e:ci
+```
 
 ## Stack
 

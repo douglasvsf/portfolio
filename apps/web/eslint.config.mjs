@@ -14,6 +14,9 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Storybook gerado no build (pnpm design-system:build) — não é código-fonte.
     "public/design-system/**",
+    // Relatórios gerados (cobertura de testes, Lighthouse CI).
+    "coverage/**",
+    ".lighthouseci/**",
   ]),
 ]);
 

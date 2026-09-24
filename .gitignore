@@ -58,3 +58,6 @@ apps/web/cypress/downloads/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Lighthouse CI (relatórios locais)
+.lighthouseci/

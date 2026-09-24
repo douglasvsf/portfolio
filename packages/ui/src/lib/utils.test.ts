@@ -11,6 +11,7 @@ describe("cn", () => {
   it("continua resolvendo conflitos do mesmo grupo", () => {
     expect(cn("text-body", "text-body-sm")).toBe("text-body-sm");
     expect(cn("text-muted-foreground", "text-primary")).toBe("text-primary");
-    expect(cn("px-2", false && "px-8", "px-4")).toBe("px-4");
+    const disabled: boolean = false;
+    expect(cn("px-2", disabled && "px-8", "px-4")).toBe("px-4");
   });
 });
