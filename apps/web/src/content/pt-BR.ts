@@ -16,7 +16,7 @@ export const ptBR: SiteContent = {
       projects: "Projetos",
       experience: "Experiência",
       contact: "Contato",
-      systems: "Sistemas",
+      systems: "Produtos",
     }),
   },
   hero: {
@@ -175,9 +175,9 @@ export const ptBR: SiteContent = {
     links: contactLinks("E-mail"),
   },
   systems: {
-    title: "Sistemas",
-    description: "Produtos que construí e publiquei junto com este site — é só abrir e usar.",
-    openLabel: "Abrir sistema",
+    title: "Produtos",
+    description: "Construí e publiquei junto com este site — é só abrir e usar.",
+    openLabel: "Abrir",
     items: systemItems({
       spotify: "Dashboard de estatísticas musicais com OAuth da Spotify, Last.fm e vitrine ao vivo: top artistas, músicas, gêneros e o que está tocando agora.",
       stocks: "Cotações da B3 em tempo quase real: maiores altas e quedas, volume por setor, busca em todas as ações e histórico com gráficos.",

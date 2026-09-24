@@ -16,7 +16,7 @@ export const esES: SiteContent = {
       projects: "Proyectos",
       experience: "Experiencia",
       contact: "Contacto",
-      systems: "Sistemas",
+      systems: "Productos",
     }),
   },
   hero: {
@@ -175,9 +175,9 @@ export const esES: SiteContent = {
     links: contactLinks("Correo"),
   },
   systems: {
-    title: "Sistemas",
-    description: "Productos que construí y publiqué junto con este sitio: ábrelos y pruébalos.",
-    openLabel: "Abrir sistema",
+    title: "Productos",
+    description: "Construidos y publicados junto con este sitio: ábrelos y pruébalos.",
+    openLabel: "Abrir",
     items: systemItems({
       spotify: "Dashboard de estadísticas musicales con OAuth de Spotify, Last.fm y vitrina en vivo: artistas, canciones, géneros y lo que suena ahora.",
       stocks: "Cotizaciones de la B3 casi en tiempo real: mayores alzas y bajas, volumen por sector, búsqueda en todas las acciones e historial con gráficos.",
