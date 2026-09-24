@@ -3,9 +3,11 @@
 import { AlertTriangle } from "@godzilla/icons";
 import { Button, Card } from "@godzilla/ui";
 import { useSpotifyDictionary } from "@/content/spotify";
+import { useReportError } from "@/lib/observability/use-report-error";
 
 /** Última rede de proteção: mensagem amigável, sem stack trace, com opção de tentar de novo. */
-export default function DashboardError({ retry }: { error: Error & { digest?: string }; retry: () => void }) {
+export default function DashboardError({ error, retry }: { error: Error & { digest?: string }; retry: () => void }) {
+  useReportError(error);
   const { dict } = useSpotifyDictionary();
   return (
     <Card role="alert" className="mx-auto flex w-full max-w-xl flex-col items-center gap-3 px-6 py-10 text-center">
