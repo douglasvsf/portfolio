@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@godzilla/ui";
-import { TIME_RANGES } from "@/config/spotify";
+import type { SpotifyDictionary } from "@/content/spotify";
 import { formatDuration, releaseYear, type MusicProfile as Profile } from "@/lib/spotify/transform";
 import type { TimeRange } from "@/lib/spotify/types";
 
@@ -7,29 +7,30 @@ import type { TimeRange } from "@/lib/spotify/types";
  * "Your Music Profile" — números derivados exclusivamente das respostas da
  * API. Linhas sem dado (ex.: gêneros no Development Mode da Spotify) somem.
  */
-export function MusicProfile({ profile, range }: { profile: Profile; range: TimeRange }) {
+export function MusicProfile({ profile, range, dict }: { profile: Profile; range: TimeRange; dict: SpotifyDictionary }) {
+  const t = dict.profile;
   const newestYear = profile.newestTrack ? releaseYear(profile.newestTrack) : null;
   const oldestYear = profile.oldestTrack ? releaseYear(profile.oldestTrack) : null;
 
   const rows: { label: string; value: string | null }[] = [
-    { label: "Artists analyzed", value: String(profile.artistsAnalyzed) },
-    { label: "Tracks analyzed", value: String(profile.tracksAnalyzed) },
-    { label: "Top artist", value: profile.topArtist?.name ?? null },
-    { label: "Top track", value: profile.topTrack?.name ?? null },
-    { label: "Most common genre", value: profile.topGenre },
-    { label: "Genres discovered", value: profile.genresDiscovered ? String(profile.genresDiscovered) : null },
-    { label: "Favourite era", value: profile.topDecade?.decade ?? null },
-    { label: "Newest release", value: newestYear ? `${profile.newestTrack?.name} (${newestYear})` : null },
-    { label: "Oldest release", value: oldestYear ? `${profile.oldestTrack?.name} (${oldestYear})` : null },
-    { label: "Explicit tracks", value: profile.explicitShare !== null ? `${Math.round(profile.explicitShare * 100)}%` : null },
-    { label: "Avg. track length", value: profile.averageTrackMs ? formatDuration(profile.averageTrackMs) : null },
+    { label: t.artistsAnalyzed, value: String(profile.artistsAnalyzed) },
+    { label: t.tracksAnalyzed, value: String(profile.tracksAnalyzed) },
+    { label: t.topArtist, value: profile.topArtist?.name ?? null },
+    { label: t.topTrack, value: profile.topTrack?.name ?? null },
+    { label: t.topGenre, value: profile.topGenre },
+    { label: t.genresDiscovered, value: profile.genresDiscovered ? String(profile.genresDiscovered) : null },
+    { label: t.favouriteEra, value: profile.topDecade?.decade ?? null },
+    { label: t.newestRelease, value: newestYear ? `${profile.newestTrack?.name} (${newestYear})` : null },
+    { label: t.oldestRelease, value: oldestYear ? `${profile.oldestTrack?.name} (${oldestYear})` : null },
+    { label: t.explicitTracks, value: profile.explicitShare !== null ? `${Math.round(profile.explicitShare * 100)}%` : null },
+    { label: t.averageLength, value: profile.averageTrackMs ? formatDuration(profile.averageTrackMs) : null },
   ];
 
   return (
     <Card data-testid="music-profile">
       <CardHeader>
-        <CardTitle>Your Music Profile</CardTitle>
-        <CardDescription>{TIME_RANGES[range].label}</CardDescription>
+        <CardTitle>{t.title}</CardTitle>
+        <CardDescription>{dict.ranges[range].label}</CardDescription>
       </CardHeader>
       <CardContent>
         <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">

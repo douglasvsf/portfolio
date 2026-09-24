@@ -3,41 +3,22 @@ import { cookies } from "next/headers";
 import { AlertCircle, ArrowRight, BarChart3, History, ListMusic, Mic2, Play, type LucideIcon } from "@godzilla/icons";
 import { AppHeader, Card, CardContent, CardDescription, CardHeader, CardTitle, appContainerClassName, cn } from "@godzilla/ui";
 import { routes } from "@/config/spotify";
+import { getSpotifyDictionary } from "@/content/spotify";
+import { getRequestLocale } from "@/i18n/request";
 import { mockCurrentlyPlaying, mockTopArtists, mockTopTracks } from "@/lib/spotify/mock-data";
 import { DEMO_COOKIE, SESSION_COOKIE } from "@/lib/spotify/session";
 import { isShowcaseAvailable } from "@/lib/spotify/source";
 import { isLastfmConfigured } from "@/lib/lastfm/client";
-import { LastfmForm } from "@/components/spotify/landing/lastfm-form";
 import { artistNames, formatDuration, genreDistribution, normalizeNowPlaying } from "@/lib/spotify/transform";
+import { BackToPortfolio } from "@/components/layout/back-to-portfolio";
+import { SystemLocaleSwitcher } from "@/components/layout/system-locale-switcher";
 import { GenreChart } from "@/components/spotify/charts/genre-chart";
 import { CoverArt } from "@/components/spotify/common/cover-art";
-import { BackToPortfolio } from "@/components/layout/back-to-portfolio";
+import { LastfmForm } from "@/components/spotify/landing/lastfm-form";
 import { SpotifyBrand } from "@/components/spotify/layout/spotify-brand";
 
-const loginErrors: Record<string, string> = {
-  access_denied: "You cancelled the Spotify authorization. Connect again whenever you're ready.",
-  state_mismatch: "The login request couldn't be verified. Please try connecting again.",
-  auth_failed: "We couldn't complete the Spotify login. Please try again.",
-  not_allowlisted:
-    "This Spotify account isn't allow-listed. The app runs in Spotify's Development Mode (limited to invited users) — try the demo instead.",
-  session_expired: "Your session ended. Connect Spotify again or explore the demo.",
-  not_configured: "Spotify login isn't configured on this deployment yet — explore the demo instead.",
-};
-
-/** Erros da entrada pelo Last.fm — exibidos junto do formulário. */
-const lastfmErrors: Record<string, string> = {
-  lastfm_not_found: "We couldn't find that Last.fm user. Check the spelling.",
-  lastfm_private: "This Last.fm profile is private.",
-  lastfm_unavailable: "Last.fm isn't responding right now. Try again in a moment.",
-  lastfm_not_configured: "Last.fm isn't configured on this deployment yet.",
-};
-
-const features: { icon: LucideIcon; title: string; description: string }[] = [
-  { icon: Mic2, title: "Top Artists", description: "Your most-played artists over the last 4 weeks, 6 months or year, with genres and links to Spotify." },
-  { icon: ListMusic, title: "Top Tracks", description: "A ranked list of your favourite songs with covers, albums and durations." },
-  { icon: History, title: "Recently Played", description: "A timeline of your last 50 plays, grouped by day in your own time zone." },
-  { icon: BarChart3, title: "Music Insights", description: "Genre distribution, artists across your top tracks and a live now-playing card." },
-];
+/** Ícones dos 4 destaques, na ordem de `landing.features` no dicionário. */
+const featureIcons: LucideIcon[] = [Mic2, ListMusic, History, BarChart3];
 
 const ctaPrimary =
   "inline-flex h-(--size-control-lg) items-center justify-center gap-2 rounded-full bg-primary px-6 font-semibold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
@@ -45,15 +26,19 @@ const ctaSecondary =
   "inline-flex h-(--size-control-lg) items-center justify-center gap-2 rounded-full border border-input px-6 font-semibold transition-colors hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
 export default async function LandingPage({ searchParams }: PageProps<"/spotify">) {
+  const locale = await getRequestLocale();
+  const dict = getSpotifyDictionary(locale);
+  const t = dict.landing;
+
   const error = (await searchParams).error;
-  const errorMessage = typeof error === "string" ? loginErrors[error] : undefined;
-  const lastfmError = typeof error === "string" ? lastfmErrors[error] : undefined;
+  const errorMessage = typeof error === "string" ? t.loginErrors[error] : undefined;
+  const lastfmError = typeof error === "string" ? t.lastfmErrors[error] : undefined;
   const showLastfm = isLastfmConfigured();
 
   const store = await cookies();
   const hasSession = Boolean(store.get(SESSION_COOKIE) || store.get(DEMO_COOKIE));
   // Com a vitrine configurada, o visitante vê as estatísticas reais do dono em vez do mock.
-  const exploreLabel = isShowcaseAvailable() ? "Explore Douglas's live stats" : "View Demo";
+  const exploreLabel = isShowcaseAvailable() ? t.exploreShowcase : t.viewDemo;
 
   // Prévia do dashboard com os dados do demo — o visitante vê o produto antes de conectar.
   const previewArtists = mockTopArtists("medium_term", 20);
@@ -63,9 +48,14 @@ export default async function LandingPage({ searchParams }: PageProps<"/spotify"
   return (
     <div className="flex flex-1 flex-col">
       <AppHeader
-        skipToContent={{ label: "Skip to content" }}
+        skipToContent={{ label: dict.common.skipToContent }}
         brand={<SpotifyBrand href={routes.landing} />}
-        actions={<BackToPortfolio label="Back to portfolio" shortLabel="Portfolio" />}
+        actions={
+          <div className="flex items-center gap-4 sm:gap-6">
+            <BackToPortfolio label={dict.common.backToPortfolio} />
+            <SystemLocaleSwitcher locale={locale} />
+          </div>
+        }
       />
 
       <main id="content" className="flex flex-1 flex-col">
@@ -77,45 +67,46 @@ export default async function LandingPage({ searchParams }: PageProps<"/spotify"
                 {errorMessage}
               </p>
             )}
-            <span className="rounded-full border border-primary/40 bg-primary/10 px-3 py-1 font-mono text-caption text-primary">
-              Spotify Web API · OAuth PKCE · Next.js
-            </span>
+            <span className="rounded-full border border-primary/40 bg-primary/10 px-3 py-1 font-mono text-caption text-primary">{t.badge}</span>
             <h1 className="text-h1 font-extrabold leading-none tracking-tight sm:text-display">
-              YOUR MUSIC.
+              {t.titleTop}
               <br />
-              <span className="text-primary text-glow">YOUR STATS.</span>
+              <span className="text-primary text-glow">{t.titleBottom}</span>
             </h1>
-            <p className="max-w-xl text-body-lg text-muted-foreground">Discover your Spotify listening habits.</p>
+            <p className="max-w-xl text-body-lg text-muted-foreground">{t.subtitle}</p>
             <div className="flex flex-col gap-3 sm:flex-row">
               {hasSession ? (
                 <Link href={routes.dashboard} className={ctaPrimary}>
-                  Open dashboard
+                  {t.openDashboard}
                   <ArrowRight className="size-(--size-icon-sm)" aria-hidden="true" />
                 </Link>
               ) : (
                 <a href={routes.login} className={ctaPrimary}>
                   <Play className="size-(--size-icon-sm) fill-current" aria-hidden="true" />
-                  Connect Spotify
+                  {t.connect}
                 </a>
               )}
               <a href={routes.demo} className={ctaSecondary} data-testid="view-demo">
                 {exploreLabel}
               </a>
             </div>
-            <p className="text-caption text-muted-foreground">Read-only access · we never post, follow or change anything on your account.</p>
+            <p className="text-caption text-muted-foreground">{t.readOnly}</p>
             {showLastfm && (
               <a href="#lastfm" className="text-body-sm text-muted-foreground underline-offset-4 hover:text-primary hover:underline">
-                Not invited? Use your Last.fm username →
+                {t.lastfmHint}
               </a>
             )}
           </div>
 
           {/* Prévia do dashboard (dados do demo) */}
-          <div className={cn(appContainerClassName, "mt-14 grid max-w-5xl gap-4 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]")} aria-label="Dashboard preview">
+          <div
+            className={cn(appContainerClassName, "mt-14 grid max-w-5xl grid-cols-1 gap-4 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]")}
+            aria-label={t.previewLabel}
+          >
             <Card className="shadow-glow">
               <CardHeader>
-                <CardTitle>Genre Distribution</CardTitle>
-                <CardDescription>Derived from your top artists</CardDescription>
+                <CardTitle>{t.previewGenres}</CardTitle>
+                <CardDescription>{t.previewGenresDescription}</CardDescription>
               </CardHeader>
               <CardContent>
                 <GenreChart data={genreDistribution(previewArtists, 6)} />
@@ -126,14 +117,14 @@ export default async function LandingPage({ searchParams }: PageProps<"/spotify"
                 <Card className="flex items-center gap-4 p-5">
                   <CoverArt images={[]} seed={previewNow.track.album.id} alt="" size={64} />
                   <div className="min-w-0">
-                    <p className="text-overline font-semibold uppercase tracking-widest text-primary">Now playing</p>
+                    <p className="text-overline font-semibold uppercase tracking-widest text-primary">{dict.nowPlaying.label}</p>
                     <p className="truncate font-semibold">{previewNow.track.name}</p>
                     <p className="truncate text-body-sm text-muted-foreground">{artistNames(previewNow.track)}</p>
                   </div>
                 </Card>
               )}
               <Card className="p-3">
-                <p className="px-2 pb-2 pt-1 text-overline font-semibold uppercase tracking-widest text-muted-foreground">Top tracks</p>
+                <p className="px-2 pb-2 pt-1 text-overline font-semibold uppercase tracking-widest text-muted-foreground">{dict.tracks.title}</p>
                 <ol>
                   {previewTracks.map((track, index) => (
                     <li key={track.id} className="flex items-center gap-3 rounded-md px-2 py-2">
@@ -153,43 +144,42 @@ export default async function LandingPage({ searchParams }: PageProps<"/spotify"
         </section>
 
         {showLastfm && (
-          <section className={cn(appContainerClassName, "pt-4")} aria-label="Use Last.fm">
-            <LastfmForm error={lastfmError} />
+          <section className={cn(appContainerClassName, "pt-4")} aria-label={dict.lastfmForm.sectionLabel}>
+            <LastfmForm error={lastfmError} dict={dict} />
           </section>
         )}
 
         <section className="py-16" aria-labelledby="features-title">
           <div className={appContainerClassName}>
             <h2 id="features-title" className="mb-8 text-center text-h3 font-bold">
-              Everything the Spotify API can tell you
+              {t.featuresTitle}
             </h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {features.map(({ icon: Icon, title, description }) => (
-                <Card key={title} className="flex flex-col gap-3 p-5 transition-colors hover:border-primary/40">
-                  <span className="flex size-10 items-center justify-center rounded-md bg-primary/15 text-primary">
-                    <Icon className="size-(--size-icon-md)" aria-hidden="true" />
-                  </span>
-                  <h3 className="font-semibold">{title}</h3>
-                  <p className="text-body-sm text-muted-foreground">{description}</p>
-                </Card>
-              ))}
+              {t.features.map(({ title, description }, index) => {
+                const Icon = featureIcons[index] ?? BarChart3;
+                return (
+                  <Card key={title} className="flex flex-col gap-3 p-5 transition-colors hover:border-primary/40">
+                    <span className="flex size-10 items-center justify-center rounded-md bg-primary/15 text-primary">
+                      <Icon className="size-(--size-icon-md)" aria-hidden="true" />
+                    </span>
+                    <h3 className="font-semibold">{title}</h3>
+                    <p className="text-body-sm text-muted-foreground">{description}</p>
+                  </Card>
+                );
+              })}
             </div>
-            <p className="mx-auto mt-6 max-w-2xl text-center text-caption text-muted-foreground">
-              Stats are limited to what the APIs provide: top items for three time ranges and your recent plays. Spotify
-              doesn&apos;t send genres to apps like this one — they come from Last.fm tags when available. This is not a
-              Wrapped replacement.
-            </p>
+            <p className="mx-auto mt-6 max-w-2xl text-center text-caption text-muted-foreground">{t.limitations}</p>
           </div>
         </section>
 
         <section className={cn(appContainerClassName, "pb-20")}>
           <Card className="bg-aura mx-auto flex max-w-4xl flex-col items-center gap-5 px-6 py-12 text-center">
-            <h2 className="text-h3 font-bold">Connect your Spotify</h2>
-            <p className="max-w-md text-muted-foreground">See your own top artists, tracks and genres in seconds — or explore without logging in first.</p>
+            <h2 className="text-h3 font-bold">{t.ctaTitle}</h2>
+            <p className="max-w-md text-muted-foreground">{t.ctaDescription}</p>
             <div className="flex flex-col gap-3 sm:flex-row">
               {!hasSession && (
                 <a href={routes.login} className={ctaPrimary}>
-                  Connect Spotify
+                  {t.connect}
                 </a>
               )}
               <a href={routes.demo} className={ctaSecondary}>

@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useSyncExternalStore } from "react";
+import { useSpotifyDictionary } from "@/content/spotify";
+import { fmt } from "@/i18n/message";
 import { artistNames, groupByDay, externalUrl } from "@/lib/spotify/transform";
 import type { RecentlyPlayedItem } from "@/lib/spotify/types";
 import { CoverArt } from "../common/cover-art";
@@ -17,15 +19,16 @@ const serverTimeZone = () => "UTC";
 
 export function Timeline({ items }: { items: RecentlyPlayedItem[] }) {
   const timeZone = useSyncExternalStore(noopSubscribe, localTimeZone, serverTimeZone);
+  const { dict, locale } = useSpotifyDictionary();
   const days = useMemo(() => groupByDay(items, timeZone), [items, timeZone]);
-  const time = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", timeZone });
+  const time = new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone });
 
   return (
     <div className="flex flex-col gap-8">
       {days.map((day) => (
-        <section key={day.day} aria-label={dayLabel(day.day, timeZone)}>
+        <section key={day.day} aria-label={dayLabel(day.day, timeZone, locale, dict.recent)}>
           <h2 className="sticky top-28 z-10 mb-3 w-fit rounded-md bg-background/90 px-2 py-1 text-overline font-semibold uppercase tracking-widest text-muted-foreground backdrop-blur lg:top-18">
-            {dayLabel(day.day, timeZone)}
+            {dayLabel(day.day, timeZone, locale, dict.recent)}
           </h2>
           <ol className="relative ml-3 border-l border-border">
             {day.items.map((item) => (
@@ -34,7 +37,7 @@ export function Timeline({ items }: { items: RecentlyPlayedItem[] }) {
                 <time dateTime={item.played_at} className="w-12 shrink-0 font-mono text-body-sm tabular-nums text-primary">
                   {time.format(new Date(item.played_at))}
                 </time>
-                <CoverArt images={item.track.album.images} seed={item.track.album.id} alt={`${item.track.album.name || item.track.name} cover`} size={44} />
+                <CoverArt images={item.track.album.images} seed={item.track.album.id} alt={fmt(dict.tracks.coverAlt, { name: item.track.album.name || item.track.name })} size={44} />
                 <div className="flex min-w-0 flex-col">
                   <SpotifyLink href={externalUrl(item.track)} className="truncate font-medium">
                     {item.track.name}
@@ -53,10 +56,10 @@ export function Timeline({ items }: { items: RecentlyPlayedItem[] }) {
   );
 }
 
-function dayLabel(day: string, timeZone: string) {
+function dayLabel(day: string, timeZone: string, locale: string, labels: { today: string; yesterday: string }) {
   const today = new Intl.DateTimeFormat("en-CA", { timeZone }).format(new Date());
   const yesterday = new Intl.DateTimeFormat("en-CA", { timeZone }).format(new Date(Date.now() - 86_400_000));
-  if (day === today) return "Today";
-  if (day === yesterday) return "Yesterday";
-  return new Intl.DateTimeFormat("en-US", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }).format(new Date(`${day}T12:00:00Z`));
+  if (day === today) return labels.today;
+  if (day === yesterday) return labels.yesterday;
+  return new Intl.DateTimeFormat(locale, { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }).format(new Date(`${day}T12:00:00Z`));
 }

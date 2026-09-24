@@ -35,7 +35,7 @@ export default async function RootLayout({ children }: LayoutProps<"/stocks">) {
             }
             actions={
               <div className="flex items-center gap-4 sm:gap-6">
-                <BackToPortfolio label={dict.layout.backToPortfolio} shortLabel={dict.layout.backShort} />
+                <BackToPortfolio label={dict.layout.backToPortfolio} />
                 <SystemLocaleSwitcher locale={locale} />
               </div>
             }

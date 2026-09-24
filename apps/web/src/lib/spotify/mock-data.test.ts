@@ -1,8 +1,7 @@
 import { TIME_RANGES } from "@/config/spotify";
 import { mockCurrentlyPlaying, mockRecentlyPlayed, mockTopArtists, mockTopTracks } from "./mock-data";
-import type { TimeRange } from "./types";
 
-const ranges = Object.keys(TIME_RANGES) as TimeRange[];
+const ranges = [...TIME_RANGES];
 
 describe("modo demo", () => {
   it("cada período tem um ranking próprio e estável", () => {

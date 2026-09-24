@@ -2,7 +2,8 @@ import type { ReactNode } from "react";
 import { AlertTriangle, Music, RefreshCw } from "@godzilla/icons";
 import { Card, cn } from "@godzilla/ui";
 import { routes } from "@/config/spotify";
-import { friendlyMessages, type SpotifyErrorKind } from "@/lib/spotify/errors";
+import type { SpotifyDictionary } from "@/content/spotify";
+import type { SpotifyErrorKind } from "@/lib/spotify/errors";
 
 const actionClass =
   "inline-flex h-(--size-control-sm) items-center gap-2 rounded-md border border-input bg-background px-3 text-body-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground";
@@ -18,8 +19,8 @@ export function EmptyState({ title, description, className }: { title: string; d
 }
 
 /** Erro amigável — nunca mostra detalhes técnicos. Sessão/permissão oferecem reconectar ou o demo. */
-export function ErrorState({ kind, retryHref }: { kind: SpotifyErrorKind; retryHref?: string }) {
-  const message = friendlyMessages[kind];
+export function ErrorState({ kind, retryHref, dict }: { kind: SpotifyErrorKind; retryHref?: string; dict: SpotifyDictionary }) {
+  const message = dict.errors[kind];
   const needsAuth = kind === "unauthorized" || kind === "forbidden";
 
   return (
@@ -31,16 +32,16 @@ export function ErrorState({ kind, retryHref }: { kind: SpotifyErrorKind; retryH
         {needsAuth ? (
           <>
             <a href={routes.login} className={actionClass}>
-              Reconnect Spotify
+              {dict.errors.reconnect}
             </a>
             <a href={routes.demo} className={actionClass}>
-              View demo
+              {dict.errors.viewDemo}
             </a>
           </>
         ) : (
           <a href={retryHref ?? "."} className={actionClass}>
             <RefreshCw className="size-(--size-icon-sm)" aria-hidden="true" />
-            Try again
+            {dict.errors.tryAgain}
           </a>
         )}
       </div>

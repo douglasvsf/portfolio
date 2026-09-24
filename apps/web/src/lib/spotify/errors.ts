@@ -33,41 +33,6 @@ export function kindFromStatus(status: number): SpotifyErrorKind {
   return "unknown";
 }
 
-export const friendlyMessages: Record<SpotifyErrorKind, { title: string; description: string }> = {
-  unauthorized: {
-    title: "Your session expired",
-    description: "Connect your Spotify account again to keep exploring your stats.",
-  },
-  forbidden: {
-    title: "Spotify denied access",
-    description:
-      "This app runs in Spotify's Development Mode, so only allow-listed accounts can connect. Try the demo instead.",
-  },
-  rate_limited: {
-    title: "Too many requests",
-    description: "Spotify is limiting requests right now. Wait a few seconds and try again.",
-  },
-  unavailable: {
-    title: "Spotify is unavailable",
-    description: "The Spotify API is not responding at the moment. Please try again shortly.",
-  },
-  timeout: {
-    title: "Spotify took too long",
-    description: "The request timed out. Check your connection and try again.",
-  },
-  network: {
-    title: "Connection problem",
-    description: "We couldn't reach Spotify. Check your connection and try again.",
-  },
-  not_found: {
-    title: "User not found",
-    description: "We couldn't find that Last.fm user. Check the username and try again.",
-  },
-  unknown: {
-    title: "Something went wrong",
-    description: "An unexpected error happened while loading your stats. Please try again.",
-  },
-};
 
 export function toErrorKind(error: unknown): SpotifyErrorKind {
   return error instanceof SpotifyApiError ? error.kind : "unknown";
