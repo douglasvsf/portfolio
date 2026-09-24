@@ -4,6 +4,7 @@ export const enUS: Dictionary = {
   loading: "Loading",
   next: "Next",
   previous: "Previous",
+  goToSlide: "Go to slide",
   search: "Search",
   cancel: "Cancel",
   confirm: "Confirm",

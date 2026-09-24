@@ -4,6 +4,7 @@ export const ptBR: Dictionary = {
   loading: "Carregando",
   next: "Próximo",
   previous: "Anterior",
+  goToSlide: "Ir para o slide",
   search: "Buscar",
   cancel: "Cancelar",
   confirm: "Confirmar",

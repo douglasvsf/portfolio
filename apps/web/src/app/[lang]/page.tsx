@@ -7,6 +7,7 @@ import { SkillsSection } from "@/components/sections/skills-section";
 import { ProjectsSection } from "@/components/sections/projects-section";
 import { ExperienceSection } from "@/components/sections/experience-section";
 import { ContactSection } from "@/components/sections/contact-section";
+import { SystemsSection } from "@/components/sections/systems-section";
 import { SECTION_IDS, getContent } from "@/content";
 import { isLocale } from "@/i18n/config";
 
@@ -14,7 +15,7 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
 
-  const { nav, hero, about, skills, projects, experience, contact, footer } = getContent(lang);
+  const { nav, hero, about, skills, projects, experience, contact, systems, footer } = getContent(lang);
 
   return (
     <>
@@ -22,7 +23,6 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
         brand={nav.brand}
         brandHref={`#${SECTION_IDS.hero}`}
         links={nav.links}
-        systems={nav.systems}
         locale={lang}
         skipToContent={nav.skipToContent}
       />
@@ -33,6 +33,7 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
         <ProjectsSection id={SECTION_IDS.projects} index="03" {...projects} />
         <ExperienceSection id={SECTION_IDS.experience} index="04" {...experience} />
         <ContactSection id={SECTION_IDS.contact} index="05" {...contact} />
+        <SystemsSection id={SECTION_IDS.systems} index="06" {...systems} />
       </main>
       <SiteFooter {...footer} />
     </>

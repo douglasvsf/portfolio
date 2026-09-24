@@ -4,6 +4,7 @@ export const esES: Dictionary = {
   loading: "Cargando",
   next: "Siguiente",
   previous: "Anterior",
+  goToSlide: "Ir a la diapositiva",
   search: "Buscar",
   cancel: "Cancelar",
   confirm: "Confirmar",

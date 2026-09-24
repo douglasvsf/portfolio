@@ -25,6 +25,7 @@ export * from "./molecules/section-heading";
 // Organisms
 export * from "./organisms/app-shell";
 export * from "./organisms/card";
+export * from "./organisms/carousel";
 export * from "./organisms/chart";
 export * from "./organisms/dialog";
 export * from "./organisms/dropdown-menu";
