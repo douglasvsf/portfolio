@@ -10,7 +10,7 @@
 
 A personal music-stats dashboard built on the **Spotify Web API**. Connect your Spotify account to see your top artists, top tracks, genres, recent plays and what's playing right now. You can also explore the **demo mode** without logging in.
 
-Live at **`/spotify`** in the portfolio (same deploy as the site): <https://portfolio-web-nu-khaki.vercel.app/spotify>
+Live at **`/spotify`** in the portfolio (same deploy as the site): <https://douglas-szapak.vercel.app/spotify>
 
 ---
 
@@ -127,7 +127,7 @@ MOCK_MODE=false   # true = everyone sees demo mode
 1. Create an app at <https://developer.spotify.com/dashboard> (Web API).
 2. Register the redirect URIs:
    - `http://127.0.0.1:3000/api/spotify/callback`
-   - `https://<your-domain>/api/spotify/callback`
+   - `https://douglas-szapak.vercel.app/api/spotify/callback` (or your own domain)
 3. Under **User Management**, add the Spotify accounts that are allowed to log in (Development Mode).
 4. Fill in `apps/web/.env.local` and run:
 
@@ -153,7 +153,7 @@ The E2E tests (`cypress/e2e/spotify.cy.ts`) **don't touch the real Spotify API**
 
 It deploys together with the portfolio (Vercel project for `apps/web`); there's no separate project.
 
-1. **Vercel → Settings → Environment Variables:** `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, `SPOTIFY_REDIRECT_URI=https://<domain>/api/spotify/callback`.
+1. **Vercel → Settings → Environment Variables:** `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, `SPOTIFY_REDIRECT_URI=https://douglas-szapak.vercel.app/api/spotify/callback`.
 2. Register that same production URI in the Spotify dashboard.
 3. Redeploy.
 
