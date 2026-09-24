@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { Card, cn } from "@godzilla/ui";
 import { NOW_PLAYING_POLL_MS, routes } from "@/config/spotify";
+import { useSpotifyDictionary } from "@/content/spotify";
+import { fmt } from "@/i18n/message";
 import {
   artistNames,
   formatDuration,
@@ -35,6 +37,8 @@ export function NowPlaying({
     at: fetchedAt,
   });
   const [now, setNow] = useState(fetchedAt);
+  const { dict } = useSpotifyDictionary();
+  const t = dict.nowPlaying;
 
   useEffect(() => {
     const tick = setInterval(() => setNow(Date.now()), 1000);
@@ -75,13 +79,9 @@ export function NowPlaying({
           <Equalizer playing={false} />
         </div>
         <div>
-          <p className="text-overline font-semibold uppercase tracking-widest text-muted-foreground">
-            Now playing
-          </p>
-          <p className="font-medium">Nothing playing right now</p>
-          <p className="text-body-sm text-muted-foreground">
-            Play something and it shows up here.
-          </p>
+          <p className="text-overline font-semibold uppercase tracking-widest text-muted-foreground">{t.label}</p>
+          <p className="font-medium">{t.nothing}</p>
+          <p className="text-body-sm text-muted-foreground">{t.hint}</p>
         </div>
       </Card>
     );
@@ -104,13 +104,13 @@ export function NowPlaying({
         <CoverArt
           images={data.track.album.images}
           seed={data.track.album.id}
-          alt={`${data.track.album.name || data.track.name} cover`}
+          alt={fmt(dict.tracks.coverAlt, { name: data.track.album.name || data.track.name })}
           size={80}
         />
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <p className="flex items-center gap-2 text-overline font-semibold uppercase tracking-widest text-primary">
             <Equalizer playing={data.isPlaying} />
-            {data.isPlaying ? "Now playing" : "Paused"}
+            {data.isPlaying ? t.label : t.paused}
           </p>
           <SpotifyLink
             href={externalUrl(data.track)}
@@ -129,7 +129,7 @@ export function NowPlaying({
           <span>{formatDuration(progress)}</span>
           <div
             role="progressbar"
-            aria-label="Playback progress"
+            aria-label={t.progress}
             aria-valuemin={0}
             aria-valuemax={Math.round(data.durationMs / 1000)}
             aria-valuenow={Math.round(progress / 1000)}

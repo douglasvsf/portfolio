@@ -1,8 +1,12 @@
+"use client";
+
+import { useTranslation } from "@godzilla/ui";
 import { ChartSkeleton, PageHeaderSkeleton, StatsCardSkeleton } from "@/components/spotify/common/skeletons";
 
 export default function Loading() {
+  const t = useTranslation();
   return (
-    <div className="flex flex-col gap-8" aria-busy="true" aria-label="Loading overview">
+    <div className="flex flex-col gap-8" aria-busy="true" aria-label={t.loading}>
       <PageHeaderSkeleton />
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {Array.from({ length: 4 }, (_, index) => (

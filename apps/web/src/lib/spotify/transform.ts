@@ -194,10 +194,8 @@ export function formatDuration(ms: number) {
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
-const compact = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 });
-
-export function formatCompact(value: number) {
-  return compact.format(value);
+export function formatCompact(value: number, locale = "en-US") {
+  return new Intl.NumberFormat(locale, { notation: "compact", maximumFractionDigits: 1 }).format(value);
 }
 
 /** Menor imagem que ainda cobre `size` px (a Spotify manda da maior para a menor). */

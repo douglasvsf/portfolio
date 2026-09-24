@@ -4,6 +4,10 @@
  * ela esteja configurada no ambiente).
  */
 describe("GODZILLA Spotify Stats", () => {
+  // Os textos checados são os em inglês; o idioma não pode depender da máquina.
+  const english = () => cy.setCookie("NEXT_LOCALE", "en-US");
+  beforeEach(english);
+
   describe("landing page", () => {
     it("apresenta o produto e os dois caminhos de entrada", () => {
       cy.visit("/spotify");
@@ -23,6 +27,8 @@ describe("GODZILLA Spotify Stats", () => {
 
     it("sem sessão, o dashboard volta para a landing", () => {
       cy.clearCookies();
+      english();
+    english();
       cy.visit("/spotify/dashboard");
       cy.location("pathname").should("eq", "/spotify");
       cy.get('[role="alert"]').should("contain.text", "session ended");
@@ -31,6 +37,7 @@ describe("GODZILLA Spotify Stats", () => {
 
   it("o botão de explorar abre o dashboard sem login", () => {
     cy.clearCookies();
+    english();
     cy.visit("/spotify");
     cy.get('[data-testid="view-demo"]').click();
     cy.location("pathname").should("eq", "/spotify/dashboard");
@@ -98,5 +105,24 @@ describe("GODZILLA Spotify Stats", () => {
         expect(doc.documentElement.scrollWidth).to.be.at.most(doc.documentElement.clientWidth);
       });
     });
+  });
+});
+
+describe("GODZILLA Spotify Stats — idiomas", () => {
+  it("troca de idioma pelas bandeiras e mantém a escolha", () => {
+    cy.setCookie("NEXT_LOCALE", "en-US");
+    cy.visit("/api/spotify/demo?data=mock");
+    cy.contains("h1", "Overview").should("be.visible");
+
+    cy.get("header").find('button[aria-label="Português"]').click();
+    cy.contains("h1", "Visão geral").should("be.visible");
+    cy.get("html").should("have.attr", "lang", "pt-BR");
+
+    cy.visit("/stocks");
+    cy.contains("h1", "Mercado", { timeout: 20000 }).should("be.visible");
+
+    cy.get("header").find('button[aria-label="Español"]').click();
+    // O Stocks refaz as consultas à brapi ao trocar de idioma.
+    cy.contains("h2", "Todas las acciones", { timeout: 20000 }).should("be.visible");
   });
 });

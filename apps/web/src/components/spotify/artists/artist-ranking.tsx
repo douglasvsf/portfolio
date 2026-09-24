@@ -1,16 +1,19 @@
 import { Badge, Card, cn } from "@godzilla/ui";
 import { formatCompact, normalizeGenre, externalUrl } from "@/lib/spotify/transform";
+import type { SpotifyDictionary } from "@/content/spotify";
+import type { Locale } from "@/i18n/config";
+import { fmt, plural } from "@/i18n/message";
 import type { SpotifyArtist } from "@/lib/spotify/types";
 import { CoverArt } from "../common/cover-art";
 import { SpotifyLink } from "../common/spotify-link";
 
 const MAX_GENRES = 3;
 
-function Meta({ artist }: { artist: SpotifyArtist }) {
+function Meta({ artist, dict, locale }: { artist: SpotifyArtist; dict: SpotifyDictionary; locale: Locale }) {
   const parts = [
-    artist.playcount !== undefined ? `${artist.playcount.toLocaleString("en-US")} plays` : null,
-    artist.followers ? `${formatCompact(artist.followers.total)} followers` : null,
-    artist.popularity !== undefined ? `Popularity ${artist.popularity}` : null,
+    artist.playcount !== undefined ? plural(dict.artists.plays, artist.playcount, locale) : null,
+    artist.followers ? fmt(dict.artists.followers, { n: formatCompact(artist.followers.total, locale) }) : null,
+    artist.popularity !== undefined ? fmt(dict.artists.popularity, { n: artist.popularity }) : null,
   ].filter(Boolean);
   if (!parts.length) return null;
   return <p className="text-caption text-muted-foreground">{parts.join(" · ")}</p>;
@@ -30,13 +33,13 @@ function Genres({ genres }: { genres?: string[] }) {
 }
 
 /** Ranking: pódio para o top 3 e lista para o restante. Posição = ordem da API, sem pontuação inventada. */
-export function ArtistRanking({ artists }: { artists: SpotifyArtist[] }) {
+export function ArtistRanking({ artists, dict, locale }: { artists: SpotifyArtist[]; dict: SpotifyDictionary; locale: Locale }) {
   const podium = artists.slice(0, 3);
   const rest = artists.slice(3);
 
   return (
     <div className="flex flex-col gap-6">
-      <ol className="grid gap-4 md:grid-cols-3" aria-label="Top 3 artists">
+      <ol className="grid gap-4 md:grid-cols-3" aria-label={dict.artists.top3}>
         {podium.map((artist, index) => (
           <li key={artist.id}>
             <Card
@@ -55,7 +58,7 @@ export function ArtistRanking({ artists }: { artists: SpotifyArtist[] }) {
                 <SpotifyLink href={externalUrl(artist)} className="text-h4 font-semibold">
                   {artist.name}
                 </SpotifyLink>
-                <Meta artist={artist} />
+                <Meta artist={artist} dict={dict} locale={locale} />
                 <Genres genres={artist.genres} />
               </div>
             </Card>
@@ -64,7 +67,7 @@ export function ArtistRanking({ artists }: { artists: SpotifyArtist[] }) {
       </ol>
 
       {rest.length > 0 && (
-        <ol start={4} className="grid gap-2 md:grid-cols-2" aria-label="More top artists">
+        <ol start={4} className="grid gap-2 md:grid-cols-2" aria-label={dict.artists.more}>
           {rest.map((artist, index) => (
             <li key={artist.id} data-testid="artist-card" className="flex items-center gap-4 rounded-lg border border-border bg-card p-3">
               <span className="w-7 text-right font-mono text-body-sm text-muted-foreground">#{index + 4}</span>
@@ -73,7 +76,7 @@ export function ArtistRanking({ artists }: { artists: SpotifyArtist[] }) {
                 <SpotifyLink href={externalUrl(artist)} className="truncate font-semibold">
                   {artist.name}
                 </SpotifyLink>
-                <Meta artist={artist} />
+                <Meta artist={artist} dict={dict} locale={locale} />
                 <Genres genres={artist.genres?.slice(0, 2)} />
               </div>
             </li>

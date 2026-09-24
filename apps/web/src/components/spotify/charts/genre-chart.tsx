@@ -2,6 +2,8 @@
 
 import { Cell, Pie, PieChart } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@godzilla/ui";
+import { useSpotifyDictionary } from "@/content/spotify";
+import { plural } from "@/i18n/message";
 import type { GenreSlice } from "@/lib/spotify/transform";
 
 const colors = [
@@ -17,6 +19,7 @@ const colors = [
 
 /** Donut + legenda com % dos artistas analisados em cada gênero. */
 export function GenreChart({ data }: { data: GenreSlice[] }) {
+  const { dict, locale } = useSpotifyDictionary();
   const config = Object.fromEntries(data.map((slice) => [slice.genre, { label: slice.genre }])) satisfies ChartConfig;
 
   return (
@@ -28,7 +31,7 @@ export function GenreChart({ data }: { data: GenreSlice[] }) {
               <ChartTooltipContent
                 nameKey="genre"
                 hideLabel
-                valueFormatter={(value) => `${value} artist${Number(value) === 1 ? "" : "s"}`}
+                valueFormatter={(value) => plural(dict.charts.artistsCount, Number(value), locale)}
               />
             }
           />

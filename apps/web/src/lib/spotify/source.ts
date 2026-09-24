@@ -27,7 +27,7 @@ export type SourceMode = "live" | "showcase" | "lastfm" | "demo";
 export interface SpotifySource {
   mode: SourceMode;
   /** De onde vêm os gêneros exibidos (a Spotify não envia em Development Mode). */
-  genreSource: "Last.fm tags" | "Spotify" | null;
+  genreSource: "lastfm" | "spotify" | null;
   getProfile(): Promise<SpotifyUser | null>;
   getTopArtists(range: TimeRange, limit?: number): Promise<SpotifyArtist[]>;
   getTopTracks(range: TimeRange, limit?: number): Promise<SpotifyTrack[]>;
@@ -37,7 +37,7 @@ export interface SpotifySource {
 
 export const demoSource: SpotifySource = {
   mode: "demo",
-  genreSource: "Last.fm tags",
+  genreSource: "lastfm",
   getProfile: async () => mock.mockUser,
   getTopArtists: async (range, limit = TOP_LIMIT) => mock.mockTopArtists(range, limit),
   getTopTracks: async (range, limit = TOP_LIMIT) => mock.mockTopTracks(range, limit),
@@ -56,7 +56,7 @@ export function liveSource(accessToken: string, mode: "live" | "showcase" = "liv
   const nowPlayingCache = mode === "showcase" ? CACHE_SECONDS.showcaseNowPlaying : 0;
   return {
     mode,
-    genreSource: isLastfmConfigured() ? "Last.fm tags" : "Spotify",
+    genreSource: isLastfmConfigured() ? "lastfm" : "spotify",
     getProfile: () => api.getCurrentUser(accessToken),
     getTopArtists: (range, limit) => spotifyArtistsWithGenres(accessToken, range, limit),
     getTopTracks: (range, limit) => api.getTopTracks(accessToken, range, limit),
@@ -69,7 +69,7 @@ export function liveSource(accessToken: string, mode: "live" | "showcase" = "liv
 export function lastfmSource(username: string): SpotifySource {
   return {
     mode: "lastfm",
-    genreSource: "Last.fm tags",
+    genreSource: "lastfm",
     getProfile: () => lastfm.getUserInfo(username),
     getTopArtists: async (range, limit) => withLastfmGenres(await lastfm.getTopArtists(username, range, limit)),
     getTopTracks: (range, limit) => lastfm.getTopTracks(username, range, limit),

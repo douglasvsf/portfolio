@@ -1,19 +1,20 @@
 import Link from "next/link";
 import { cn } from "@godzilla/ui";
 import { TIME_RANGES } from "@/config/spotify";
+import type { SpotifyDictionary } from "@/content/spotify";
 import type { TimeRange } from "@/lib/spotify/types";
 
 /**
  * Seletor de período como links (?range=…): a página é Server Component e
  * refaz a busca no servidor, sem estado no cliente. Visual do TabsList do DS.
  */
-export function RangeTabs({ pathname, active }: { pathname: string; active: TimeRange }) {
+export function RangeTabs({ pathname, active, dict }: { pathname: string; active: TimeRange; dict: SpotifyDictionary }) {
   return (
     <nav
-      aria-label="Time range"
+      aria-label={dict.rangeLabel}
       className="inline-flex h-(--size-control-md) items-center gap-1 self-start rounded-md bg-muted p-1 text-muted-foreground"
     >
-      {(Object.keys(TIME_RANGES) as TimeRange[]).map((range) => (
+      {TIME_RANGES.map((range) => (
         <Link
           key={range}
           href={`${pathname}?range=${range}`}
@@ -25,7 +26,7 @@ export function RangeTabs({ pathname, active }: { pathname: string; active: Time
             range === active && "bg-background text-foreground shadow-xs",
           )}
         >
-          {TIME_RANGES[range].short}
+          {dict.ranges[range].short}
         </Link>
       ))}
     </nav>

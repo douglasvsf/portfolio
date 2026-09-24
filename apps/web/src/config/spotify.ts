@@ -23,16 +23,13 @@ export const SPOTIFY_SCOPES = [
   "user-read-playback-state",
 ] as const;
 
-export const TIME_RANGES: Record<TimeRange, { label: string; short: string }> = {
-  short_term: { label: "Last 4 weeks", short: "4 weeks" },
-  medium_term: { label: "Last 6 months", short: "6 months" },
-  long_term: { label: "Last year", short: "1 year" },
-};
+/** Períodos da API, na ordem das abas. Os rótulos vêm do dicionário (content/spotify). */
+export const TIME_RANGES: readonly TimeRange[] = ["short_term", "medium_term", "long_term"];
 
 export const DEFAULT_TIME_RANGE: TimeRange = "short_term";
 
 export function parseTimeRange(value: unknown): TimeRange {
-  return typeof value === "string" && value in TIME_RANGES ? (value as TimeRange) : DEFAULT_TIME_RANGE;
+  return typeof value === "string" && (TIME_RANGES as readonly string[]).includes(value) ? (value as TimeRange) : DEFAULT_TIME_RANGE;
 }
 
 /** Tempo de cache (segundos) de cada tipo de dado — ver lib/spotify/endpoints.ts. */

@@ -1,35 +1,35 @@
 import { LogOut } from "@godzilla/icons";
 import { AppHeader as ShellHeader, Avatar, AvatarFallback, AvatarImage, Badge, appContainerClassName, cn } from "@godzilla/ui";
 import { signOut } from "@/app/spotify/actions";
+import { SystemLocaleSwitcher } from "@/components/layout/system-locale-switcher";
 import { routes } from "@/config/spotify";
+import type { SpotifyDictionary } from "@/content/spotify";
+import type { Locale } from "@/i18n/config";
 import { pickImage } from "@/lib/spotify/transform";
 import type { SourceMode } from "@/lib/spotify/source";
 import type { SpotifyUser } from "@/lib/spotify/types";
 import { NavLinks } from "./nav-links";
 import { SpotifyBrand } from "./spotify-brand";
 
-const badges: Record<SourceMode, string | null> = { live: null, showcase: "Live showcase", lastfm: "Last.fm", demo: "Demo" };
-const logoutLabels: Record<SourceMode, string> = { live: "Logout", showcase: "Exit showcase", lastfm: "Exit Last.fm", demo: "Exit demo" };
-
-export function AppHeader({ user, mode }: { user: SpotifyUser | null; mode: SourceMode }) {
-  const name = user?.display_name ?? "Spotify listener";
+export function AppHeader({ user, mode, dict, locale }: { user: SpotifyUser | null; mode: SourceMode; dict: SpotifyDictionary; locale: Locale }) {
+  const name = user?.display_name ?? dict.header.fallbackName;
   const avatar = pickImage(user?.images, 64);
-  const logoutLabel = logoutLabels[mode];
+  const badge = mode === "live" ? null : dict.header.badges[mode];
+  const logoutLabel = dict.header.logout[mode];
 
   return (
     <ShellHeader
-      skipToContent={{ label: "Skip to content" }}
+      skipToContent={{ label: dict.common.skipToContent }}
       brand={<SpotifyBrand href={routes.dashboard} />}
-      nav={<NavLinks className="hidden lg:flex" />}
       actions={
         <div className="flex items-center gap-3">
-          {badges[mode] && (
+          {badge && (
             // No mobile o banner logo abaixo já explica o modo — o selo só ocuparia espaço.
             <Badge variant="outline" className="hidden sm:inline-flex">
-              {badges[mode]}
+              {badge}
             </Badge>
           )}
-          <Avatar className="size-8" title={name}>
+          <Avatar className="hidden size-8 sm:flex" title={name}>
             {avatar && <AvatarImage src={avatar} alt="" />}
             <AvatarFallback className="text-caption">{name.slice(0, 1).toUpperCase()}</AvatarFallback>
           </Avatar>
@@ -43,10 +43,13 @@ export function AppHeader({ user, mode }: { user: SpotifyUser | null; mode: Sour
               <span className="sr-only">{logoutLabel}</span>
             </button>
           </form>
+          <SystemLocaleSwitcher locale={locale} />
         </div>
       }
+      // Navegação sempre numa segunda linha: com as bandeiras e os rótulos
+      // traduzidos (mais longos), a barra principal ficaria apertada.
       below={
-        <div className="border-t border-border lg:hidden">
+        <div className="border-t border-border">
           <NavLinks className={cn(appContainerClassName, "overflow-x-auto py-3 [scrollbar-width:none]")} />
         </div>
       }
