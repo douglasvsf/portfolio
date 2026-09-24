@@ -1,5 +1,5 @@
 import type { SiteContent } from "./types";
-import { DESIGN_SYSTEM_LINK, EXPERIENCE, PROFILE_PHOTO, PROJECT_TAGS, SECTION_IDS, SKILL_ITEMS, contactLinks, navLinks, systemItems } from "./shared";
+import { ACTIONS_URL, DESIGN_SYSTEM_LINK, EXPERIENCE, PROFILE_PHOTO, PROJECT_TAGS, REPO_URL, SECTION_IDS, SKILL_ITEMS, contactLinks, engineeringItems, navLinks, systemItems } from "./shared";
 
 export const ptBR: SiteContent = {
   meta: {
@@ -17,6 +17,7 @@ export const ptBR: SiteContent = {
       experience: "Experiência",
       contact: "Contato",
       systems: "Produtos",
+      engineering: "Engenharia",
     }),
   },
   hero: {
@@ -182,6 +183,60 @@ export const ptBR: SiteContent = {
       spotify: "Dashboard de estatísticas musicais com OAuth da Spotify, Last.fm e vitrine ao vivo: top artistas, músicas, gêneros e o que está tocando agora.",
       stocks: "Cotações da B3 em tempo quase real: maiores altas e quedas, volume por setor, busca em todas as ações e histórico com gráficos.",
       designSystem: "A biblioteca de componentes que dá cara a todos os sistemas — Atomic Design, acessível, com i18n e documentada no Storybook.",
+    }),
+  },
+  engineering: {
+    title: "Por trás deste site",
+    description:
+      "Este portfólio também é um projeto de produção, com o mesmo padrão que aplico no trabalho. Nada aqui é só discurso: cada card leva ao código.",
+    pipelineLabel: "A cada push, 3 jobs em paralelo — a main só fica verde se todos passarem",
+    pipeline: ["Lint · Typecheck", "Testes · Cobertura ≥ 80%", "Build · E2E · Lighthouse"],
+    stats: [
+      { value: "150+", label: "testes automatizados" },
+      { value: "≥ 80%", label: "cobertura exigida no CI" },
+      { value: "100", label: "acessibilidade e SEO no Lighthouse" },
+      { value: "3", label: "idiomas com detecção automática" },
+    ],
+    codeLabel: "Ver no código",
+    repoCta: { label: "Repositório no GitHub", href: REPO_URL },
+    actionsCta: { label: "Execuções do CI", href: ACTIONS_URL },
+    items: engineeringItems({
+      monorepo: {
+        title: "Monorepo",
+        description: "Site, sistemas, API NestJS e Design System no mesmo repositório, com pacotes compartilhados e build incremental em cache.",
+      },
+      designSystem: {
+        title: "Design System próprio",
+        description: "Tokens, componentes acessíveis e Atomic Design em um pacote usado por todos os sistemas — documentado no Storybook publicado.",
+      },
+      ci: {
+        title: "CI/CD com barreiras de qualidade",
+        description: "Lint, tipos, testes, E2E e Lighthouse barram regressões a cada push. Deploy automático na Vercel e dependências atualizadas pelo Dependabot.",
+      },
+      tests: {
+        title: "Testes em camadas",
+        description: "Unitários, E2E no navegador e testes de contrato com respostas reais gravadas das APIs — incluindo cenários em que a API muda de formato.",
+      },
+      contracts: {
+        title: "Contratos de API",
+        description: "Toda resposta de Spotify, Last.fm e brapi é validada com Zod na borda. Item quebrado sai da lista sem derrubar a página; dado duvidoso nunca chega à tela.",
+      },
+      resilience: {
+        title: "Resiliência",
+        description: "Timeout, retry com backoff exponencial e jitter só para falhas transitórias, respeito ao Retry-After e cache no servidor para poupar as APIs.",
+      },
+      observability: {
+        title: "Observabilidade",
+        description: "Erros do navegador, do servidor e da borda vão para o Sentry com source maps privados. Quebra de contrato de API vira alerta agrupado por fonte.",
+      },
+      security: {
+        title: "Segurança",
+        description: "Login Spotify com OAuth PKCE, sessão em cookie criptografado com AES-256-GCM e segredos que só existem no servidor.",
+      },
+      i18n: {
+        title: "i18n e acessibilidade",
+        description: "Três idiomas com detecção pelo navegador, plurais com Intl e dicionários testados. Navegável por teclado, com contraste e semântica verificados.",
+      },
     }),
   },
   footer: {

@@ -11,6 +11,7 @@ export const SECTION_IDS = {
   experience: "experience",
   contact: "contact",
   systems: "products",
+  engineering: "engineering",
 } as const;
 
 export const CONTACT = {
@@ -21,7 +22,7 @@ export const CONTACT = {
 
 const s = SECTION_IDS;
 
-const NAV_SECTIONS = ["about", "skills", "projects", "experience", "contact", "systems"] as const;
+const NAV_SECTIONS = ["about", "skills", "projects", "experience", "contact", "systems", "engineering"] as const;
 
 /** Links do menu: as seções na ordem da página (cada idioma só fornece os rótulos). */
 export function navLinks(labels: Record<(typeof NAV_SECTIONS)[number], string>) {
@@ -56,6 +57,38 @@ export function systemItems(descriptions: Record<"spotify" | "stocks" | "designS
       tags: ["React", "Radix UI", "Tailwind CSS", "Storybook"],
     },
   ];
+}
+
+export const REPO_URL = "https://github.com/douglasvsf/portfolio";
+const code = (path: string) => `${REPO_URL}/${path.endsWith("/") ? "tree" : "blob"}/main/${path.replace(/\/$/, "")}`;
+
+/** Link do pipeline de CI (execuções públicas no GitHub Actions). */
+export const ACTIONS_URL = `${REPO_URL}/actions/workflows/ci.yml`;
+
+/**
+ * Práticas de engenharia do próprio site. Tags e links (para o código que
+ * prova cada item) são iguais em todos os idiomas — cada idioma só fornece
+ * título e descrição.
+ */
+const ENGINEERING = {
+  monorepo: { tags: ["pnpm workspaces", "Turborepo", "Next.js 16", "NestJS"], href: code("turbo.json") },
+  designSystem: { tags: ["Tailwind v4", "Radix UI", "Storybook"], href: code("packages/ui/src/") },
+  ci: { tags: ["GitHub Actions", "Lighthouse CI", "Dependabot", "Vercel"], href: code(".github/workflows/ci.yml") },
+  tests: { tags: ["Jest", "Cypress", "Testing Library"], href: code("apps/web/src/lib/contracts.test.ts") },
+  contracts: { tags: ["Zod", "TypeScript"], href: code("apps/web/src/lib/http/contract.ts") },
+  resilience: { tags: ["Backoff + jitter", "Timeout", "Data Cache"], href: code("apps/web/src/lib/http/retry.ts") },
+  observability: { tags: ["Sentry", "Source maps", "Tracing"], href: code("apps/web/src/lib/observability/") },
+  security: { tags: ["OAuth PKCE", "AES-256-GCM", "Server-only"], href: code("apps/web/src/lib/spotify/crypto.ts") },
+  i18n: { tags: ["pt-BR · en-US · es-ES", "Intl", "WCAG"], href: code("apps/web/src/i18n/") },
+} as const;
+
+export function engineeringItems(copy: Record<keyof typeof ENGINEERING, { title: string; description: string }>) {
+  return (Object.keys(ENGINEERING) as (keyof typeof ENGINEERING)[]).map((key) => ({
+    key,
+    ...copy[key],
+    tags: [...ENGINEERING[key].tags],
+    href: ENGINEERING[key].href,
+  }));
 }
 
 export function contactLinks(emailLabel: string) {

@@ -1,5 +1,5 @@
 import type { SiteContent } from "./types";
-import { DESIGN_SYSTEM_LINK, EXPERIENCE, PROFILE_PHOTO, PROJECT_TAGS, SECTION_IDS, SKILL_ITEMS, contactLinks, navLinks, systemItems } from "./shared";
+import { ACTIONS_URL, DESIGN_SYSTEM_LINK, EXPERIENCE, PROFILE_PHOTO, PROJECT_TAGS, REPO_URL, SECTION_IDS, SKILL_ITEMS, contactLinks, engineeringItems, navLinks, systemItems } from "./shared";
 
 export const enUS: SiteContent = {
   meta: {
@@ -17,6 +17,7 @@ export const enUS: SiteContent = {
       experience: "Experience",
       contact: "Contact",
       systems: "Products",
+      engineering: "Engineering",
     }),
   },
   hero: {
@@ -182,6 +183,60 @@ export const enUS: SiteContent = {
       spotify: "Music stats dashboard with Spotify OAuth, Last.fm and a live showcase: top artists, tracks, genres and what's playing right now.",
       stocks: "Near real-time B3 stock quotes: top gainers and losers, volume by sector, search across every stock and price history charts.",
       designSystem: "The component library behind every system here — Atomic Design, accessible, with i18n and documented in Storybook.",
+    }),
+  },
+  engineering: {
+    title: "Under the hood",
+    description:
+      "This portfolio is also a production project, built to the same standard I apply at work. None of this is just talk: every card links to the code.",
+    pipelineLabel: "On every push, 3 parallel jobs — main only turns green when all of them pass",
+    pipeline: ["Lint · Typecheck", "Tests · Coverage ≥ 80%", "Build · E2E · Lighthouse"],
+    stats: [
+      { value: "150+", label: "automated tests" },
+      { value: "≥ 80%", label: "coverage enforced in CI" },
+      { value: "100", label: "accessibility and SEO on Lighthouse" },
+      { value: "3", label: "languages with automatic detection" },
+    ],
+    codeLabel: "See the code",
+    repoCta: { label: "GitHub repository", href: REPO_URL },
+    actionsCta: { label: "CI runs", href: ACTIONS_URL },
+    items: engineeringItems({
+      monorepo: {
+        title: "Monorepo",
+        description: "Site, apps, NestJS API and Design System in one repository, with shared packages and cached incremental builds.",
+      },
+      designSystem: {
+        title: "In-house Design System",
+        description: "Tokens, accessible components and Atomic Design in a package used by every app — documented in a published Storybook.",
+      },
+      ci: {
+        title: "CI/CD with quality gates",
+        description: "Lint, types, tests, E2E and Lighthouse catch regressions on every push. Automatic deploys on Vercel and dependencies kept fresh by Dependabot.",
+      },
+      tests: {
+        title: "Layered testing",
+        description: "Unit tests, in-browser E2E and contract tests against recorded real API responses — including cases where the API changes shape.",
+      },
+      contracts: {
+        title: "API contracts",
+        description: "Every Spotify, Last.fm and brapi response is validated with Zod at the edge. A broken item is dropped without taking the page down; dubious data never reaches the screen.",
+      },
+      resilience: {
+        title: "Resilience",
+        description: "Timeouts, retries with exponential backoff and jitter for transient failures only, Retry-After support and server-side caching to spare the APIs.",
+      },
+      observability: {
+        title: "Observability",
+        description: "Browser, server and edge errors go to Sentry with private source maps. API contract breaks become alerts grouped by source.",
+      },
+      security: {
+        title: "Security",
+        description: "Spotify login with OAuth PKCE, session in an AES-256-GCM encrypted cookie and secrets that only exist on the server.",
+      },
+      i18n: {
+        title: "i18n & accessibility",
+        description: "Three languages detected from the browser, Intl plurals and tested dictionaries. Keyboard navigable, with verified contrast and semantics.",
+      },
     }),
   },
   footer: {

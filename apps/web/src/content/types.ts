@@ -15,6 +15,27 @@ export interface SystemItem {
   tags: string[];
 }
 
+/** Prática de engenharia aplicada no próprio site (seção "Por trás deste site"). */
+export interface EngineeringItem {
+  key: EngineeringKey;
+  title: string;
+  description: string;
+  tags: string[];
+  /** Onde conferir no código (GitHub) ou no ar. */
+  href: string;
+}
+
+export type EngineeringKey =
+  | "monorepo"
+  | "designSystem"
+  | "ci"
+  | "tests"
+  | "contracts"
+  | "resilience"
+  | "observability"
+  | "security"
+  | "i18n";
+
 export interface Photo {
   src: string;
   alt: string;
@@ -73,6 +94,15 @@ export interface SiteContent {
   experience: SectionCopy & { items: ExperienceItem[] };
   contact: SectionCopy & { links: ContactLink[] };
   systems: SectionCopy & { items: SystemItem[]; openLabel: string };
+  engineering: SectionCopy & {
+    pipelineLabel: string;
+    pipeline: string[];
+    stats: Fact[];
+    items: EngineeringItem[];
+    codeLabel: string;
+    repoCta: LinkItem;
+    actionsCta: LinkItem;
+  };
   footer: {
     owner: string;
     rightsReserved: string;

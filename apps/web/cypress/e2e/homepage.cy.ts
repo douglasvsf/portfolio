@@ -35,6 +35,19 @@ describe("Homepage", () => {
       });
     });
 
+    it("mostra a engenharia do site com links para o código", () => {
+      cy.get("header nav").contains("a", "Engenharia").click();
+
+      cy.location("hash").should("eq", "#engineering");
+      cy.get("#engineering").within(() => {
+        cy.contains("h2", "Por trás deste site").should("be.visible");
+        cy.get("h3").should("have.length", 9);
+        cy.contains("a", "Ver no código")
+          .should("have.attr", "href")
+          .and("match", /^https:\/\/github\.com\/douglasvsf\/portfolio\//);
+      });
+    });
+
     it("troca de idioma pelas bandeiras e lembra a escolha", () => {
       cy.get("header").find('button[aria-label="English"]').click();
 

@@ -1,5 +1,5 @@
 import type { SiteContent } from "./types";
-import { DESIGN_SYSTEM_LINK, EXPERIENCE, PROFILE_PHOTO, PROJECT_TAGS, SECTION_IDS, SKILL_ITEMS, contactLinks, navLinks, systemItems } from "./shared";
+import { ACTIONS_URL, DESIGN_SYSTEM_LINK, EXPERIENCE, PROFILE_PHOTO, PROJECT_TAGS, REPO_URL, SECTION_IDS, SKILL_ITEMS, contactLinks, engineeringItems, navLinks, systemItems } from "./shared";
 
 export const esES: SiteContent = {
   meta: {
@@ -17,6 +17,7 @@ export const esES: SiteContent = {
       experience: "Experiencia",
       contact: "Contacto",
       systems: "Productos",
+      engineering: "Ingeniería",
     }),
   },
   hero: {
@@ -182,6 +183,60 @@ export const esES: SiteContent = {
       spotify: "Dashboard de estadísticas musicales con OAuth de Spotify, Last.fm y vitrina en vivo: artistas, canciones, géneros y lo que suena ahora.",
       stocks: "Cotizaciones de la B3 casi en tiempo real: mayores alzas y bajas, volumen por sector, búsqueda en todas las acciones e historial con gráficos.",
       designSystem: "La biblioteca de componentes detrás de todos los sistemas: Atomic Design, accesible, con i18n y documentada en Storybook.",
+    }),
+  },
+  engineering: {
+    title: "Detrás de este sitio",
+    description:
+      "Este portafolio también es un proyecto de producción, con el mismo estándar que aplico en el trabajo. Nada de esto es solo discurso: cada tarjeta lleva al código.",
+    pipelineLabel: "En cada push, 3 jobs en paralelo — main solo queda en verde si todos pasan",
+    pipeline: ["Lint · Typecheck", "Tests · Cobertura ≥ 80%", "Build · E2E · Lighthouse"],
+    stats: [
+      { value: "150+", label: "tests automatizados" },
+      { value: "≥ 80%", label: "cobertura exigida en el CI" },
+      { value: "100", label: "accesibilidad y SEO en Lighthouse" },
+      { value: "3", label: "idiomas con detección automática" },
+    ],
+    codeLabel: "Ver en el código",
+    repoCta: { label: "Repositorio en GitHub", href: REPO_URL },
+    actionsCta: { label: "Ejecuciones del CI", href: ACTIONS_URL },
+    items: engineeringItems({
+      monorepo: {
+        title: "Monorepo",
+        description: "Sitio, sistemas, API NestJS y Design System en un mismo repositorio, con paquetes compartidos y build incremental en caché.",
+      },
+      designSystem: {
+        title: "Design System propio",
+        description: "Tokens, componentes accesibles y Atomic Design en un paquete usado por todos los sistemas — documentado en el Storybook publicado.",
+      },
+      ci: {
+        title: "CI/CD con barreras de calidad",
+        description: "Lint, tipos, tests, E2E y Lighthouse frenan regresiones en cada push. Deploy automático en Vercel y dependencias actualizadas por Dependabot.",
+      },
+      tests: {
+        title: "Tests en capas",
+        description: "Unitarios, E2E en el navegador y tests de contrato con respuestas reales grabadas de las APIs — incluidos los casos en que la API cambia de formato.",
+      },
+      contracts: {
+        title: "Contratos de API",
+        description: "Cada respuesta de Spotify, Last.fm y brapi se valida con Zod en el borde. Un ítem roto sale de la lista sin tumbar la página; un dato dudoso nunca llega a la pantalla.",
+      },
+      resilience: {
+        title: "Resiliencia",
+        description: "Timeout, reintentos con backoff exponencial y jitter solo para fallos transitorios, respeto al Retry-After y caché en el servidor para cuidar las APIs.",
+      },
+      observability: {
+        title: "Observabilidad",
+        description: "Los errores del navegador, del servidor y del edge van a Sentry con source maps privados. Una ruptura de contrato de API se convierte en alerta agrupada por origen.",
+      },
+      security: {
+        title: "Seguridad",
+        description: "Login de Spotify con OAuth PKCE, sesión en cookie cifrada con AES-256-GCM y secretos que solo existen en el servidor.",
+      },
+      i18n: {
+        title: "i18n y accesibilidad",
+        description: "Tres idiomas detectados por el navegador, plurales con Intl y diccionarios probados. Navegable con teclado, con contraste y semántica verificados.",
+      },
     }),
   },
   footer: {
