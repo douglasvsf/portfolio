@@ -113,7 +113,7 @@ export default async function StockPage({ params, searchParams }: PageProps<"/st
       <Card>
         <CardHeader className="flex-row flex-wrap items-center justify-between gap-4 space-y-0">
           <div className="flex flex-col gap-1.5">
-            <CardTitle>{dict.detail.quote}</CardTitle>
+            <CardTitle as="h2">{dict.detail.quote}</CardTitle>
             <CardDescription>
               {dict.detail.periodChange}: <span className={cn("font-mono", periodChange != null && (periodChange >= 0 ? "text-success" : "text-destructive"))}>{format.percent(periodChange)}</span>
               {closes.length > 0 && (
@@ -148,7 +148,7 @@ export default async function StockPage({ params, searchParams }: PageProps<"/st
       {history.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>{dict.detail.history}</CardTitle>
+            <CardTitle as="h2">{dict.detail.history}</CardTitle>
             <CardDescription>{fmt(dict.detail.lastSessions, { n: Math.min(HISTORY_ROWS, history.length) })}</CardDescription>
           </CardHeader>
           <CardContent>
@@ -225,7 +225,7 @@ function QuoteUnavailable({ ticker, error, dict }: { ticker: string; error: unkn
       <BackLink label={dict.detail.back} />
       <Card className="mx-auto w-full max-w-xl">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle as="h2" className="flex items-center gap-2">
             <AlertTriangle className="size-(--size-icon-md) text-warning" aria-hidden="true" />
             {missingToken ? fmt(dict.detail.needsToken, { ticker }) : dict.detail.unavailable}
           </CardTitle>

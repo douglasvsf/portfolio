@@ -9,7 +9,7 @@ export default function Error({ retry }: { error: Error & { digest?: string }; r
   return (
     <Card className="mx-auto mt-12 w-full max-w-xl">
       <CardHeader>
-        <CardTitle>{states.errorTitle}</CardTitle>
+        <CardTitle as="h2">{states.errorTitle}</CardTitle>
         <CardDescription>{states.errorDescription}</CardDescription>
       </CardHeader>
       <CardFooter>

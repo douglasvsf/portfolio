@@ -105,7 +105,7 @@ export default async function LandingPage({ searchParams }: PageProps<"/spotify"
           >
             <Card className="shadow-glow">
               <CardHeader>
-                <CardTitle>{t.previewGenres}</CardTitle>
+                <CardTitle as="h2">{t.previewGenres}</CardTitle>
                 <CardDescription>{t.previewGenresDescription}</CardDescription>
               </CardHeader>
               <CardContent>

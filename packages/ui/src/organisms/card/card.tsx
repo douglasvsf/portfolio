@@ -19,11 +19,16 @@ export const CardHeader = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivEleme
 );
 CardHeader.displayName = "CardHeader";
 
-export const CardTitle = forwardRef<HTMLParagraphElement, HTMLAttributes<HTMLHeadingElement>>(
-  ({ className, children, ...props }, ref) => (
-    <h3 ref={ref} className={cn("text-h4 font-semibold leading-none", className)} {...props}>
+export interface CardTitleProps extends HTMLAttributes<HTMLHeadingElement> {
+  /** Nível do heading — ajuste para manter a hierarquia da página (h1 → h2 → h3). @default "h3" */
+  as?: "h2" | "h3" | "h4";
+}
+
+export const CardTitle = forwardRef<HTMLHeadingElement, CardTitleProps>(
+  ({ as: Heading = "h3", className, children, ...props }, ref) => (
+    <Heading ref={ref} className={cn("text-h4 font-semibold leading-none", className)} {...props}>
       {children}
-    </h3>
+    </Heading>
   ),
 );
 CardTitle.displayName = "CardTitle";

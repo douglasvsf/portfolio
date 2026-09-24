@@ -155,7 +155,7 @@ export default async function OverviewPage({ searchParams }: PageProps<"/spotify
         {hasGenres && (
           <Card data-testid="genre-distribution">
             <CardHeader>
-              <CardTitle>{t.genreTitle}</CardTitle>
+              <CardTitle as="h2">{t.genreTitle}</CardTitle>
               <CardDescription className="flex items-start gap-1.5">
                 <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
                 {fmt(t.genreDescription, { source: source.genreSource ? t.genreSources[source.genreSource] : t.genreSourceFallback, n: artists.length })}
@@ -170,7 +170,7 @@ export default async function OverviewPage({ searchParams }: PageProps<"/spotify
         {decades.length > 0 && (
           <Card data-testid="decade-distribution">
             <CardHeader>
-              <CardTitle>{t.decadeTitle}</CardTitle>
+              <CardTitle as="h2">{t.decadeTitle}</CardTitle>
               <CardDescription>{fmt(t.decadeDescription, { n: tracks.length })}</CardDescription>
             </CardHeader>
             <CardContent>
@@ -181,7 +181,7 @@ export default async function OverviewPage({ searchParams }: PageProps<"/spotify
 
         <Card className={cn(hasGenres && decades.length > 0 && "lg:col-span-2")}>
           <CardHeader>
-            <CardTitle>{t.artistsTitle}</CardTitle>
+            <CardTitle as="h2">{t.artistsTitle}</CardTitle>
             <CardDescription>{fmt(t.artistsDescription, { n: tracks.length })}</CardDescription>
           </CardHeader>
           <CardContent>

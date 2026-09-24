@@ -57,7 +57,7 @@ export default async function TopArtistsPage({ searchParams }: PageProps<"/spoti
       {popularity.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>{t.popularityTitle}</CardTitle>
+            <CardTitle as="h2">{t.popularityTitle}</CardTitle>
             <CardDescription>{t.popularityDescription}</CardDescription>
           </CardHeader>
           <CardContent>

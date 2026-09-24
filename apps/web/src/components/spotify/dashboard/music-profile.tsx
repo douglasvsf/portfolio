@@ -29,7 +29,7 @@ export function MusicProfile({ profile, range, dict }: { profile: Profile; range
   return (
     <Card data-testid="music-profile">
       <CardHeader>
-        <CardTitle>{t.title}</CardTitle>
+        <CardTitle as="h2">{t.title}</CardTitle>
         <CardDescription>{dict.ranges[range].label}</CardDescription>
       </CardHeader>
       <CardContent>
