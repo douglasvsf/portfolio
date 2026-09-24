@@ -1,5 +1,6 @@
 import {
   artistsInTopTracks,
+  decadeDistribution,
   formatDuration,
   genreDistribution,
   groupByDay,
@@ -18,12 +19,12 @@ const artist = (id: string, genres?: string[]): SpotifyArtist => ({
   external_urls: {},
 });
 
-const track = (id: string, artistIds: string[], durationMs = 200_000): SpotifyTrack => ({
+const track = (id: string, artistIds: string[], durationMs = 200_000, releaseDate?: string, explicit = false): SpotifyTrack => ({
   id,
   name: `Track ${id}`,
   duration_ms: durationMs,
-  explicit: false,
-  album: { id: `album-${id}`, name: `Album ${id}`, images: [], external_urls: {} },
+  explicit,
+  album: { id: `album-${id}`, name: `Album ${id}`, images: [], release_date: releaseDate, external_urls: {} },
   artists: artistIds.map((artistId) => ({ id: artistId, name: artistId.toUpperCase(), external_urls: {} })),
   external_urls: {},
 });
@@ -68,18 +69,49 @@ describe("artistsInTopTracks", () => {
   });
 });
 
+describe("decadeDistribution", () => {
+  it("agrupa por década em ordem cronológica e ignora faixas sem data", () => {
+    const result = decadeDistribution([
+      track("1", ["a"], 1, "2021-05-01"),
+      track("2", ["a"], 1, "2019"),
+      track("3", ["a"], 1, "2024-02"),
+      track("4", ["a"], 1, "1991-09-24"),
+      track("5", ["a"], 1),
+    ]);
+    expect(result).toEqual([
+      { decade: "1990s", tracks: 1, share: 0.25 },
+      { decade: "2010s", tracks: 1, share: 0.25 },
+      { decade: "2020s", tracks: 2, share: 0.5 },
+    ]);
+  });
+});
+
 describe("musicProfile", () => {
-  it("resume artistas, faixas e gêneros", () => {
-    const profile = musicProfile([artist("a", ["rock"]), artist("b", ["rock", "jazz"])], [track("1", ["a"], 180_000), track("2", ["b"], 240_000)]);
+  it("resume artistas, faixas, gêneros e épocas", () => {
+    const profile = musicProfile(
+      [artist("a", ["rock"]), artist("b", ["rock", "jazz"])],
+      [track("1", ["a"], 180_000, "2020-01-01", true), track("2", ["b"], 240_000, "1997"), track("3", ["b"], 0, "2023-06")],
+    );
     expect(profile).toMatchObject({
       artistsAnalyzed: 2,
-      tracksAnalyzed: 2,
+      tracksAnalyzed: 3,
       genresDiscovered: 2,
       topGenre: "Rock",
-      averageTrackMs: 210_000,
+      topDecade: { decade: "2020s", tracks: 2 },
+      averageTrackMs: 210_000, // faixa sem duração (0) não entra na média
     });
+    expect(profile.explicitShare).toBeCloseTo(1 / 3);
+    expect(profile.newestTrack?.id).toBe("3");
+    expect(profile.oldestTrack?.id).toBe("2");
     expect(profile.topArtist?.id).toBe("a");
     expect(profile.topTrack?.id).toBe("1");
+  });
+
+  it("sem gêneros (Spotify em Development Mode) só zera os campos de gênero", () => {
+    const profile = musicProfile([artist("a"), artist("b", [])], [track("1", ["a"], 1, "2010")]);
+    expect(profile.genresDiscovered).toBe(0);
+    expect(profile.topGenre).toBeNull();
+    expect(profile.topDecade?.decade).toBe("2010s");
   });
 
   it("lida com respostas vazias", () => {
@@ -88,6 +120,10 @@ describe("musicProfile", () => {
       tracksAnalyzed: 0,
       genresDiscovered: 0,
       topGenre: null,
+      topDecade: null,
+      newestTrack: null,
+      oldestTrack: null,
+      explicitShare: null,
       topArtist: null,
       topTrack: null,
       averageTrackMs: null,

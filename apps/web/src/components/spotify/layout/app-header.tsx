@@ -23,7 +23,12 @@ export function AppHeader({ user, mode }: { user: SpotifyUser | null; mode: Sour
       nav={<NavLinks className="hidden lg:flex" />}
       actions={
         <div className="flex items-center gap-3">
-          {badges[mode] && <Badge variant="outline">{badges[mode]}</Badge>}
+          {badges[mode] && (
+            // No mobile o banner logo abaixo já explica o modo — o selo só ocuparia espaço.
+            <Badge variant="outline" className="hidden sm:inline-flex">
+              {badges[mode]}
+            </Badge>
+          )}
           <Avatar className="size-8" title={name}>
             {avatar && <AvatarImage src={avatar} alt="" />}
             <AvatarFallback className="text-caption">{name.slice(0, 1).toUpperCase()}</AvatarFallback>

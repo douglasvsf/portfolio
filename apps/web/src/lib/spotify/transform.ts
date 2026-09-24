@@ -70,27 +70,72 @@ export function artistsInTopTracks(tracks: SpotifyTrack[], top = 8): ArtistTrack
 
 // ---- Perfil musical -------------------------------------------------------
 
+// ---- Épocas (ano de lançamento) -------------------------------------------
+
+export type DecadeSlice = {
+  /** Ex.: "2010s". */
+  decade: string;
+  tracks: number;
+  share: number;
+};
+
+/** Ano de lançamento do álbum da faixa (a Spotify envia "YYYY", "YYYY-MM" ou "YYYY-MM-DD"). */
+export function releaseYear(track: SpotifyTrack): number | null {
+  const year = Number(track.album.release_date?.slice(0, 4));
+  return Number.isInteger(year) && year > 1900 ? year : null;
+}
+
+/** Quantas top tracks saíram em cada década — em ordem cronológica. */
+export function decadeDistribution(tracks: SpotifyTrack[]): DecadeSlice[] {
+  const counts = new Map<number, number>();
+  for (const track of tracks) {
+    const year = releaseYear(track);
+    if (year === null) continue;
+    const decade = Math.floor(year / 10) * 10;
+    counts.set(decade, (counts.get(decade) ?? 0) + 1);
+  }
+  const dated = [...counts.values()].reduce((sum, count) => sum + count, 0) || 1;
+  return [...counts]
+    .sort((a, b) => a[0] - b[0])
+    .map(([decade, count]) => ({ decade: `${decade}s`, tracks: count, share: count / dated }));
+}
+
 export interface MusicProfile {
   artistsAnalyzed: number;
   tracksAnalyzed: number;
+  /** Zero quando a fonte não envia gêneros (Spotify em Development Mode). */
   genresDiscovered: number;
   topGenre: string | null;
+  topDecade: DecadeSlice | null;
+  newestTrack: SpotifyTrack | null;
+  oldestTrack: SpotifyTrack | null;
+  /** Fração (0–1) das top tracks marcadas como explícitas. */
+  explicitShare: number | null;
   topArtist: SpotifyArtist | null;
   topTrack: SpotifyTrack | null;
-  /** Duração média das top tracks, em ms. */
+  /** Duração média das top tracks, em ms (ignora faixas sem duração). */
   averageTrackMs: number | null;
 }
 
 export function musicProfile(artists: SpotifyArtist[], tracks: SpotifyTrack[]): MusicProfile {
   const genres = genreDistribution(artists, 1);
+  const decades = decadeDistribution(tracks);
+  const dated = tracks.filter((track) => releaseYear(track) !== null);
+  const byRelease = [...dated].sort((a, b) => (a.album.release_date ?? "").localeCompare(b.album.release_date ?? ""));
+  const timed = tracks.filter((track) => track.duration_ms > 0);
+
   return {
     artistsAnalyzed: artists.length,
     tracksAnalyzed: tracks.length,
     genresDiscovered: countGenres(artists),
     topGenre: genres[0]?.genre ?? null,
+    topDecade: decades.reduce<DecadeSlice | null>((best, slice) => (!best || slice.tracks > best.tracks ? slice : best), null),
+    newestTrack: byRelease.at(-1) ?? null,
+    oldestTrack: byRelease[0] ?? null,
+    explicitShare: tracks.length ? tracks.filter((track) => track.explicit).length / tracks.length : null,
     topArtist: artists[0] ?? null,
     topTrack: tracks[0] ?? null,
-    averageTrackMs: tracks.length ? tracks.reduce((sum, track) => sum + track.duration_ms, 0) / tracks.length : null,
+    averageTrackMs: timed.length ? timed.reduce((sum, track) => sum + track.duration_ms, 0) / timed.length : null,
   };
 }
 

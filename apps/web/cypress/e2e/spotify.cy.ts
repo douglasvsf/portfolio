@@ -1,6 +1,7 @@
 /**
  * GODZILLA Spotify Stats — E2E sem depender da Spotify real: o "login" é o
- * modo demo (dados mockados servidos pelo próprio app).
+ * modo demo com dados mockados (`?data=mock` ignora a vitrine do dono, caso
+ * ela esteja configurada no ambiente).
  */
 describe("GODZILLA Spotify Stats", () => {
   describe("landing page", () => {
@@ -28,23 +29,33 @@ describe("GODZILLA Spotify Stats", () => {
     });
   });
 
+  it("o botão de explorar abre o dashboard sem login", () => {
+    cy.clearCookies();
+    cy.visit("/spotify");
+    cy.get('[data-testid="view-demo"]').click();
+    cy.location("pathname").should("eq", "/spotify/dashboard");
+    cy.get('[data-testid="mode-banner"]').should("be.visible");
+  });
+
   describe("modo demo (login mockado)", () => {
     beforeEach(() => {
       cy.viewport(1280, 900);
-      cy.visit("/spotify");
-      cy.get('[data-testid="view-demo"]').click();
+      cy.visit("/api/spotify/demo?data=mock");
       cy.location("pathname").should("eq", "/spotify/dashboard");
     });
 
     it("carrega o overview com cards, player e perfil musical", () => {
       cy.contains("h1", "Overview").should("be.visible");
       cy.contains("Demo").should("be.visible");
+      // O mock tem gêneros (como quando o Last.fm enriquece os artistas).
       for (const card of ["top-artist", "top-track", "top-genre", "recently-played"]) {
         cy.get(`[data-testid="card-${card}"]`).should("be.visible");
       }
       cy.get('[data-testid="now-playing"]').should("contain.text", "Now playing").find('[role="progressbar"]').should("exist");
       cy.get('[data-testid="music-profile"]').should("contain.text", "Artists analyzed");
-      cy.get("[data-chart]").should("have.length.at.least", 2);
+      cy.get('[data-testid="genre-distribution"]').should("be.visible");
+      cy.get('[data-testid="decade-distribution"]').should("be.visible");
+      cy.get("[data-chart]").should("have.length.at.least", 3);
     });
 
     it("filtra o período", () => {

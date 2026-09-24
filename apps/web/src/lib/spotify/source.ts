@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { CACHE_SECONDS, RECENTLY_PLAYED_LIMIT, TOP_LIMIT } from "@/config/spotify";
 import { getSpotifyConfig, isSpotifyConfigured, refreshAccessToken } from "./auth";
 import * as api from "./endpoints";
-import { DEMO_COOKIE, SESSION_COOKIE, isExpiring, sessionFromToken, unsealSession } from "./session";
+import { DEMO_COOKIE, DEMO_MOCK_VALUE, SESSION_COOKIE, isExpiring, sessionFromToken, unsealSession } from "./session";
 import * as mock from "./mock-data";
 import { getOwnerAccessToken, isOwnerConfigured } from "./owner";
 import { normalizeNowPlaying, type NowPlaying } from "./transform";
@@ -75,7 +75,9 @@ export const getSpotifySource = cache(async (): Promise<SpotifySource | null> =>
   if (isForcedMockMode()) return demoSource;
 
   const store = await cookies();
-  if (store.get(DEMO_COOKIE)?.value === "1") return visitorSource();
+  const demoCookie = store.get(DEMO_COOKIE)?.value;
+  if (demoCookie === DEMO_MOCK_VALUE) return demoSource;
+  if (demoCookie === "1") return visitorSource();
   if (!isSpotifyConfigured()) return null;
 
   const config = getSpotifyConfig();

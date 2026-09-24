@@ -1,11 +1,15 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { routes } from "@/config/spotify";
 import { requestOrigin } from "@/lib/spotify/request-origin";
-import { DEMO_COOKIE, demoCookieOptions } from "@/lib/spotify/session";
+import { DEMO_COOKIE, DEMO_MOCK_VALUE, demoCookieOptions } from "@/lib/spotify/session";
 
-/** "View demo": liga o modo demonstrativo (dados mockados) e abre o dashboard. */
+/**
+ * "Explore"/"View demo": abre o dashboard sem login — vitrine com os dados do
+ * dono quando configurada, senão o mock. `?data=mock` força o mock (E2E).
+ */
 export function GET(request: NextRequest) {
   const response = NextResponse.redirect(new URL(routes.dashboard, requestOrigin(request)));
-  response.cookies.set(DEMO_COOKIE, "1", demoCookieOptions);
+  const mockOnly = request.nextUrl.searchParams.get("data") === "mock";
+  response.cookies.set(DEMO_COOKIE, mockOnly ? DEMO_MOCK_VALUE : "1", demoCookieOptions);
   return response;
 }

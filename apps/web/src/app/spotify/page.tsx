@@ -39,7 +39,7 @@ export default async function LandingPage({ searchParams }: PageProps<"/spotify"
   const errorMessage = typeof error === "string" ? loginErrors[error] : undefined;
 
   const store = await cookies();
-  const hasSession = Boolean(store.get(SESSION_COOKIE) || store.get(DEMO_COOKIE)?.value === "1");
+  const hasSession = Boolean(store.get(SESSION_COOKIE) || store.get(DEMO_COOKIE));
   // Com a vitrine configurada, o visitante vê as estatísticas reais do dono em vez do mock.
   const exploreLabel = isShowcaseAvailable() ? "Explore Douglas's live stats" : "View Demo";
 
