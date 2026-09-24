@@ -9,6 +9,7 @@ export const enUS: Dictionary = {
   cancel: "Cancel",
   confirm: "Confirm",
   close: "Close",
+  openMenu: "Open menu",
   noResults: "No results found",
   select: "Select",
   clear: "Clear",

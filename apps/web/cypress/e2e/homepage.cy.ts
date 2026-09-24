@@ -46,4 +46,21 @@ describe("Homepage", () => {
       cy.location("pathname").should("eq", "/en-US");
     });
   });
+
+  describe("no mobile", () => {
+    it("navega pelo menu hambúrguer", () => {
+      cy.viewport("iphone-x");
+      cy.visit("/pt-BR");
+      cy.get("header nav").should("not.be.visible");
+
+      cy.get("button[aria-label=\"Abrir menu\"]").click();
+      cy.get("[role=dialog]").should("be.visible").within(() => {
+        cy.contains("a", "Produtos").click();
+      });
+
+      cy.get("[role=dialog]").should("not.exist");
+      cy.location("hash").should("eq", "#products");
+      cy.get("#products").should("be.visible");
+    });
+  });
 });

@@ -2,6 +2,7 @@ import { AppBrand, AppHeader, appNavLinkClassName } from "@godzilla/ui";
 import type { LinkItem } from "@/content/types";
 import type { Locale } from "@/i18n/config";
 import { LanguageSwitcher } from "./language-switcher";
+import { MobileNav } from "./mobile-nav";
 
 export interface SiteHeaderProps {
   brand: string;
@@ -36,7 +37,12 @@ export function SiteHeader({
           ))}
         </nav>
       }
-      actions={<LanguageSwitcher locale={locale} />}
+      actions={
+        <div className="flex items-center gap-3">
+          <LanguageSwitcher locale={locale} />
+          <MobileNav brand={brand} links={links} className="lg:hidden" />
+        </div>
+      }
     />
   );
 }

@@ -9,6 +9,7 @@ export const ptBR: Dictionary = {
   cancel: "Cancelar",
   confirm: "Confirmar",
   close: "Fechar",
+  openMenu: "Abrir menu",
   noResults: "Nenhum resultado encontrado",
   select: "Selecionar",
   clear: "Limpar",

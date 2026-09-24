@@ -30,6 +30,7 @@ export * from "./organisms/chart";
 export * from "./organisms/dialog";
 export * from "./organisms/dropdown-menu";
 export * from "./organisms/locale-switcher";
+export * from "./organisms/sheet";
 export * from "./organisms/table";
 export * from "./organisms/tabs";
 export * from "./organisms/toast";

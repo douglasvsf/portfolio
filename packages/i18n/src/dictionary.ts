@@ -8,6 +8,8 @@ export interface Dictionary {
   cancel: string;
   confirm: string;
   close: string;
+  /** Rótulo do botão que abre o menu de navegação (hambúrguer). */
+  openMenu: string;
   noResults: string;
   select: string;
   clear: string;
