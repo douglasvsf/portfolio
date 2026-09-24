@@ -26,6 +26,8 @@ packages/shared/dist/
 
 # Storybook
 apps/storybook/storybook-static/
+# Storybook publicado junto com o site (gerado no build do web)
+apps/web/public/design-system/
 
 # Vercel
 .vercel

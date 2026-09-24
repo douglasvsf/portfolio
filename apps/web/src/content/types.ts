@@ -5,6 +5,13 @@ export interface LinkItem {
   href: string;
 }
 
+export interface Photo {
+  src: string;
+  alt: string;
+  width: number;
+  height: number;
+}
+
 export interface Fact {
   label: string;
   value: string;
@@ -47,6 +54,7 @@ export interface SiteContent {
     secondaryCta: LinkItem;
   };
   about: SectionCopy & {
+    photo?: Photo;
     paragraphs: string[];
     facts: Fact[];
   };
@@ -57,5 +65,6 @@ export interface SiteContent {
   footer: {
     owner: string;
     rightsReserved: string;
+    links: LinkItem[];
   };
 }

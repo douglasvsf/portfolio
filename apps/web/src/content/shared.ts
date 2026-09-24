@@ -20,12 +20,16 @@ export const CONTACT = {
 
 const s = SECTION_IDS;
 
-/** Links do menu na ordem das seções — cada idioma só fornece os rótulos. */
+/**
+ * Links do menu: as seções na ordem da página (cada idioma só fornece os
+ * rótulos) e, por último, o Design System.
+ */
 export function navLinks(labels: Record<"about" | "skills" | "projects" | "experience" | "contact", string>) {
-  return (["about", "skills", "projects", "experience", "contact"] as const).map((key) => ({
+  const sections = (["about", "skills", "projects", "experience", "contact"] as const).map((key) => ({
     href: `#${s[key]}`,
     label: labels[key],
   }));
+  return [...sections, DESIGN_SYSTEM_LINK];
 }
 
 export function contactLinks(emailLabel: string) {
@@ -34,6 +38,11 @@ export function contactLinks(emailLabel: string) {
     { icon: "linkedin" as const, label: "LinkedIn", value: CONTACT.linkedinLabel, href: CONTACT.linkedinUrl },
   ];
 }
+
+/** Storybook do Design System, publicado junto com o site (ver next.config.ts). */
+export const DESIGN_SYSTEM_LINK = { label: "Design System", href: "/design-system" };
+
+export const PROFILE_PHOTO = { src: "/images/douglas.jpg", width: 390, height: 396 } as const;
 
 export const SKILL_ITEMS = {
   frontend: [

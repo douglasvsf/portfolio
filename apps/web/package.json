@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "pnpm --filter storybook build:site && next build",
+    "design-system:build": "pnpm --filter storybook build:site",
     "start": "next start",
     "lint": "eslint",
     "test": "jest",
@@ -36,6 +37,5 @@
     "start-server-and-test": "^3.0.12",
     "tailwindcss": "^4",
     "typescript": "^5"
-  },
-  "packageManager": "pnpm@11.5.2"
+  }
 }

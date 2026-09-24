@@ -22,6 +22,7 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Ignora internos do Next, rotas de API e arquivos estáticos (qualquer coisa com extensão).
-  matcher: ["/((?!_next|api|.*\\..*).*)"],
+  // Ignora internos do Next, rotas de API, o Storybook publicado em /design-system
+  // e arquivos estáticos (qualquer coisa com extensão).
+  matcher: ["/((?!_next|api|design-system|.*\\..*).*)"],
 };

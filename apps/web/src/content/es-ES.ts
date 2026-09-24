@@ -1,11 +1,11 @@
 import type { SiteContent } from "./types";
-import { EXPERIENCE, PROJECT_TAGS, SECTION_IDS, SKILL_ITEMS, contactLinks, navLinks } from "./shared";
+import { DESIGN_SYSTEM_LINK, EXPERIENCE, PROFILE_PHOTO, PROJECT_TAGS, SECTION_IDS, SKILL_ITEMS, contactLinks, navLinks } from "./shared";
 
 export const esES: SiteContent = {
   meta: {
-    title: "Godzilla — Full Stack Developer",
+    title: "Douglas Szapak — Ingeniero de Software Full Stack Sénior",
     description:
-      "Portafolio personal de Douglas Vinicius Szapak Ferreira (Godzilla), ingeniero full stack. Proyectos, habilidades y experiencia.",
+      "Douglas Szapak, ingeniero de software full stack sénior con más de 9 años en React, Next.js y Node.js. Conoce sus proyectos, experiencia y habilidades.",
   },
   nav: {
     brand: "GODZILLA.DEV",
@@ -29,6 +29,7 @@ export const esES: SiteContent = {
   },
   about: {
     title: "Sobre mí",
+    photo: { ...PROFILE_PHOTO, alt: "Foto de Douglas Szapak sonriendo al aire libre" },
     paragraphs: [
       "Me llamo Douglas Vinicius Szapak Ferreira — en el sector, también conocido como Godzilla. Soy ingeniero de software full stack sénior, con más de 9 años construyendo productos web desde el levantamiento de requisitos hasta producción.",
       "Empecé desarrollando sistemas corporativos, APIs e integraciones en Cristófoli. Después cofundé QualiCloud, donde fui socio y líder técnico de un equipo que creaba productos SaaS web y móviles. En Pravaler participé en la modernización de un ecosistema legado de más de 20 años — migrando WordPress/PHP a Next.js, Node.js y TypeScript, ayudando a crear una arquitectura BFF y escribiendo más de 400 pruebas automatizadas. En Inoa trabajé como sénior en el frontend de una plataforma integrada con 16 módulos de backend.",
@@ -173,7 +174,8 @@ export const esES: SiteContent = {
     links: contactLinks("Correo"),
   },
   footer: {
-    owner: "Godzilla",
+    owner: "Douglas Szapak",
+    links: [DESIGN_SYSTEM_LINK],
     rightsReserved: "Todos los derechos reservados.",
   },
 };
