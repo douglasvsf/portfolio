@@ -20,6 +20,7 @@ export const esES: SiteContent = {
     systems: {
       label: "Sistemas",
       items: systemLinks({
+        spotify: "Tus estadísticas de Spotify: artistas, canciones, géneros y lo que suena ahora.",
         stocks: "Cotizaciones de la B3 con gráficos de alzas, bajas, sectores e historial.",
         designSystem: "Biblioteca de componentes del sitio, documentada en Storybook.",
       }),

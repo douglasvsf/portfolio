@@ -7,6 +7,8 @@ describe("Homepage", () => {
 
   describe("em português", () => {
     beforeEach(() => {
+      // O menu do header só aparece a partir de lg (1024px).
+      cy.viewport(1280, 800);
       cy.visit("/pt-BR");
     });
 

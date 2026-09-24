@@ -41,6 +41,12 @@ localmente, prontos para evoluir.
 - Gráficos com Recharts, através do `Chart` do Design System (padrão shadcn/ui)
 - Sem `BRAPI_TOKEN` a listagem funciona inteira, mas o histórico só sai para PETR4, VALE3, ITUB4 e MGLU3 — token grátis em brapi.dev (ver `apps/web/.env.example`)
 
+**GODZILLA Spotify Stats** (`apps/web` → rota `/spotify`)
+
+- Dashboard de estatísticas musicais com a Spotify Web API: OAuth (Authorization Code + PKCE), top artistas/músicas, gêneros, histórico recente e *now playing*
+- Sem banco: sessão em cookie httpOnly cifrado (AES-256-GCM); **modo demo** com dados mockados para quem não quer conectar
+- Mesmos componentes do `@godzilla/ui`, com outra "skin" de tokens — documentação completa em [docs/godzilla-spotify-stats.md](docs/godzilla-spotify-stats.md)
+
 **Banco de dados**
 
 - MongoDB, rodando localmente via Docker Compose
@@ -65,7 +71,7 @@ localmente, prontos para evoluir.
 │   │   │   ├── fixtures/       # Dados de apoio para os testes (quando houver)
 │   │   │   └── support/        # Setup global do Cypress
 │   │   ├── src/
-│   │   │   ├── app/            # Rotas (App Router): [lang]/ (portfólio) e stocks/ (Kaiju Stocks)
+│   │   │   ├── app/            # Rotas (App Router): [lang]/ (portfólio), stocks/ (Kaiju Stocks) e spotify/ (Spotify Stats)
 │   │   │   ├── components/     # Componentes de UI, layout e seções
 │   │   │   └── lib/            # Integração com a API (com teste unitário)
 │   │   ├── jest.config.ts
@@ -93,7 +99,7 @@ localmente, prontos para evoluir.
 │   ├── shared/             # Tipos compartilhados (HealthResponse, SkillGroup, Project, ExperienceItem)
 │   ├── ui/                 # @godzilla/ui — biblioteca de componentes (Atomic Design)
 │   │   └── src/
-│   │       ├── atoms/          # Button, Input, Label, Checkbox, Switch, Badge, Avatar, Spinner, Separator, Typography
+│   │       ├── atoms/          # Button, Input, Label, Checkbox, Switch, Badge, Avatar, Spinner, Skeleton, Separator, Typography
 │   │       ├── molecules/      # FormField, SearchInput
 │   │       ├── organisms/      # Card, Chart (Recharts), Dialog, Table, Tabs, Toast
 │   │       ├── theme/          # ThemeProvider (light/dark/system)
