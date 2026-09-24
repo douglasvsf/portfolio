@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { Geist, Geist_Mono } from "next/font/google";
 import { I18nProvider } from "@godzilla/ui";
 import { getContent } from "@/content";
-import { isLocale, locales } from "@/i18n/config";
+import { SITE_URL } from "@/config/site";
+import { DEFAULT_LOCALE, isLocale, locales } from "@/i18n/config";
 import "../globals.css";
 
 const geistSans = Geist({
@@ -29,15 +30,22 @@ export async function generateMetadata({ params }: LayoutProps<"/[lang]">): Prom
 
   const { meta } = getContent(lang);
   return {
+    // metadataBase torna canonical/hreflang/Open Graph absolutos (exigência dos buscadores).
+    metadataBase: SITE_URL,
     title: meta.title,
     description: meta.description,
     alternates: {
-      languages: Object.fromEntries(locales.map((locale) => [locale, `/${locale}`])),
+      canonical: `/${lang}`,
+      languages: {
+        ...Object.fromEntries(locales.map((locale) => [locale, `/${locale}`])),
+        "x-default": `/${DEFAULT_LOCALE}`,
+      },
     },
     openGraph: {
       title: meta.title,
       description: meta.description,
       locale: lang.replace("-", "_"),
+      url: `/${lang}`,
       type: "website",
     },
   };

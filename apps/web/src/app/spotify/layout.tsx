@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AppFooter, I18nProvider, appNavLinkClassName } from "@godzilla/ui";
+import { SITE_URL } from "@/config/site";
 import { getSpotifyDictionary } from "@/content/spotify";
 import { getRequestLocale } from "@/i18n/request";
 import "../globals.css";
@@ -13,6 +14,7 @@ const title = "GODZILLA Spotify Stats";
 export async function generateMetadata(): Promise<Metadata> {
   const { description } = getSpotifyDictionary(await getRequestLocale()).meta;
   return {
+    metadataBase: SITE_URL,
     title: { default: title, template: `%s · ${title}` },
     description,
     applicationName: title,

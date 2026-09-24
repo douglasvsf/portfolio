@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { AppBrand, AppFooter, AppHeader, I18nProvider, appContainerClassName, appNavLinkClassName, cn } from "@godzilla/ui";
 import { BackToPortfolio } from "@/components/layout/back-to-portfolio";
 import { SystemLocaleSwitcher } from "@/components/layout/system-locale-switcher";
+import { SITE_URL } from "@/config/site";
 import { getStocksDictionary } from "@/content/stocks";
 import { getRequestLocale } from "@/i18n/request";
 import "../globals.css";
@@ -13,7 +14,7 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 
 export async function generateMetadata(): Promise<Metadata> {
   const { meta } = getStocksDictionary(await getRequestLocale());
-  return { title: { default: meta.title, template: "%s · Kaiju Stocks" }, description: meta.description };
+  return { metadataBase: SITE_URL, title: { default: meta.title, template: "%s · Kaiju Stocks" }, description: meta.description };
 }
 
 export default async function RootLayout({ children }: LayoutProps<"/stocks">) {

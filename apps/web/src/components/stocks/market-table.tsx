@@ -126,7 +126,7 @@ function PageLink({ href, disabled, label, children }: { href: string; disabled:
     "inline-flex size-(--size-control-sm) items-center justify-center rounded-md border border-input bg-background text-foreground transition-colors hover:bg-accent hover:text-accent-foreground";
   if (disabled) {
     return (
-      <span aria-disabled="true" aria-label={label} className={cn(classes, "pointer-events-none opacity-50")}>
+      <span role="link" aria-disabled="true" aria-label={label} className={cn(classes, "pointer-events-none opacity-50")}>
         {children}
       </span>
     );

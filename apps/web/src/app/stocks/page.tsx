@@ -86,7 +86,7 @@ export default async function MarketPage({ searchParams }: PageProps<"/stocks">)
       <section className="grid gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>{dict.market.moversTitle}</CardTitle>
+            <CardTitle as="h2">{dict.market.moversTitle}</CardTitle>
             <CardDescription>{dict.market.moversDescription}</CardDescription>
           </CardHeader>
           <CardContent>
@@ -95,7 +95,7 @@ export default async function MarketPage({ searchParams }: PageProps<"/stocks">)
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>{dict.market.sectorsTitle}</CardTitle>
+            <CardTitle as="h2">{dict.market.sectorsTitle}</CardTitle>
             <CardDescription>{dict.market.sectorsDescription}</CardDescription>
           </CardHeader>
           <CardContent>

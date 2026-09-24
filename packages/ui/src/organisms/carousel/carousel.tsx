@@ -157,20 +157,25 @@ export function CarouselDots({ className }: { className?: string }) {
   if (snapCount <= 1) return null;
 
   return (
-    <div className={cn("flex items-center gap-2", className)}>
+    <div className={cn("flex items-center", className)}>
       {Array.from({ length: snapCount }, (_, index) => (
+        // Área de toque de 24px (WCAG 2.5.8) com o indicador visual menor dentro.
         <button
           key={index}
           type="button"
           aria-label={`${t.goToSlide} ${index + 1}`}
           aria-current={index === selectedIndex ? "true" : undefined}
           onClick={() => api?.scrollTo(index)}
-          className={cn(
-            "h-2 rounded-full bg-muted-foreground/40 transition-all duration-(--duration-base)",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-            index === selectedIndex ? "w-6 bg-primary" : "w-2 hover:bg-muted-foreground",
-          )}
-        />
+          className="group inline-flex h-6 min-w-6 items-center justify-center rounded-full px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <span
+            aria-hidden="true"
+            className={cn(
+              "h-2 rounded-full bg-muted-foreground/40 transition-all duration-(--duration-base)",
+              index === selectedIndex ? "w-6 bg-primary" : "w-2 group-hover:bg-muted-foreground",
+            )}
+          />
+        </button>
       ))}
     </div>
   );
