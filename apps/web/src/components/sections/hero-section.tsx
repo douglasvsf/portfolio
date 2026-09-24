@@ -30,7 +30,8 @@ export function HeroSection({ id, prompt, title, subtitle, description, primaryC
         <div className="relative z-10 flex flex-col gap-6">
           <span className="font-mono text-body-sm text-primary">{prompt}</span>
 
-          <Typography variant="display" id={`${id}-title`} className="text-glow text-6xl font-black sm:text-8xl">
+          {/* Marca, não texto corrido: não "pinta" de azul ao selecionar a página. */}
+          <Typography variant="display" id={`${id}-title`} className="text-glow select-none text-6xl font-black sm:text-8xl">
             {title}
           </Typography>
 
@@ -60,7 +61,7 @@ export function HeroSection({ id, prompt, title, subtitle, description, primaryC
          * imagem — só a posição muda com o breakpoint.
          */}
         <div
-          className="pointer-events-none absolute -right-16 bottom-4 w-72 opacity-25 sm:w-96 lg:relative lg:right-auto lg:bottom-auto lg:w-auto lg:opacity-100"
+          className="pointer-events-none absolute -right-16 bottom-4 w-72 select-none opacity-25 sm:w-96 lg:relative lg:right-auto lg:bottom-auto lg:w-auto lg:opacity-100"
           aria-hidden="true"
         >
           <div className="absolute inset-[15%] hidden rounded-full bg-primary opacity-20 blur-[90px] lg:block" />
@@ -70,6 +71,7 @@ export function HeroSection({ id, prompt, title, subtitle, description, primaryC
             width={900}
             height={875}
             priority
+            draggable={false}
             sizes="(min-width: 1024px) 520px, 384px"
             className="animate-float relative mx-auto w-full max-w-[520px]"
           />
