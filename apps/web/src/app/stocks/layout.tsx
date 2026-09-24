@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
 import { I18nProvider } from "@godzilla/ui";
-import { TrendingUp } from "@godzilla/icons";
+import { ArrowLeft, TrendingUp } from "@godzilla/icons";
 import "../globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -26,14 +26,22 @@ export default function RootLayout({ children }: LayoutProps<"/stocks">) {
                   kaiju<span className="text-primary">/stocks</span>
                 </span>
               </Link>
-              <span className="text-caption text-muted-foreground">
-                Dados: <a href="https://brapi.dev" className="underline-offset-4 hover:text-foreground hover:underline">brapi.dev</a>
-              </span>
+              <Link
+                href="/"
+                className="inline-flex items-center gap-1.5 font-mono text-body-sm text-muted-foreground transition-colors hover:text-primary"
+              >
+                <ArrowLeft className="size-(--size-icon-sm)" aria-hidden="true" />
+                Voltar ao portfólio
+              </Link>
             </div>
           </header>
           <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">{children}</main>
           <footer className="border-t border-border py-6 text-center text-caption text-muted-foreground">
-            Cotações com atraso de até 15 minutos. Não é recomendação de investimento.
+            Dados:{" "}
+            <a href="https://brapi.dev" className="underline-offset-4 hover:text-foreground hover:underline">
+              brapi.dev
+            </a>{" "}
+            · Cotações com atraso de até 15 minutos. Não é recomendação de investimento.
           </footer>
         </I18nProvider>
       </body>

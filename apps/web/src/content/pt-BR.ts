@@ -1,5 +1,5 @@
 import type { SiteContent } from "./types";
-import { DESIGN_SYSTEM_LINK, EXPERIENCE, PROFILE_PHOTO, PROJECT_TAGS, SECTION_IDS, SKILL_ITEMS, contactLinks, navLinks } from "./shared";
+import { DESIGN_SYSTEM_LINK, EXPERIENCE, PROFILE_PHOTO, PROJECT_TAGS, SECTION_IDS, SKILL_ITEMS, contactLinks, navLinks, systemLinks } from "./shared";
 
 export const ptBR: SiteContent = {
   meta: {
@@ -17,6 +17,13 @@ export const ptBR: SiteContent = {
       experience: "Experiência",
       contact: "Contato",
     }),
+    systems: {
+      label: "Sistemas",
+      items: systemLinks({
+        stocks: "Cotações da B3 com gráficos de altas, quedas, setores e histórico.",
+        designSystem: "Biblioteca de componentes do site, documentada no Storybook.",
+      }),
+    },
   },
   hero: {
     prompt: "$ whoami",

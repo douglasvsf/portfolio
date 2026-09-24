@@ -1,5 +1,5 @@
 import type { SiteContent } from "./types";
-import { DESIGN_SYSTEM_LINK, EXPERIENCE, PROFILE_PHOTO, PROJECT_TAGS, SECTION_IDS, SKILL_ITEMS, contactLinks, navLinks } from "./shared";
+import { DESIGN_SYSTEM_LINK, EXPERIENCE, PROFILE_PHOTO, PROJECT_TAGS, SECTION_IDS, SKILL_ITEMS, contactLinks, navLinks, systemLinks } from "./shared";
 
 export const enUS: SiteContent = {
   meta: {
@@ -17,6 +17,13 @@ export const enUS: SiteContent = {
       experience: "Experience",
       contact: "Contact",
     }),
+    systems: {
+      label: "Systems",
+      items: systemLinks({
+        stocks: "B3 stock quotes with charts for gainers, losers, sectors and history.",
+        designSystem: "The site's component library, documented in Storybook.",
+      }),
+    },
   },
   hero: {
     prompt: "$ whoami",
