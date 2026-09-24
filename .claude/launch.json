@@ -43,6 +43,21 @@
       ],
       "port": 6006,
       "autoPort": false
+    },
+    {
+      "name": "web-prod",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "--filter",
+        "web",
+        "exec",
+        "next",
+        "start",
+        "-p",
+        "3200"
+      ],
+      "port": 3200,
+      "autoPort": false
     }
   ]
 }

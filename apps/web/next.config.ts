@@ -1,3 +1,4 @@
+import { withSentryConfig } from "@sentry/nextjs/config";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -25,4 +26,15 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  org: process.env.SENTRY_ORG ?? "portfolio-id",
+  project: process.env.SENTRY_PROJECT ?? "javascript-nextjs",
+  // Source maps só sobem com SENTRY_AUTH_TOKEN (configurado na Vercel); sem ele o build segue normal.
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  sourcemaps: { deleteSourcemapsAfterUpload: true },
+  // Eventos passam pelo próprio domínio: bloqueadores de anúncio barram *.sentry.io.
+  // Fica sob /api porque o proxy de i18n ignora essa rota.
+  tunnelRoute: "/api/monitoring",
+  silent: !process.env.CI,
+  telemetry: false,
+});
