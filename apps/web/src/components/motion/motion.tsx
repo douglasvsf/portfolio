@@ -25,8 +25,13 @@ export function MotionProvider({ children }: { children: ReactNode }) {
 }
 
 const EASE = [0.22, 1, 0.36, 1] as const;
-/** Anima quando ~20% do bloco aparece; só na primeira vez. */
-const VIEWPORT = { once: true, amount: 0.2 } as const;
+/**
+ * Anima quando o topo do bloco passa de 10% acima da borda inferior da tela;
+ * só na primeira vez. (Uma fração do elemento — ex.: 20% — não serve para
+ * listas altas: no celular, 4 cards empilhados exigiriam ~560px visíveis antes
+ * de qualquer card aparecer.)
+ */
+const VIEWPORT = { once: true, amount: "some", margin: "0px 0px -10% 0px" } as const;
 
 /** `custom` = atraso em segundos (o transition da variante tem prioridade sobre a prop). */
 const fadeUp: Variants = {
@@ -44,6 +49,7 @@ export function Reveal({ children, delay = 0, className }: { children: ReactNode
       viewport={VIEWPORT}
       variants={fadeUp}
       custom={delay}
+      inherit={false}
     >
       {children}
     </m.div>
@@ -62,7 +68,9 @@ type ListTag = "ul" | "ol" | "dl" | "div";
  * semântica: renderiza o `ul`/`ol`/`dl`/`div` original.
  */
 export function Stagger({ as = "div", children, className, stagger = 0.08 }: { as?: ListTag; children: ReactNode; className?: string; stagger?: number }) {
-  const props = { className, initial: "hidden", whileInView: "visible", viewport: VIEWPORT, variants: container(stagger), children };
+  // inherit=false: listas aninhadas (métricas dentro de um card que também anima) decidem sozinhas
+  // quando aparecer — sem isso, o estado "hidden" do pai podia sobrescrever o da lista filha.
+  const props = { className, initial: "hidden", whileInView: "visible", viewport: VIEWPORT, variants: container(stagger), inherit: false, children };
   if (as === "ul") return <m.ul {...props} />;
   if (as === "ol") return <m.ol {...props} />;
   if (as === "dl") return <m.dl {...props} />;

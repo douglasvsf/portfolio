@@ -55,4 +55,27 @@ describe("Animações ao rolar", () => {
       expect(moving, "nenhum quadro visível com deslocamento").to.deep.equal([]);
     });
   });
+
+  // Chegar por âncora (ex.: "Voltar aos projetos" → /pt-BR#projects) e rolar rápido: listas altas e
+  // animações aninhadas (métricas dentro de cards) não podem ficar invisíveis na tela.
+  for (const [width, height] of [[375, 812], [768, 1024], [1280, 900]] as const) {
+    it(`chegando por #projects e rolando rápido em ${width}px, nada visível fica escondido`, () => {
+      const hiddenOnScreen = (doc: Document) =>
+        [...doc.querySelectorAll("main [style*='opacity']")]
+          .filter((el) => {
+            const rect = el.getBoundingClientRect();
+            // A faixa dos 10% de baixo ainda não revela — é a regra (VIEWPORT.margin).
+            return Number(getComputedStyle(el).opacity) < 0.99 && rect.bottom > 0 && rect.top < doc.defaultView!.innerHeight * 0.9;
+          })
+          .map((el) => (el.textContent ?? "").slice(0, 30));
+
+      cy.viewport(width, height);
+      cy.visit("/pt-BR#projects");
+      for (let step = 0; step < 12; step++) {
+        cy.window().then((win) => win.scrollBy({ top: 350, behavior: "instant" }));
+        cy.wait(30);
+        if (step % 3 === 0) cy.document().should((doc) => expect(hiddenOnScreen(doc), `passo ${step}`).to.deep.equal([]));
+      }
+    });
+  }
 });
