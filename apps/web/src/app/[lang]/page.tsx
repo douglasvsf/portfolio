@@ -4,7 +4,7 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { HeroSection } from "@/components/sections/hero-section";
 import { AboutSection } from "@/components/sections/about-section";
 import { SkillsSection } from "@/components/sections/skills-section";
-import { ProjectsSection } from "@/components/sections/projects-section";
+import { ProjectsSection } from "@/components/projects/projects-section";
 import { ExperienceSection } from "@/components/sections/experience-section";
 import { ContactSection } from "@/components/sections/contact-section";
 import { SystemsSection } from "@/components/sections/systems-section";
@@ -33,7 +33,7 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
         <HeroSection id={SECTION_IDS.hero} {...hero} />
         <AboutSection id={SECTION_IDS.about} index="01" {...about} />
         <SkillsSection id={SECTION_IDS.skills} index="02" {...skills} />
-        <ProjectsSection id={SECTION_IDS.projects} index="03" {...projects} />
+        <ProjectsSection id={SECTION_IDS.projects} index="03" locale={lang} {...projects} />
         <ExperienceSection id={SECTION_IDS.experience} index="04" {...experience} />
         <SystemsSection id={SECTION_IDS.systems} index="05" {...systems} />
         <EngineeringSection id={SECTION_IDS.engineering} index="06" {...engineering} />

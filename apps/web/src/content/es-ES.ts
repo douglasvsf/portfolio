@@ -1,5 +1,5 @@
 import type { SiteContent } from "./types";
-import { ACTIONS_URL, DESIGN_SYSTEM_LINK, EXPERIENCE, PROFILE_PHOTO, PROJECT_TAGS, REPO_URL, SECTION_IDS, SKILL_ITEMS, contactLinks, engineeringItems, navLinks, systemItems } from "./shared";
+import { ACTIONS_URL, DESIGN_SYSTEM_LINK, EXPERIENCE, PROFILE_PHOTO, REPO_URL, SECTION_IDS, SKILL_ITEMS, contactLinks, engineeringItems, navLinks, systemItems } from "./shared";
 
 export const esES: SiteContent = {
   meta: {
@@ -59,33 +59,35 @@ export const esES: SiteContent = {
   },
   projects: {
     title: "Proyectos",
-    description: "Iniciativas de las que formé parte a lo largo de mi carrera.",
-    items: [
-      {
-        name: "Reconstrucción del legado — Canales EPA · Pravaler",
-        description:
-          "En el equipo “Estrategia para la Acción”, reconstrucción del sistema legado de la empresa: simulación, presimulación, registro, crédito, atención, sitio web y formularios, con Next.js, Node.js, shadcn/ui y Tailwind CSS sobre Google Cloud Platform.",
-        tags: PROJECT_TAGS.epa,
-      },
-      {
-        name: "Modernización de Discovery — Pravaler",
-        description:
-          "Migración de un ecosistema WordPress/PHP de más de 20 años a Next.js, Node.js y TypeScript (SPA, SSR y SSG), con una nueva arquitectura BFF para el portal y el marketplace y más de 400 pruebas unitarias y de integración.",
-        tags: PROJECT_TAGS.discovery,
-      },
-      {
-        name: "Plataforma de mercado de capitales — Inoa",
-        description:
-          "Evolución del frontend en AngularJS, TypeScript y React integrado con 16 módulos de backend de equipos distintos, con componentes reutilizables, pruebas automatizadas y consistencia entre interfaz y servicios.",
-        tags: PROJECT_TAGS.inoa,
-      },
-      {
-        name: "Productos SaaS — QualiCloud",
-        description:
-          "Como socio y líder técnico, convertí necesidades de negocio en productos SaaS web y móviles, desde la arquitectura hasta la entrega, con NestJS, Laravel, React y React Native.",
-        tags: PROJECT_TAGS.qualicloud,
-      },
-    ],
+    description: "Experiencia convertida en productos, plataformas y soluciones de software.",
+    snapshotLabel: "Engineering snapshot",
+    filtersLabel: "Filtrar proyectos",
+    filters: { all: "Todos", professional: "Profesionales", personal: "Personales", frontend: "Frontend", backend: "Backend", fullstack: "Full Stack" },
+    groups: {
+      professional: { title: "Profesionales", description: "Casos de productos y plataformas en los que trabajé." },
+      personal: { title: "Personales", description: "Estudio, portafolio y experimentación — en línea y de código abierto." },
+    },
+    empty: "Ningún proyecto en este filtro.",
+    viewCase: "Ver caso",
+    open: "Abrir",
+    code: "Código",
+    companySite: "Sitio de {company}",
+    personalBadge: "Proyecto personal",
+    case: {
+      back: "Volver a los proyectos",
+      context: "Contexto",
+      challenge: "Desafío",
+      role: "Mi trabajo",
+      architecture: "Arquitectura",
+      architectureHint: "Vista simplificada del flujo",
+      stack: "Stack",
+      scale: "Escala",
+      result: "Resultado",
+      decisions: "Decisiones técnicas",
+      previous: "Caso anterior",
+      next: "Siguiente caso",
+      metaTitle: "{title} — GODZILLA.DEV",
+    },
   },
   experience: {
     title: "Experiencia",
@@ -93,6 +95,7 @@ export const esES: SiteContent = {
       {
         role: "Ingeniero de Software Full Stack Sénior",
         company: EXPERIENCE.inoa.company,
+        companyUrl: EXPERIENCE.inoa.url,
         period: "ene 2026 — jul 2026",
         location: "Río de Janeiro, Brasil · Remoto",
         description:
@@ -109,6 +112,7 @@ export const esES: SiteContent = {
       {
         role: "Ingeniero de Software Full Stack Semi Sénior",
         company: EXPERIENCE.pravalerPleno.company,
+        companyUrl: EXPERIENCE.pravalerPleno.url,
         period: "jun 2023 — nov 2025",
         location: "São Paulo, Brasil",
         description:
@@ -125,6 +129,7 @@ export const esES: SiteContent = {
       {
         role: "Ingeniero de Software Full Stack Júnior",
         company: EXPERIENCE.pravalerJunior.company,
+        companyUrl: EXPERIENCE.pravalerJunior.url,
         period: "jul 2022 — jul 2023",
         location: "Remoto",
         description:
@@ -141,6 +146,7 @@ export const esES: SiteContent = {
       {
         role: "Desarrollador Full Stack — Socio",
         company: EXPERIENCE.qualicloud.company,
+        companyUrl: EXPERIENCE.qualicloud.url,
         period: "abr 2019 — nov 2022",
         location: "Campo Mourão, Brasil",
         description:
@@ -156,6 +162,7 @@ export const esES: SiteContent = {
       {
         role: "Analista de Desarrollo de Sistemas",
         company: EXPERIENCE.cristofoli.company,
+        companyUrl: EXPERIENCE.cristofoli.url,
         period: "jul 2017 — jun 2022",
         location: "Campo Mourão, Brasil",
         description:

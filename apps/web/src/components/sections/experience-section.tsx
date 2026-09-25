@@ -1,4 +1,5 @@
 import type { ExperienceItem } from "@portfolio/shared";
+import { ArrowUpRight } from "@godzilla/icons";
 import { Badge, Typography } from "@godzilla/ui";
 import { Section, type SectionProps } from "@/components/layout/section";
 import { Stagger, StaggerItem } from "@/components/motion/motion";
@@ -40,7 +41,21 @@ export function ExperienceEntry({ item }: ExperienceEntryProps) {
         <Typography variant="h4" as="h3" className="mt-1">
           {item.role}
         </Typography>
-        <p className="font-mono text-body-sm text-primary">{item.company}</p>
+        <p className="font-mono text-body-sm text-primary">
+          {item.companyUrl ? (
+            <a
+              href={item.companyUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 rounded-sm underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
+              {item.company}
+              <ArrowUpRight className="size-3.5" aria-hidden="true" />
+            </a>
+          ) : (
+            item.company
+          )}
+        </p>
       </header>
 
       <Typography variant="body-sm" className="text-muted-foreground">

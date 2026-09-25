@@ -1,5 +1,5 @@
 import type { SiteContent } from "./types";
-import { ACTIONS_URL, DESIGN_SYSTEM_LINK, EXPERIENCE, PROFILE_PHOTO, PROJECT_TAGS, REPO_URL, SECTION_IDS, SKILL_ITEMS, contactLinks, engineeringItems, navLinks, systemItems } from "./shared";
+import { ACTIONS_URL, DESIGN_SYSTEM_LINK, EXPERIENCE, PROFILE_PHOTO, REPO_URL, SECTION_IDS, SKILL_ITEMS, contactLinks, engineeringItems, navLinks, systemItems } from "./shared";
 
 export const ptBR: SiteContent = {
   meta: {
@@ -59,33 +59,35 @@ export const ptBR: SiteContent = {
   },
   projects: {
     title: "Projetos",
-    description: "Iniciativas das quais fiz parte ao longo da carreira.",
-    items: [
-      {
-        name: "Reconstrução do legado — Canais EPA · Pravaler",
-        description:
-          "No time “Estratégia para Ação”, reconstrução do sistema legado da empresa: simulação, pré-simulação, cadastro, crédito, atendimento, website e formulários, com Next.js, Node.js, shadcn/ui e Tailwind CSS rodando no Google Cloud Platform.",
-        tags: PROJECT_TAGS.epa,
-      },
-      {
-        name: "Modernização do Discovery — Pravaler",
-        description:
-          "Migração de um ecossistema WordPress/PHP com mais de 20 anos para Next.js, Node.js e TypeScript (SPA, SSR e SSG), com nova arquitetura BFF para o portal e o marketplace e mais de 400 testes unitários e de integração.",
-        tags: PROJECT_TAGS.discovery,
-      },
-      {
-        name: "Plataforma de mercado de capitais — Inoa",
-        description:
-          "Evolução do front-end em AngularJS, TypeScript e React integrado a 16 módulos de back-end de equipes distintas, com componentes reutilizáveis, testes automatizados e consistência entre interface e serviços.",
-        tags: PROJECT_TAGS.inoa,
-      },
-      {
-        name: "Produtos SaaS — QualiCloud",
-        description:
-          "Como sócio e líder técnico, transformei necessidades de negócio em produtos SaaS web e mobile, da definição de arquitetura à entrega, com NestJS, Laravel, React e React Native.",
-        tags: PROJECT_TAGS.qualicloud,
-      },
-    ],
+    description: "Experiência transformada em produtos, plataformas e soluções de software.",
+    snapshotLabel: "Engineering snapshot",
+    filtersLabel: "Filtrar projetos",
+    filters: { all: "Todos", professional: "Profissionais", personal: "Pessoais", frontend: "Frontend", backend: "Backend", fullstack: "Full Stack" },
+    groups: {
+      professional: { title: "Profissionais", description: "Cases de produtos e plataformas em que trabalhei." },
+      personal: { title: "Pessoais", description: "Estudo, portfólio e experimentação — no ar e com código aberto." },
+    },
+    empty: "Nenhum projeto neste filtro.",
+    viewCase: "Ver case",
+    open: "Abrir",
+    code: "Código",
+    companySite: "Site da {company}",
+    personalBadge: "Projeto pessoal",
+    case: {
+      back: "Voltar aos projetos",
+      context: "Contexto",
+      challenge: "Desafio",
+      role: "Minha atuação",
+      architecture: "Arquitetura",
+      architectureHint: "Visão simplificada do fluxo",
+      stack: "Stack",
+      scale: "Escala",
+      result: "Resultado",
+      decisions: "Decisões técnicas",
+      previous: "Case anterior",
+      next: "Próximo case",
+      metaTitle: "{title} — GODZILLA.DEV",
+    },
   },
   experience: {
     title: "Experiência",
@@ -93,6 +95,7 @@ export const ptBR: SiteContent = {
       {
         role: "Engenheiro de Software Full Stack Sênior",
         company: EXPERIENCE.inoa.company,
+        companyUrl: EXPERIENCE.inoa.url,
         period: "jan 2026 — jul 2026",
         location: "Rio de Janeiro, RJ · Remoto",
         description:
@@ -109,6 +112,7 @@ export const ptBR: SiteContent = {
       {
         role: "Engenheiro de Software Full Stack Pleno",
         company: EXPERIENCE.pravalerPleno.company,
+        companyUrl: EXPERIENCE.pravalerPleno.url,
         period: "jun 2023 — nov 2025",
         location: EXPERIENCE.pravalerPleno.location,
         description:
@@ -125,6 +129,7 @@ export const ptBR: SiteContent = {
       {
         role: "Engenheiro de Software Full Stack Júnior",
         company: EXPERIENCE.pravalerJunior.company,
+        companyUrl: EXPERIENCE.pravalerJunior.url,
         period: "jul 2022 — jul 2023",
         location: "Remoto",
         description:
@@ -141,6 +146,7 @@ export const ptBR: SiteContent = {
       {
         role: "Desenvolvedor Full Stack — Sócio",
         company: EXPERIENCE.qualicloud.company,
+        companyUrl: EXPERIENCE.qualicloud.url,
         period: "abr 2019 — nov 2022",
         location: EXPERIENCE.qualicloud.location,
         description:
@@ -156,6 +162,7 @@ export const ptBR: SiteContent = {
       {
         role: "Analista de Desenvolvimento de Sistemas",
         company: EXPERIENCE.cristofoli.company,
+        companyUrl: EXPERIENCE.cristofoli.url,
         period: "jul 2017 — jun 2022",
         location: EXPERIENCE.cristofoli.location,
         description:

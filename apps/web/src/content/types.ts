@@ -1,4 +1,4 @@
-import type { ExperienceItem, Project, SkillGroup } from "@portfolio/shared";
+import type { ExperienceItem, SkillGroup } from "@portfolio/shared";
 
 export interface LinkItem {
   label: string;
@@ -35,6 +35,40 @@ export type EngineeringKey =
   | "observability"
   | "security"
   | "i18n";
+
+/** Textos da seção Projetos e das páginas de case (os projetos em si ficam em content/projects). */
+export interface ProjectsSectionCopy {
+  snapshotLabel: string;
+  filtersLabel: string;
+  filters: { all: string; professional: string; personal: string; frontend: string; backend: string; fullstack: string };
+  groups: {
+    professional: SectionCopy;
+    personal: SectionCopy;
+  };
+  empty: string;
+  viewCase: string;
+  open: string;
+  code: string;
+  /** {company} */
+  companySite: string;
+  personalBadge: string;
+  case: {
+    back: string;
+    context: string;
+    challenge: string;
+    role: string;
+    architecture: string;
+    architectureHint: string;
+    stack: string;
+    scale: string;
+    result: string;
+    decisions: string;
+    previous: string;
+    next: string;
+    /** {title} — sufixo do <title> das páginas de case. */
+    metaTitle: string;
+  };
+}
 
 export interface Photo {
   src: string;
@@ -90,7 +124,7 @@ export interface SiteContent {
     facts: Fact[];
   };
   skills: SectionCopy & { groups: SkillGroup[] };
-  projects: SectionCopy & { items: Project[] };
+  projects: SectionCopy & ProjectsSectionCopy;
   experience: SectionCopy & { items: ExperienceItem[] };
   contact: SectionCopy & { links: ContactLink[] };
   systems: SectionCopy & { items: SystemItem[]; openLabel: string };

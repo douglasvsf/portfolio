@@ -129,35 +129,34 @@ export const SKILL_ITEMS = {
   architecture: ["BFF", "Microservices", "Atomic Design", "DDD", "SOLID", "SPA · SSR · SSG"],
 };
 
-export const PROJECT_TAGS = {
-  epa: ["Next.js", "Node.js", "shadcn/ui", "Tailwind CSS", "GCP"],
-  discovery: ["Next.js", "TypeScript", "BFF", "Jest", "Cypress"],
-  inoa: ["AngularJS", "React", "TypeScript", "Storybook"],
-  qualicloud: ["NestJS", "Laravel", "React Native"],
-};
 
 /** Empresa, local e stack de cada experiência — só cargo e textos são traduzidos. */
 export const EXPERIENCE = {
   inoa: {
     company: "Inoa",
+    url: "https://inoa.com/",
     technologies: ["AngularJS", "TypeScript", "JavaScript", "React", "Next.js", "Node.js", "Jest", "React Testing Library", "Storybook"],
   },
   pravalerPleno: {
     company: "Pravaler",
+    url: "https://www.pravaler.com.br/",
     location: "São Paulo, SP",
     technologies: ["Node.js", "Next.js", "React", "TypeScript", "Material UI", "shadcn/ui", "Tailwind CSS", "Jest", "GraphQL", "Docker", "GCP"],
   },
   pravalerJunior: {
     company: "Pravaler",
+    url: "https://www.pravaler.com.br/",
     technologies: ["Next.js", "Node.js", "TypeScript", "Express", "GraphQL", "PHP", "Laravel", "PostgreSQL", "MongoDB", "Docker", "GCP", "Cypress"],
   },
   qualicloud: {
     company: "QualiCloud Soluções em Nuvem",
+    url: "https://qualicloud.online/",
     location: "Campo Mourão, PR",
     technologies: ["Node.js", "NestJS", "PHP", "Laravel", "React", "React Native", "Oracle", "MySQL"],
   },
   cristofoli: {
     company: "Cristófoli Equipamentos de Biossegurança",
+    url: "https://cristofoli.com/",
     location: "Campo Mourão, PR",
     technologies: ["PHP", "Laravel", "JavaScript", "jQuery", "WordPress", "MySQL", "PL/SQL"],
   },

@@ -15,6 +15,7 @@ export {
   Activity,
   AlertCircle,
   AlertTriangle,
+  ArrowDown,
   ArrowLeft,
   ArrowRight,
   ArrowUpRight,
