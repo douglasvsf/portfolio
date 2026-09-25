@@ -33,5 +33,7 @@ export function proxy(request: NextRequest) {
 export const config = {
   // Ignora internos do Next, rotas de API, o Storybook publicado em /design-system,
   // o Kaiju Stocks em /stocks (só pt-BR) e arquivos estáticos (qualquer coisa com extensão).
-  matcher: ["/((?!_next|api|design-system|stocks|.*\..*).*)"],
+  // Atenção ao escape: numa string JS, "\." vira só "." — a regex ficava ".*.*" (casa com tudo)
+  // e o proxy só rodava em "/"; rotas sem idioma, como /projetos/..., davam 404.
+  matcher: ["/((?!_next|api|design-system|stocks|.*\\..*).*)"],
 };
