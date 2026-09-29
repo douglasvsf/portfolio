@@ -37,7 +37,7 @@ export class StockService {
       { _id: productId, workspaceId, ...(delta < 0 ? { stock: { $gte: -delta } } : {}) },
       // Pipeline com $round: somar 0,1 + 0,2 kg não pode virar 0,30000000000000004.
       [{ $set: { stock: { $round: [{ $add: ["$stock", delta] }, 3] } } }],
-      { new: true, session: db, updatePipeline: true },
+      { returnDocument: "after", session: db, updatePipeline: true },
     );
     if (!updated) return null;
 

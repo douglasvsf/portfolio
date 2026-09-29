@@ -62,7 +62,7 @@ export class OrdersService {
     const counter = await this.counters.findOneAndUpdate(
       { workspaceId, name: "order" },
       { $inc: { value: 1 }, $setOnInsert: { expiresAt: draft.expiresAt } },
-      { new: true, upsert: true },
+      { returnDocument: "after", upsert: true },
     );
     const [order] = await this.orders.create([{ ...draft, workspaceId, number: counter.value, status: "draft", createdByRole: session.role }]);
     return toOrder(order!.toObject());

@@ -35,7 +35,13 @@ export function mongoUri(raw: string | undefined) {
     }),
     MongooseModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({ uri: mongoUri(config.get<string>("MONGODB_URI")) }),
+      // Serverless: falha rápido com erro claro em vez de tentar 9 vezes com 3s de intervalo (padrão do Nest).
+      useFactory: (config: ConfigService) => ({
+        uri: mongoUri(config.get<string>("MONGODB_URI")),
+        retryAttempts: 2,
+        retryDelay: 1000,
+        serverSelectionTimeoutMS: 8000,
+      }),
     }),
     HealthModule,
     SkillsModule,

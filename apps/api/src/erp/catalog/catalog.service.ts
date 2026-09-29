@@ -61,7 +61,7 @@ export class CatalogService {
   }
 
   async updateProduct(session: ErpSession, id: string, input: erp.ProductUpdate): Promise<erp.Product> {
-    const product = await this.products.findOneAndUpdate({ _id: id, workspaceId: tenant(session), active: true }, { $set: input }, { new: true, runValidators: true }).lean();
+    const product = await this.products.findOneAndUpdate({ _id: id, workspaceId: tenant(session), active: true }, { $set: input }, { returnDocument: "after", runValidators: true }).lean();
     if (!product) throw notFound("Produto");
     return toProduct(product);
   }
@@ -107,7 +107,7 @@ export class CatalogService {
   }
 
   async updateCustomer(session: ErpSession, id: string, input: erp.CustomerUpdate): Promise<erp.Customer> {
-    const customer = await this.customers.findOneAndUpdate({ _id: id, workspaceId: tenant(session) }, { $set: input }, { new: true }).lean();
+    const customer = await this.customers.findOneAndUpdate({ _id: id, workspaceId: tenant(session) }, { $set: input }, { returnDocument: "after" }).lean();
     if (!customer) throw notFound("Cliente");
     return toCustomer(customer);
   }
