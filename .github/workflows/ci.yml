@@ -53,6 +53,14 @@ jobs:
         env:
           CYPRESS_INSTALL_BINARY: 0
 
+      # Binário do MongoDB usado nos testes E2E da API (mongodb-memory-server): baixa uma vez.
+      - name: Cache MongoDB binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/mongodb-binaries
+          key: mongodb-binaries-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: mongodb-binaries-${{ runner.os }}-
+
       - name: Tests (Design System, API)
         run: pnpm turbo run test --filter=!web
 

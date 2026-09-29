@@ -1,0 +1,251 @@
+import type { INestApplication } from "@nestjs/common";
+import { getConnectionToken } from "@nestjs/mongoose";
+import { Test } from "@nestjs/testing";
+import { MongoMemoryReplSet } from "mongodb-memory-server";
+import type { Connection } from "mongoose";
+import request from "supertest";
+import type { erp } from "@portfolio/shared";
+import { configureApp } from "../app.factory";
+import { AppModule } from "../app.module";
+
+/**
+ * API do ERP de ponta a ponta: app real (mesma configuração do main.ts) contra
+ * um MongoDB em memória com replica set — necessário para transações.
+ */
+jest.setTimeout(120_000);
+
+let replSet: MongoMemoryReplSet;
+let app: INestApplication;
+let ipCounter = 0;
+
+/** Cada demo "vem" de um visitante diferente (o limite é 5 por hora por IP). */
+async function newDemo(): Promise<erp.DemoSession> {
+  const response = await request(app.getHttpServer())
+    .post("/erp/sessions/demo")
+    .set("x-bff-key", "test-bff-key")
+    .set("x-client-ip", `10.0.0.${++ipCounter}`)
+    .expect(201);
+  return response.body;
+}
+
+const api = (token: string) => ({
+  get: (path: string) => request(app.getHttpServer()).get(path).set("Authorization", `Bearer ${token}`),
+  post: (path: string, body?: object) => request(app.getHttpServer()).post(path).set("Authorization", `Bearer ${token}`).send(body),
+  patch: (path: string, body: object) => request(app.getHttpServer()).patch(path).set("Authorization", `Bearer ${token}`).send(body),
+  delete: (path: string) => request(app.getHttpServer()).delete(path).set("Authorization", `Bearer ${token}`),
+});
+
+beforeAll(async () => {
+  replSet = await MongoMemoryReplSet.create({ replSet: { count: 1, storageEngine: "wiredTiger" } });
+  process.env.MONGODB_URI = replSet.getUri("erp-test");
+  process.env.ERP_JWT_SECRET = "test-secret";
+  process.env.ERP_BFF_KEY = "test-bff-key";
+  process.env.ERP_MAX_WORKSPACES = "50";
+
+  const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
+  app = moduleRef.createNestApplication({ logger: false });
+  configureApp(app);
+  await app.init();
+  // Índices (únicos e TTL) criados antes dos testes de duplicidade.
+  await app.get<Connection>(getConnectionToken()).syncIndexes();
+});
+
+afterAll(async () => {
+  await app?.close();
+  await replSet?.stop();
+});
+
+describe("sessão demo", () => {
+  it("cria uma empresa isolada com dados de mercado e token de admin", async () => {
+    const demo = await newDemo();
+    expect(demo).toMatchObject({ role: "admin", workspace: { name: expect.stringMatching(/^Mercado Godzilla #/) } });
+    expect(new Date(demo.expiresAt).getTime() - Date.now()).toBeGreaterThan(23 * 3_600_000);
+
+    const me = await api(demo.token).get("/erp/me").expect(200);
+    expect(me.body).toMatchObject({ role: "admin", workspace: { id: demo.workspace.id } });
+
+    const products = await api(demo.token).get("/erp/products?pageSize=100").expect(200);
+    expect(products.body.total).toBe(40);
+  });
+
+  it("sem token ou com token inválido: 401 no formato padrão", async () => {
+    const missing = await request(app.getHttpServer()).get("/erp/products").expect(401);
+    expect(missing.body).toMatchObject({ error: "unauthorized", message: expect.any(String) });
+    await api("token.invalido").get("/erp/products").expect(401);
+  });
+
+  it("troca de papel mantém a empresa", async () => {
+    const demo = await newDemo();
+    const seller = await api(demo.token).post("/erp/sessions/role", { role: "seller" }).expect(200);
+    expect(seller.body).toMatchObject({ role: "seller", workspace: { id: demo.workspace.id } });
+  });
+});
+
+describe("permissões por papel", () => {
+  it("vendedor consulta e cadastra cliente/pedido, mas não mexe em produto nem estoque", async () => {
+    const demo = await newDemo();
+    const { body: seller } = await api(demo.token).post("/erp/sessions/role", { role: "seller" });
+    const { body: products } = await api(seller.token).get("/erp/products").expect(200);
+    const productId = products.items[0].id;
+
+    const denied = await api(seller.token).patch(`/erp/products/${productId}`, { priceCents: 1 }).expect(403);
+    expect(denied.body.error).toBe("forbidden");
+    await api(seller.token).post("/erp/stock/movements", { type: "in", productId, quantity: 10, reason: "teste" }).expect(403);
+    await api(seller.token).post("/erp/customers", { name: "Cliente do Vendedor", document: "123.456.789-09" }).expect(201);
+  });
+});
+
+describe("validação e conflitos", () => {
+  it("CPF inválido: 400 com a lista de campos", async () => {
+    const demo = await newDemo();
+    const response = await api(demo.token).post("/erp/customers", { name: "Fulano", document: "111.111.111-11" }).expect(400);
+    expect(response.body).toMatchObject({ error: "validation_error", details: { issues: [{ path: "document", message: "CPF ou CNPJ inválido" }] } });
+  });
+
+  it("SKU repetido na mesma empresa: 409; em outra empresa, pode", async () => {
+    const [a, b] = [await newDemo(), await newDemo()];
+    const product = { sku: "TST-001", name: "Produto teste", category: "mercearia", unit: "un", priceCents: 1000, costCents: 600, minStock: 5 };
+    await api(a.token).post("/erp/products", product).expect(201);
+    const duplicate = await api(a.token).post("/erp/products", product).expect(409);
+    expect(duplicate.body).toMatchObject({ error: "conflict", details: { field: "sku" } });
+    await api(b.token).post("/erp/products", product).expect(201);
+  });
+
+  it("id malformado: 400, não erro interno", async () => {
+    const demo = await newDemo();
+    const response = await api(demo.token).get("/erp/products/nao-e-um-id").expect(400);
+    expect(response.body.error).toBe("validation_error");
+  });
+});
+
+describe("isolamento entre empresas (multi-tenancy)", () => {
+  it("uma empresa não enxerga nem altera dados da outra", async () => {
+    const [a, b] = [await newDemo(), await newDemo()];
+    const { body } = await api(a.token).get("/erp/products").expect(200);
+    const productOfA = body.items[0].id;
+
+    await api(b.token).get(`/erp/products/${productOfA}`).expect(404);
+    await api(b.token).patch(`/erp/products/${productOfA}`, { priceCents: 1 }).expect(404);
+    const { body: productsOfB } = await api(b.token).get("/erp/products?pageSize=100");
+    expect(productsOfB.items.map((product: erp.Product) => product.id)).not.toContain(productOfA);
+  });
+});
+
+describe("pedidos e estoque", () => {
+  async function setup() {
+    const demo = await newDemo();
+    const client = api(demo.token);
+    const { body: customers } = await client.get("/erp/customers");
+    const { body: products } = await client.get("/erp/products?pageSize=100");
+    const byUnit = (unit: erp.Unit) => (products.items as erp.Product[]).find((product) => product.unit === unit && product.stock >= 4)!;
+    return { client, customerId: customers.items[0].id as string, un: byUnit("un"), kg: byUnit("kg") };
+  }
+
+  it("rascunho congela preço; confirmar baixa estoque e registra no livro-razão; cancelar devolve", async () => {
+    const { client, customerId, un, kg } = await setup();
+    const created = await client
+      .post("/erp/orders", { customerId, items: [{ productId: un.id, quantity: 2 }, { productId: kg.id, quantity: 1.25 }], discountCents: 100 })
+      .expect(201);
+    const order: erp.Order = created.body;
+    expect(order.status).toBe("draft");
+    expect(order.subtotalCents).toBe(un.priceCents * 2 + Math.round(kg.priceCents * 1.25));
+    expect(order.totalCents).toBe(order.subtotalCents - 100);
+
+    // Mudar o preço depois não altera o pedido.
+    await client.patch(`/erp/products/${un.id}`, { priceCents: un.priceCents + 500 }).expect(200);
+    const confirmed = await client.post(`/erp/orders/${order.id}/confirm`).expect(200);
+    expect(confirmed.body.items[0].unitPriceCents).toBe(un.priceCents);
+
+    const afterSale = (await client.get(`/erp/products/${kg.id}`)).body as erp.Product;
+    expect(afterSale.stock).toBeCloseTo(kg.stock - 1.25, 3);
+    const { body: ledger } = await client.get(`/erp/stock/movements?productId=${kg.id}&type=sale`);
+    expect(ledger.items[0]).toMatchObject({ type: "sale", delta: -1.25, orderNumber: order.number, balanceAfter: afterSale.stock });
+
+    await client.post(`/erp/orders/${order.id}/confirm`).expect(409);
+    await client.post(`/erp/orders/${order.id}/cancel`).expect(200);
+    expect(((await client.get(`/erp/products/${kg.id}`)).body as erp.Product).stock).toBeCloseTo(kg.stock, 3);
+    await client.patch(`/erp/orders/${order.id}`, { customerId, items: [{ productId: un.id, quantity: 1 }] }).expect(409);
+  });
+
+  it("falta de estoque: 409 com todos os itens em falta e nenhum saldo alterado", async () => {
+    const { client, customerId, un, kg } = await setup();
+    const { body: order } = await client
+      .post("/erp/orders", { customerId, items: [{ productId: un.id, quantity: un.stock + 5 }, { productId: kg.id, quantity: 1 }] })
+      .expect(201);
+
+    const response = await client.post(`/erp/orders/${order.id}/confirm`).expect(409);
+    expect(response.body).toMatchObject({ error: "insufficient_stock", details: [{ productId: un.id, requested: un.stock + 5, available: un.stock }] });
+    expect(((await client.get(`/erp/products/${kg.id}`)).body as erp.Product).stock).toBeCloseTo(kg.stock, 3);
+    expect(((await client.get(`/erp/orders/${order.id}`)).body as erp.Order).status).toBe("draft");
+  });
+
+  it("duas confirmações simultâneas pelo último estoque: só uma passa e o saldo nunca fica negativo", async () => {
+    const { client, customerId, un } = await setup();
+    await client.post("/erp/stock/movements", { type: "adjust", productId: un.id, quantity: 3, reason: "Contagem para o teste" }).expect(201);
+
+    const orders = await Promise.all(
+      [0, 1].map(async () => (await client.post("/erp/orders", { customerId, items: [{ productId: un.id, quantity: 2 }] }).expect(201)).body as erp.Order),
+    );
+    const results = await Promise.all(orders.map((order) => client.post(`/erp/orders/${order.id}/confirm`)));
+
+    expect(results.map((result) => result.status).sort()).toEqual([200, 409]);
+    expect(((await client.get(`/erp/products/${un.id}`)).body as erp.Product).stock).toBe(1);
+  });
+
+  it("movimentação manual: saída acima do saldo é recusada; ajuste de inventário vira o novo saldo", async () => {
+    const { client, un } = await setup();
+    const out = await client.post("/erp/stock/movements", { type: "out", productId: un.id, quantity: un.stock + 1, reason: "Quebra" }).expect(409);
+    expect(out.body.error).toBe("insufficient_stock");
+
+    const adjusted = await client.post("/erp/stock/movements", { type: "adjust", productId: un.id, quantity: 7, reason: "Inventário mensal" }).expect(201);
+    expect(adjusted.body).toMatchObject({ type: "adjust", delta: 7 - un.stock, balanceAfter: 7 });
+  });
+
+  it("item vendido por unidade não aceita fração", async () => {
+    const { client, customerId, un } = await setup();
+    const response = await client.post("/erp/orders", { customerId, items: [{ productId: un.id, quantity: 1.5 }] }).expect(400);
+    expect(response.body.message).toContain("unidade");
+  });
+});
+
+describe("dashboard", () => {
+  it("6 meses de faturamento, estoque baixo e contagem por status coerentes com os pedidos", async () => {
+    const demo = await newDemo();
+    const { body }: { body: erp.Dashboard } = await api(demo.token).get("/erp/dashboard").expect(200);
+    expect(body.revenueByMonth).toHaveLength(6);
+    expect(body.revenueByMonth.some((month) => month.totalCents > 0)).toBe(true);
+    expect(body.lowStock.length).toBeGreaterThan(0);
+    expect(body.topProducts.length).toBe(5);
+    expect(body.totals).toEqual({ products: 40, customers: 12 });
+
+    const { body: confirmed } = await api(demo.token).get("/erp/orders?status=confirmed&pageSize=1");
+    expect(body.ordersByStatus.confirmed).toBe(confirmed.total);
+  });
+});
+
+describe("proteções", () => {
+  it("documentação OpenAPI publicada com as rotas do ERP", async () => {
+    const { body } = await request(app.getHttpServer()).get("/docs-json").expect(200);
+    expect(Object.keys(body.paths)).toEqual(expect.arrayContaining(["/erp/sessions/demo", "/erp/orders/{id}/confirm", "/erp/dashboard"]));
+  });
+
+  it("limite de demos ativas: 503 demo_full", async () => {
+    const connection = app.get<Connection>(getConnectionToken());
+    const expiresAt = new Date(Date.now() + 3_600_000);
+    const active = await connection.collection("erp_workspaces").countDocuments({ expiresAt: { $gt: new Date() } });
+    await connection.collection("erp_workspaces").insertMany(Array.from({ length: 50 - active }, (_, index) => ({ name: `Lotada ${index}`, expiresAt })));
+
+    const response = await request(app.getHttpServer()).post("/erp/sessions/demo").set("x-bff-key", "test-bff-key").set("x-client-ip", "10.9.9.9").expect(503);
+    expect(response.body.error).toBe("demo_full");
+    await connection.collection("erp_workspaces").deleteMany({ name: /^Lotada / });
+  });
+
+  it("rate limit por visitante: a 6ª demo do mesmo IP em 1h é recusada", async () => {
+    const create = () => request(app.getHttpServer()).post("/erp/sessions/demo").set("x-bff-key", "test-bff-key").set("x-client-ip", "10.1.1.1");
+    for (let index = 0; index < 5; index++) await create().expect(201);
+    const response = await create().expect(429);
+    expect(response.body.error).toBe("rate_limited");
+    // Chave errada: o IP informado é ignorado (não dá para burlar trocando o cabeçalho).
+    await request(app.getHttpServer()).post("/erp/sessions/demo").set("x-bff-key", "errada").set("x-client-ip", "10.2.2.2").expect(201);
+  });
+});
