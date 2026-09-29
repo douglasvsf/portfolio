@@ -41,6 +41,7 @@ beforeAll(async () => {
   process.env.ERP_JWT_SECRET = "test-secret";
   process.env.ERP_BFF_KEY = "test-bff-key";
   process.env.ERP_MAX_WORKSPACES = "50";
+  process.env.ERP_SETUP_TOKEN = "token-de-instalacao-do-teste";
 
   const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
   app = moduleRef.createNestApplication({ logger: false });
@@ -352,5 +353,154 @@ describe("PDV (frente de caixa)", () => {
 
     // Edição só da unidade: confere com o código salvo.
     await api(demo.token).patch(`/erp/products/${product.id}`, { unit: "kg" }).expect(400);
+  });
+});
+
+describe("contas por convite", () => {
+  const PASSWORD = "senha-forte-do-dono";
+  let owner: erp.AccountSession;
+
+  /** Rotas públicas de conta como se viessem do BFF, cada uma de um "visitante" (o rate limit é por IP). */
+  const pub = () => {
+    const ip = `10.9.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}`;
+    const server = app.getHttpServer();
+    return {
+      get: (path: string) => request(server).get(path).set("x-bff-key", "test-bff-key").set("x-client-ip", ip),
+      post: (path: string, body: object) => request(server).post(path).set("x-bff-key", "test-bff-key").set("x-client-ip", ip).send(body),
+    };
+  };
+  const login = (email: string, password: string) => pub().post("/erp/auth/login", { email, password });
+
+  /** Convida e aceita: devolve a sessão da pessoa nova. */
+  async function invited(inviter: string, email: string, role: erp.Role, path = "/erp/team/invites", workspaceId?: string): Promise<erp.AccountSession> {
+    const { body: link } = await api(inviter).post(path, { email, role, ...(workspaceId ? { workspaceId } : {}) }).expect(201);
+    const { body } = await pub().post(`/erp/auth/invites/${link.token}/accept`, { name: `Pessoa ${email}`, password: "senha-da-pessoa-1" }).expect(201);
+    return body;
+  }
+
+  beforeAll(async () => {
+    expect((await pub().get("/erp/auth/setup").expect(200)).body).toEqual({ available: true });
+    await pub()
+      .post("/erp/auth/setup", { token: "token-errado-mas-longo", name: "Dono", email: "dono@exemplo.com.br", password: PASSWORD, companyName: "Mercado do Dono" })
+      .expect(403);
+    const { body } = await pub()
+      .post("/erp/auth/setup", { token: "token-de-instalacao-do-teste", name: "Dono", email: "Dono@Exemplo.com.br", password: PASSWORD, companyName: "Mercado do Dono" })
+      .expect(201);
+    owner = body;
+  });
+
+  it("instalação cria o dono uma vez só; a empresa de verdade não expira", async () => {
+    expect(owner).toMatchObject({ kind: "account", role: "admin", user: { email: "dono@exemplo.com.br", isOwner: true }, workspace: { name: "Mercado do Dono" } });
+    await pub()
+      .post("/erp/auth/setup", { token: "token-de-instalacao-do-teste", name: "Outro", email: "outro@exemplo.com.br", password: PASSWORD, companyName: "Outro" })
+      .expect(409);
+    expect((await pub().get("/erp/auth/setup").expect(200)).body).toEqual({ available: false });
+
+    const me = await api(owner.token).get("/erp/me").expect(200);
+    expect(me.body.workspace.expiresAt).toBeUndefined();
+    const product = { sku: "REAL-1", name: "Produto real", category: "mercearia", unit: "un", priceCents: 500, costCents: 300, minStock: 1 };
+    const { body: created } = await api(owner.token).post("/erp/products", product).expect(201);
+    const stored = await app.get<Connection>(getConnectionToken()).collection("erp_products").findOne({ sku: "REAL-1" });
+    expect(stored?.expiresAt).toBeUndefined();
+    expect(created.stock).toBe(0);
+    await api(owner.token).post("/erp/sessions/role", { role: "seller" }).expect(403);
+  });
+
+  it("login: mensagem genérica para e-mail ou senha errados", async () => {
+    const ok = await login("dono@exemplo.com.br", PASSWORD).expect(200);
+    expect(ok.body.user.isOwner).toBe(true);
+    const wrong = await login("dono@exemplo.com.br", "senha-errada-123").expect(401);
+    const unknown = await login("ninguem@exemplo.com.br", "senha-errada-123").expect(401);
+    expect(wrong.body.message).toBe("E-mail ou senha inválidos");
+    expect(unknown.body.message).toBe(wrong.body.message);
+  });
+
+  it("convite: link de uso único, papel definido por quem convidou, empresa isolada", async () => {
+    const { body: link } = await api(owner.token).post("/erp/team/invites", { email: "vendedora@exemplo.com.br", role: "seller" }).expect(201);
+    expect(link.token).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    const preview = await pub().get(`/erp/auth/invites/${link.token}`).expect(200);
+    expect(preview.body).toMatchObject({ email: "vendedora@exemplo.com.br", role: "seller", workspace: { name: "Mercado do Dono" } });
+
+    await pub().post(`/erp/auth/invites/${link.token}/accept`, { name: "Vendedora", password: "curta" }).expect(400);
+    const { body: seller } = await pub().post(`/erp/auth/invites/${link.token}/accept`, { name: "Vendedora", password: "senha-da-vendedora" }).expect(201);
+    expect(seller).toMatchObject({ kind: "account", role: "seller", workspace: { id: owner.workspace.id } });
+    await pub().post(`/erp/auth/invites/${link.token}/accept`, { name: "De novo", password: "senha-da-vendedora" }).expect(404);
+    await pub().get("/erp/auth/invites/token-invalido").expect(400);
+
+    // Mesma empresa do dono: vê o produto dele. Vendedor não gerencia equipe; demo não tem equipe.
+    const { body: products } = await api(seller.token).get("/erp/products").expect(200);
+    expect(products.items.map((item: erp.Product) => item.sku)).toContain("REAL-1");
+    await api(seller.token).get("/erp/team").expect(403);
+    await api((await newDemo()).token).get("/erp/team").expect(403);
+    await api(owner.token).post("/erp/team/invites", { email: "vendedora@exemplo.com.br", role: "seller" }).expect(409);
+  });
+
+  it("bloquear derruba a sessão na hora; promover vale na hora", async () => {
+    const person = await invited(owner.token, "bloqueio@exemplo.com.br", "seller");
+    await api(person.token).get("/erp/products").expect(200);
+
+    await api(owner.token).patch(`/erp/team/members/${person.user.id}`, { status: "blocked" }).expect(200);
+    await api(person.token).get("/erp/products").expect(401);
+    const blocked = await login("bloqueio@exemplo.com.br", "senha-da-pessoa-1").expect(403);
+    expect(blocked.body.message).toMatch(/bloqueado/);
+
+    await api(owner.token).patch(`/erp/team/members/${person.user.id}`, { status: "active", role: "admin" }).expect(200);
+    const { body: again } = await login("bloqueio@exemplo.com.br", "senha-da-pessoa-1").expect(200);
+    await api(again.token).get("/erp/team").expect(200);
+
+    // Ninguém mexe em si mesmo pela equipe, e admin não mexe no dono.
+    await api(owner.token).patch(`/erp/team/members/${owner.user.id}`, { role: "seller" }).expect(409);
+    await api(again.token).patch(`/erp/team/members/${owner.user.id}`, { status: "blocked" }).expect(403);
+  });
+
+  it("5 senhas erradas seguidas bloqueiam o login por um tempo", async () => {
+    await invited(owner.token, "tentativas@exemplo.com.br", "seller");
+    for (let attempt = 0; attempt < 5; attempt++) await login("tentativas@exemplo.com.br", "senha-errada-123").expect(401);
+    const locked = await login("tentativas@exemplo.com.br", "senha-da-pessoa-1").expect(429);
+    expect(locked.body.error).toBe("rate_limited");
+  });
+
+  it("link de senha: gerado pelo admin, uso único, derruba as sessões antigas", async () => {
+    const person = await invited(owner.token, "esqueceu@exemplo.com.br", "seller");
+    const { body: link } = await api(owner.token).post(`/erp/team/members/${person.user.id}/reset`).expect(201);
+    expect((await pub().get(`/erp/auth/resets/${link.token}`).expect(200)).body).toMatchObject({ email: "esqueceu@exemplo.com.br" });
+
+    const { body: fresh } = await pub().post(`/erp/auth/resets/${link.token}`, { password: "senha-nova-lembrada" }).expect(201);
+    await api(person.token).get("/erp/products").expect(401);
+    await api(fresh.token).get("/erp/products").expect(200);
+    await pub().post(`/erp/auth/resets/${link.token}`, { password: "outra-senha-nova" }).expect(404);
+    await login("esqueceu@exemplo.com.br", "senha-nova-lembrada").expect(200);
+  });
+
+  it("trocar a própria senha exige a atual e invalida o token antigo", async () => {
+    const person = await invited(owner.token, "troca@exemplo.com.br", "seller");
+    await api(person.token).post("/erp/auth/password", { current: "errada", next: "senha-nova-da-troca" }).expect(400);
+    const { body: renewed } = await api(person.token).post("/erp/auth/password", { current: "senha-da-pessoa-1", next: "senha-nova-da-troca" }).expect(200);
+    await api(person.token).get("/erp/products").expect(401);
+    await api(renewed.token).get("/erp/products").expect(200);
+  });
+
+  it("painel do dono: empresas, convite para outra empresa e isolamento entre elas", async () => {
+    const { body: company } = await api(owner.token).post("/erp/owner/companies", { name: "Mercearia da Ana" }).expect(201);
+    const ana = await invited(owner.token, "ana@exemplo.com.br", "admin", "/erp/owner/invites", company.id);
+    expect(ana.workspace).toEqual({ id: company.id, name: "Mercearia da Ana" });
+
+    // A Ana administra só a empresa dela.
+    const { body: team } = await api(ana.token).get("/erp/team").expect(200);
+    expect(team.members.map((member: erp.TeamMember) => member.email)).toEqual(["ana@exemplo.com.br"]);
+    const { body: products } = await api(ana.token).get("/erp/products").expect(200);
+    expect(products.total).toBe(0);
+    const { body: users } = await api(owner.token).get("/erp/owner/users").expect(200);
+    const seller = users.find((user: erp.TeamMember) => user.email === "vendedora@exemplo.com.br");
+    await api(ana.token).patch(`/erp/team/members/${seller.id}`, { status: "blocked" }).expect(404);
+    await api(ana.token).get("/erp/owner/overview").expect(403);
+
+    const { body: overview } = await api(owner.token).get("/erp/owner/overview").expect(200);
+    expect(overview).toMatchObject({ companies: 2, blockedUsers: 0 });
+    expect(overview.users).toBeGreaterThanOrEqual(6);
+    expect(overview.activeDemos).toBeGreaterThan(0);
+    const { body: companies } = await api(owner.token).get("/erp/owner/companies").expect(200);
+    expect(companies.map((item: erp.Company) => item.name)).toEqual(["Mercado do Dono", "Mercearia da Ana"]);
+    expect(companies[0].products).toBe(1);
   });
 });

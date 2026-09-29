@@ -33,7 +33,7 @@ export class WorkspacesService {
 
   async createDemo(now = new Date()): Promise<erp.DemoSession> {
     const max = Number(this.config.get("ERP_MAX_WORKSPACES") ?? 300);
-    const active = await this.workspaces.countDocuments({ expiresAt: { $gt: now } });
+    const active = await this.workspaces.countDocuments({ kind: { $ne: "real" }, expiresAt: { $gt: now } });
     if (active >= max) {
       throw new ErpException("demo_full", "A demonstração está cheia agora. Tente de novo mais tarde.", HttpStatus.SERVICE_UNAVAILABLE);
     }
@@ -41,7 +41,7 @@ export class WorkspacesService {
     const expiresAt = new Date(now.getTime() + DEMO_TTL_MS);
     const workspaceId = new Types.ObjectId();
     const name = `Mercado Godzilla #${workspaceId.toString().slice(-4).toUpperCase()}`;
-    await this.workspaces.create({ _id: workspaceId, name, expiresAt });
+    await this.workspaces.create({ _id: workspaceId, name, kind: "demo", expiresAt });
 
     try {
       const data = buildDemoData(workspaceId, now, expiresAt);
@@ -63,20 +63,24 @@ export class WorkspacesService {
     return this.session({ workspaceId: workspaceId.toString(), role: "admin" }, { id: workspaceId.toString(), name, expiresAt });
   }
 
-  /** Troca de papel na mesma empresa (para ver as permissões mudando). */
+  /** Troca de papel na mesma empresa (para ver as permissões mudando). Só na demonstração. */
   async switchRole(current: ErpSession, role: erp.Role): Promise<erp.DemoSession> {
+    if (current.userId) throw new ErpException("forbidden", "Troca de papel é só na demonstração", HttpStatus.FORBIDDEN);
     const workspace = await this.find(current.workspaceId);
-    return this.session({ workspaceId: current.workspaceId, role }, { id: current.workspaceId, name: workspace.name, expiresAt: workspace.expiresAt });
+    return this.session({ workspaceId: current.workspaceId, role }, { id: current.workspaceId, name: workspace.name, expiresAt: workspace.expiresAt! });
   }
 
   async me(current: ErpSession): Promise<erp.Me> {
     const workspace = await this.find(current.workspaceId);
-    return { role: current.role, workspace: { id: current.workspaceId, name: workspace.name, expiresAt: workspace.expiresAt.toISOString() } };
+    return {
+      role: current.role,
+      workspace: { id: current.workspaceId, name: workspace.name, ...(workspace.expiresAt ? { expiresAt: workspace.expiresAt.toISOString() } : {}) },
+    };
   }
 
   private async find(workspaceId: string) {
     const workspace = await this.workspaces.findById(workspaceId).lean();
-    if (!workspace || workspace.expiresAt <= new Date()) {
+    if (!workspace || (workspace.expiresAt && workspace.expiresAt <= new Date())) {
       throw new ErpException("unauthorized", "Esta demonstração expirou — entre de novo", HttpStatus.UNAUTHORIZED);
     }
     return workspace;
@@ -86,7 +90,7 @@ export class WorkspacesService {
   private async session(session: ErpSession, workspace: { id: string; name: string; expiresAt: Date }): Promise<erp.DemoSession> {
     const seconds = Math.max(1, Math.floor((workspace.expiresAt.getTime() - Date.now()) / 1000));
     const token = await this.jwt.signAsync({ sub: session.workspaceId, role: session.role }, { expiresIn: seconds });
-    return { token, role: session.role, workspace: { id: workspace.id, name: workspace.name }, expiresAt: workspace.expiresAt.toISOString() };
+    return { kind: "demo", token, role: session.role, workspace: { id: workspace.id, name: workspace.name }, expiresAt: workspace.expiresAt.toISOString() };
   }
 
   private async purge(workspaceId: Types.ObjectId) {

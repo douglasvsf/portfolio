@@ -9,6 +9,7 @@ async function main() {
   const mongo = await MongoMemoryReplSet.create({ replSet: { count: 1, storageEngine: "wiredTiger" } });
   process.env.MONGODB_URI = mongo.getUri("godzilla-erp-e2e");
   process.env.ERP_BFF_KEY ??= "e2e-bff-key";
+  process.env.ERP_SETUP_TOKEN ??= "e2e-setup-token-0123456789";
   process.env.API_PORT ??= "3001";
 
   const stop = async () => {

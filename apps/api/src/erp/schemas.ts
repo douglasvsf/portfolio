@@ -4,17 +4,20 @@ import { erp } from "@portfolio/shared";
 
 /**
  * Modelos do ERP. Multi-tenancy por coluna: todo documento tem `workspaceId`
- * (a empresa demo) e `expiresAt` com índice TTL — quando a demo expira, o
- * próprio Mongo apaga a empresa e tudo dela, sem job de limpeza.
+ * (a empresa). Na demonstração, todo documento também tem `expiresAt` com
+ * índice TTL — quando a demo expira, o próprio Mongo apaga a empresa e tudo
+ * dela, sem job de limpeza. Empresa de verdade não tem `expiresAt`, e o TTL
+ * ignora documento sem essa data: nada dela é apagado.
  */
 
-const ttl = { type: Date, required: true, index: { expires: 0 } } as const;
+const ttl = { type: Date, index: { expires: 0 } } as const;
 const tenant = { type: Types.ObjectId, required: true, index: true } as const;
 
 @Schema({ timestamps: true, collection: "erp_workspaces" })
 export class Workspace {
   @Prop({ required: true }) name!: string;
-  @Prop(ttl) expiresAt!: Date;
+  @Prop({ type: String, required: true, enum: ["demo", "real"], default: "demo" }) kind!: "demo" | "real";
+  @Prop(ttl) expiresAt?: Date;
 }
 export const WorkspaceSchema = SchemaFactory.createForClass(Workspace);
 
@@ -33,7 +36,7 @@ export class Product {
   /** Nunca negativo: o banco também recusa (min: 0), além da regra no serviço. */
   @Prop({ required: true, min: 0, default: 0 }) stock!: number;
   @Prop({ required: true, default: true }) active!: boolean;
-  @Prop(ttl) expiresAt!: Date;
+  @Prop(ttl) expiresAt?: Date;
 }
 export const ProductSchema = SchemaFactory.createForClass(Product);
 ProductSchema.index({ workspaceId: 1, sku: 1 }, { unique: true });
@@ -48,7 +51,7 @@ export class Customer {
   @Prop() email?: string;
   @Prop() phone?: string;
   @Prop() city?: string;
-  @Prop(ttl) expiresAt!: Date;
+  @Prop(ttl) expiresAt?: Date;
 }
 export const CustomerSchema = SchemaFactory.createForClass(Customer);
 CustomerSchema.index({ workspaceId: 1, document: 1 }, { unique: true });
@@ -66,7 +69,7 @@ export class StockMovement {
   @Prop({ type: Types.ObjectId }) orderId?: Types.ObjectId;
   @Prop() orderNumber?: number;
   @Prop({ type: String, required: true, enum: erp.ROLES }) role!: erp.Role;
-  @Prop(ttl) expiresAt!: Date;
+  @Prop(ttl) expiresAt?: Date;
   createdAt!: Date;
 }
 export const StockMovementSchema = SchemaFactory.createForClass(StockMovement);
@@ -115,7 +118,7 @@ export class Order {
   @Prop({ type: String, required: true, enum: erp.ROLES }) createdByRole!: erp.Role;
   @Prop() confirmedAt?: Date;
   @Prop() cancelledAt?: Date;
-  @Prop(ttl) expiresAt!: Date;
+  @Prop(ttl) expiresAt?: Date;
   createdAt!: Date;
 }
 export const OrderSchema = SchemaFactory.createForClass(Order);
@@ -129,7 +132,7 @@ export class Counter {
   @Prop(tenant) workspaceId!: Types.ObjectId;
   @Prop({ required: true }) name!: string;
   @Prop({ required: true, default: 0 }) value!: number;
-  @Prop(ttl) expiresAt!: Date;
+  @Prop(ttl) expiresAt?: Date;
 }
 export const CounterSchema = SchemaFactory.createForClass(Counter);
 CounterSchema.index({ workspaceId: 1, name: 1 }, { unique: true });
@@ -138,3 +141,56 @@ export type ProductDocument = HydratedDocument<Product>;
 export type CustomerDocument = HydratedDocument<Customer>;
 export type OrderDocument = HydratedDocument<Order>;
 export type StockMovementDocument = HydratedDocument<StockMovement>;
+
+// ---- Contas (acesso por convite) ------------------------------------------------
+
+/** Pessoa com login. Pertence a uma empresa de verdade, com um papel nela. */
+@Schema({ timestamps: true, collection: "erp_users" })
+export class User {
+  @Prop({ type: Types.ObjectId, required: true, index: true }) workspaceId!: Types.ObjectId;
+  @Prop({ required: true }) name!: string;
+  /** Minúsculo, único no sistema. */
+  @Prop({ required: true }) email!: string;
+  @Prop({ required: true }) passwordHash!: string;
+  @Prop({ type: String, required: true, enum: erp.ROLES }) role!: erp.Role;
+  @Prop({ type: String, required: true, enum: erp.USER_STATUSES, default: "active" }) status!: erp.UserStatus;
+  /** Dono do sistema (um só): painel de todas as empresas. */
+  @Prop({ required: true, default: false }) isOwner!: boolean;
+  /** Muda ao bloquear ou trocar a senha: derruba os tokens já emitidos. */
+  @Prop({ required: true, default: 0 }) tokenVersion!: number;
+  @Prop({ required: true, default: 0 }) failedLogins!: number;
+  @Prop() lockedUntil?: Date;
+  @Prop() lastLoginAt?: Date;
+  createdAt!: Date;
+}
+export const UserSchema = SchemaFactory.createForClass(User);
+UserSchema.index({ email: 1 }, { unique: true });
+UserSchema.index({ isOwner: 1 }, { unique: true, partialFilterExpression: { isOwner: true } });
+
+/** Link de uso único (convite ou troca de senha). O banco guarda só o SHA-256 do token. */
+@Schema({ timestamps: { createdAt: true, updatedAt: false }, collection: "erp_invites" })
+export class Invite {
+  @Prop({ type: Types.ObjectId, required: true, index: true }) workspaceId!: Types.ObjectId;
+  @Prop({ required: true }) email!: string;
+  @Prop({ type: String, required: true, enum: erp.ROLES }) role!: erp.Role;
+  @Prop({ required: true }) tokenHash!: string;
+  @Prop({ type: Types.ObjectId, required: true }) createdBy!: Types.ObjectId;
+  @Prop() usedAt?: Date;
+  /** Convite vencido some sozinho (TTL). */
+  @Prop({ type: Date, required: true, index: { expires: 0 } }) expiresAt!: Date;
+  createdAt!: Date;
+}
+export const InviteSchema = SchemaFactory.createForClass(Invite);
+InviteSchema.index({ tokenHash: 1 }, { unique: true });
+
+@Schema({ timestamps: { createdAt: true, updatedAt: false }, collection: "erp_password_resets" })
+export class PasswordReset {
+  @Prop({ type: Types.ObjectId, required: true, index: true }) userId!: Types.ObjectId;
+  @Prop({ required: true }) tokenHash!: string;
+  @Prop({ type: Types.ObjectId, required: true }) createdBy!: Types.ObjectId;
+  @Prop() usedAt?: Date;
+  @Prop({ type: Date, required: true, index: { expires: 0 } }) expiresAt!: Date;
+  createdAt!: Date;
+}
+export const PasswordResetSchema = SchemaFactory.createForClass(PasswordReset);
+PasswordResetSchema.index({ tokenHash: 1 }, { unique: true });

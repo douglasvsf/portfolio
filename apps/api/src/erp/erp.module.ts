@@ -2,6 +2,8 @@ import { Module } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { JwtModule } from "@nestjs/jwt";
 import { MongooseModule } from "@nestjs/mongoose";
+import { AuthController, OwnerController, TeamController } from "./accounts/accounts.controllers";
+import { AccountsService } from "./accounts/accounts.service";
 import { CatalogService } from "./catalog/catalog.service";
 import { SessionGuard } from "./common/auth";
 import { DashboardService } from "./dashboard/dashboard.service";
@@ -21,6 +23,12 @@ import {
   CounterSchema,
   Customer,
   CustomerSchema,
+  Invite,
+  InviteSchema,
+  PasswordReset,
+  PasswordResetSchema,
+  User,
+  UserSchema,
   Order,
   OrderSchema,
   Product,
@@ -42,6 +50,9 @@ import { WorkspacesService } from "./workspaces/workspaces.service";
       { name: StockMovement.name, schema: StockMovementSchema },
       { name: Order.name, schema: OrderSchema },
       { name: Counter.name, schema: CounterSchema },
+      { name: User.name, schema: UserSchema },
+      { name: Invite.name, schema: InviteSchema },
+      { name: PasswordReset.name, schema: PasswordResetSchema },
     ]),
     JwtModule.registerAsync({
       inject: [ConfigService],
@@ -53,7 +64,7 @@ import { WorkspacesService } from "./workspaces/workspaces.service";
       },
     }),
   ],
-  controllers: [SessionController, ProductsController, StockController, CustomersController, OrdersController, PosController, DashboardController],
-  providers: [WorkspacesService, CatalogService, StockService, OrdersService, PosService, DashboardService, SessionGuard],
+  controllers: [SessionController, AuthController, TeamController, OwnerController, ProductsController, StockController, CustomersController, OrdersController, PosController, DashboardController],
+  providers: [AccountsService, WorkspacesService, CatalogService, StockService, OrdersService, PosService, DashboardService, SessionGuard],
 })
 export class ErpModule {}

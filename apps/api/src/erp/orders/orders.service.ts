@@ -140,10 +140,11 @@ export class OrdersService {
   }
 
   /** Próximo número de venda da empresa (pedidos e PDV dividem a sequência). */
-  async nextNumber(workspaceId: Types.ObjectId, expiresAt: Date, db?: ClientSession) {
+  async nextNumber(workspaceId: Types.ObjectId, expiresAt: Date | undefined, db?: ClientSession) {
     const counter = await this.counters.findOneAndUpdate(
       { workspaceId, name: "order" },
-      { $inc: { value: 1 }, $setOnInsert: { expiresAt } },
+      // Empresa de verdade não expira: o contador também não.
+      { $inc: { value: 1 }, ...(expiresAt ? { $setOnInsert: { expiresAt } } : {}) },
       { returnDocument: "after", upsert: true, session: db },
     );
     return counter.value;

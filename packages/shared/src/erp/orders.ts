@@ -123,6 +123,7 @@ export interface Dashboard {
 export const roleSwitchSchema = z.object({ role: z.enum(["admin", "seller"]) });
 
 export interface DemoSession {
+  kind?: "demo";
   token: string;
   role: Role;
   workspace: { id: string; name: string };
@@ -131,5 +132,6 @@ export interface DemoSession {
 
 export interface Me {
   role: Role;
-  workspace: { id: string; name: string; expiresAt: string };
+  /** `expiresAt` só na demonstração; empresa de verdade não expira. */
+  workspace: { id: string; name: string; expiresAt?: string };
 }
