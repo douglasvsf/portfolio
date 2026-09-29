@@ -179,3 +179,49 @@ export async function createCompany(_: ActionState, form: FormData): Promise<Act
   refresh();
   return { status: "success", message: `Empresa ${parsed.data.name} criada. Agora convide o administrador dela.` };
 }
+
+// ---- Pedidos de acesso ----------------------------------------------------------------
+
+export async function requestAccess(_: ActionState, form: FormData): Promise<ActionState> {
+  const parsed = erp.accessRequestSchema.safeParse({
+    name: text(form, "name"),
+    email: text(form, "email"),
+    company: text(form, "company") || undefined,
+    message: text(form, "message") || undefined,
+    website: text(form, "website") || undefined,
+  });
+  if (!parsed.success) return { status: "error", message: "Confira os campos destacados.", fieldErrors: fieldErrors(parsed.error) };
+  try {
+    await erpRequest("/erp/auth/access-requests", { method: "POST", body: parsed.data, anonymous: true });
+  } catch (error) {
+    return publicError(error);
+  }
+  return { status: "success", message: "Pedido enviado! Se for aprovado, você recebe um link de convite de quem administra o sistema." };
+}
+
+export async function approveRequest(id: string, _: LinkState, form: FormData): Promise<LinkState> {
+  const target = text(form, "target");
+  const parsed = erp.accessApproveSchema.safeParse({
+    role: text(form, "role") || "admin",
+    ...(target === "new" ? { companyName: text(form, "companyName") } : { workspaceId: target }),
+  });
+  if (!parsed.success) return { status: "error", message: parsed.error.issues[0]?.message ?? "Confira a aprovação.", fieldErrors: fieldErrors(parsed.error) };
+  let link: erp.CreatedLink;
+  try {
+    link = await erpRequest<erp.CreatedLink>(`/erp/owner/access-requests/${id}/approve`, { method: "POST", body: parsed.data });
+  } catch (error) {
+    return handle(error);
+  }
+  // Sem revalidar a página: o pedido sairia da lista e levaria junto o link que precisa ficar na tela.
+  return { status: "success", message: "Aprovado. Mande este convite para a pessoa:", link: await siteUrl(`/erp/convite/${link.token}`), expiresAt: link.expiresAt };
+}
+
+export async function rejectRequest(id: string): Promise<ActionState> {
+  try {
+    await erpRequest(`/erp/owner/access-requests/${id}/reject`, { method: "POST" });
+  } catch (error) {
+    return handle(error);
+  }
+  refresh();
+  return { status: "success", message: "Pedido recusado." };
+}

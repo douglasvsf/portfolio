@@ -1,25 +1,28 @@
 import type { Metadata } from "next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@godzilla/ui";
+import { AccessRequestCard } from "@/components/erp/access-requests";
 import { InvitesTable, MembersTable } from "@/components/erp/members-table";
 import { CompanyForm, InviteForm } from "@/components/erp/team-manager";
 import { PageHeader, StatCard } from "@/components/erp/ui";
 import { formatDate, formatDateTime, money } from "@/lib/erp/format";
-import { ownerCompanies, ownerInvites, ownerOverview, ownerUsers, requireAccount } from "@/lib/erp/queries";
+import { ownerAccessRequests, ownerCompanies, ownerInvites, ownerOverview, ownerUsers, requireAccount } from "@/lib/erp/queries";
 
 export const metadata: Metadata = { title: "Painel do dono" };
 
 /** Painel do dono do sistema: todas as empresas, todas as pessoas, convites e a demonstração pública. */
 export default async function OwnerPage() {
   const session = await requireAccount("owner");
-  const [overview, companies, users, invites] = await Promise.all([ownerOverview(), ownerCompanies(), ownerUsers(), ownerInvites()]);
+  const [overview, companies, users, invites, requests] = await Promise.all([ownerOverview(), ownerCompanies(), ownerUsers(), ownerInvites(), ownerAccessRequests()]);
+  const companyOptions = companies.map((company) => ({ id: company.id, name: company.name }));
 
   return (
     <div className="flex flex-col gap-8">
       <PageHeader title="Painel do dono" description="Visão do sistema inteiro. Só você vê esta página." />
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
         <StatCard label="Empresas" value={overview.companies} hint="contas de verdade" />
         <StatCard label="Pessoas" value={overview.users} hint={overview.blockedUsers ? `${overview.blockedUsers} bloqueada(s)` : "todas ativas"} />
+        <StatCard label="Pedidos" value={overview.pendingRequests} hint="de acesso, aguardando você" tone={overview.pendingRequests ? "warning" : undefined} />
         <StatCard label="Convites" value={overview.pendingInvites} hint="pendentes" />
         <StatCard
           label="Demos ativas"
@@ -28,6 +31,25 @@ export default async function OwnerPage() {
           tone={overview.activeDemos >= overview.demoCapacity * 0.8 ? "warning" : undefined}
         />
       </div>
+
+      <section className="flex flex-col gap-3" aria-labelledby="pedidos">
+        <h2 id="pedidos" className="font-mono text-overline uppercase tracking-widest text-primary">
+          Pedidos de acesso {requests.length > 0 && `(${requests.length})`}
+        </h2>
+        {requests.length === 0 ? (
+          <p className="text-body-sm text-muted-foreground">
+            Nenhum pedido pendente. O link público para pedir acesso é <span className="font-mono text-foreground">/erp/solicitar-acesso</span>.
+          </p>
+        ) : (
+          <ul className="grid gap-4 lg:grid-cols-2">
+            {requests.map((request) => (
+              <li key={request.id}>
+                <AccessRequestCard request={request} companies={companyOptions} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <section className="flex flex-col gap-3">
         <h2 className="font-mono text-overline uppercase tracking-widest text-primary">Empresas</h2>
@@ -81,7 +103,7 @@ export default async function OwnerPage() {
           <CardDescription>O link aparece uma vez só: copie ou mande pelo WhatsApp. Vale 48 horas e funciona uma vez.</CardDescription>
         </CardHeader>
         <CardContent>
-          <InviteForm scope="owner" companies={companies.map((company) => ({ id: company.id, name: company.name }))} />
+          <InviteForm scope="owner" companies={companyOptions} />
         </CardContent>
       </Card>
 

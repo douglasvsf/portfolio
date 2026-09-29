@@ -48,6 +48,7 @@ describe("GODZILLA ERP — contas por convite", () => {
         cy.contains("button", "Criar minha conta de dono").click();
       } else {
         login(OWNER.email, OWNER.password);
+        cy.location("pathname", { timeout: 20_000 }).should("eq", "/erp/dashboard");
         cy.visit("/erp/admin");
       }
     });
@@ -94,6 +95,31 @@ describe("GODZILLA ERP — contas por convite", () => {
     login(email, "senha-da-vendedora");
     cy.contains("bloqueado").should("be.visible");
     cy.location("pathname").should("eq", "/erp");
+  });
+
+  it("pedido de acesso chega ao painel e a aprovação gera o convite", () => {
+    asVisitor();
+    const email = `pedido.${Date.now()}@exemplo.com.br`;
+    cy.visit("/erp");
+    cy.contains("a", "Solicitar acesso").click();
+    cy.get("input[name='name']").type("Carlos Pereira");
+    cy.get("input[name='email']").type(email);
+    cy.get("input[name='company']").type("Empório do Carlos");
+    cy.get("textarea[name='message']").type("Quero testar no meu mercado");
+    cy.contains("button", "Enviar pedido").click();
+    cy.contains("Pedido enviado!").should("be.visible");
+
+    login(OWNER.email, OWNER.password);
+    cy.location("pathname", { timeout: 20_000 }).should("eq", "/erp/dashboard");
+    cy.visit("/erp/admin");
+    cy.contains("li", email).within(() => {
+      cy.contains("Quero testar no meu mercado").should("exist");
+      cy.get("input[name='companyName']").should("have.value", "Empório do Carlos");
+      cy.contains("button", "Aprovar e gerar convite").click();
+      cy.get("input[aria-label='Link gerado']", { timeout: 20_000 })
+        .invoke("val")
+        .should("match", /\/erp\/convite\/[A-Za-z0-9_-]{43}$/);
+    });
   });
 
   it("login errado mostra mensagem genérica", () => {

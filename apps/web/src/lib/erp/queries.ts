@@ -88,6 +88,7 @@ export const ownerOverview = () => load<erp.OwnerOverview>("/erp/owner/overview"
 export const ownerCompanies = () => load<erp.Company[]>("/erp/owner/companies");
 export const ownerUsers = () => load<erp.TeamMember[]>("/erp/owner/users");
 export const ownerInvites = () => load<erp.Invite[]>("/erp/owner/invites");
+export const ownerAccessRequests = () => load<erp.AccessRequest[]>("/erp/owner/access-requests");
 
 /** A instalação (criar o dono) só aparece enquanto não houver dono. */
 export async function setupAvailable() {

@@ -58,7 +58,12 @@ export default async function ErpHome({ searchParams }: PageProps<"/erp">) {
             <CardTitle as="h2" className="flex items-center gap-2">
               <LogIn className="size-(--size-icon-md) text-primary" aria-hidden="true" /> Entrar com sua conta
             </CardTitle>
-            <CardDescription>Acesso só por convite do administrador da sua empresa.</CardDescription>
+            <CardDescription>
+              Acesso só por convite.{" "}
+              <Link href="/erp/solicitar-acesso" className="text-primary underline-offset-4 hover:underline">
+                Não tem conta? Solicitar acesso
+              </Link>
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <LoginForm />

@@ -139,6 +139,41 @@ describe("equipe e painel do dono", () => {
   });
 });
 
+describe("pedidos de acesso", () => {
+  it("pedido público: valida, envia sem sessão e confirma", async () => {
+    erpRequest.mockResolvedValueOnce({ received: true });
+    await expect(accounts.requestAccess(IDLE, form({ name: "Carlos", email: "Carlos@X.com", company: "Empório", message: "Oi" }))).resolves.toMatchObject({ status: "success" });
+    expect(erpRequest).toHaveBeenLastCalledWith("/erp/auth/access-requests", {
+      method: "POST",
+      body: { name: "Carlos", email: "carlos@x.com", company: "Empório", message: "Oi" },
+      anonymous: true,
+    });
+    await expect(accounts.requestAccess(IDLE, form({ name: "", email: "x" }))).resolves.toMatchObject({ status: "error" });
+    erpRequest.mockRejectedValueOnce(new ErpApiError(429, "rate_limited", "Muitas requisições"));
+    await expect(accounts.requestAccess(IDLE, form({ name: "Carlos", email: "c@x.com" }))).resolves.toMatchObject({ message: "Muitas requisições" });
+  });
+
+  it("aprovar (empresa nova ou existente) devolve o convite; recusar", async () => {
+    erpRequest.mockResolvedValueOnce({ token: TOKEN, expiresAt: "2099-01-01T00:00:00Z" });
+    await expect(accounts.approveRequest(ID, IDLE, form({ target: "new", companyName: "Empório do Carlos" }))).resolves.toMatchObject({
+      link: `https://douglas-szapak.vercel.app/erp/convite/${TOKEN}`,
+    });
+    expect(erpRequest).toHaveBeenLastCalledWith(`/erp/owner/access-requests/${ID}/approve`, { method: "POST", body: { role: "admin", companyName: "Empório do Carlos" } });
+
+    erpRequest.mockResolvedValueOnce({ token: TOKEN, expiresAt: "2099-01-01T00:00:00Z" });
+    await accounts.approveRequest(ID, IDLE, form({ target: ID, role: "seller" }));
+    expect(erpRequest).toHaveBeenLastCalledWith(`/erp/owner/access-requests/${ID}/approve`, { method: "POST", body: { role: "seller", workspaceId: ID } });
+    await expect(accounts.approveRequest(ID, IDLE, form({ target: "new", companyName: "x" }))).resolves.toMatchObject({ status: "error" });
+
+    erpRequest.mockResolvedValueOnce(undefined);
+    await expect(accounts.rejectRequest(ID)).resolves.toMatchObject({ status: "success" });
+    erpRequest.mockRejectedValue(new ErpApiError(404, "not_found", "Pedido não encontrado"));
+    await expect(accounts.rejectRequest(ID)).resolves.toMatchObject({ status: "error" });
+    await expect(accounts.approveRequest(ID, IDLE, form({ target: ID, role: "seller" }))).resolves.toMatchObject({ status: "error" });
+    erpRequest.mockReset();
+  });
+});
+
 describe("sessão de conta nas páginas", () => {
   it("papel vem da API a cada página; conta bloqueada vira 'sem sessão'", async () => {
     getSession.mockResolvedValue({ ...session, role: "admin" });
@@ -176,6 +211,7 @@ describe("sessão de conta nas páginas", () => {
     await queries.ownerCompanies();
     await queries.ownerUsers();
     await queries.ownerInvites();
-    expect(erpRequest).toHaveBeenLastCalledWith("/erp/owner/invites", { query: undefined });
+    await queries.ownerAccessRequests();
+    expect(erpRequest).toHaveBeenLastCalledWith("/erp/owner/access-requests", { query: undefined });
   });
 });
