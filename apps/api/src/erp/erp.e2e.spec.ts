@@ -228,6 +228,11 @@ describe("proteções", () => {
   it("documentação OpenAPI publicada com as rotas do ERP", async () => {
     const { body } = await request(app.getHttpServer()).get("/docs-json").expect(200);
     expect(Object.keys(body.paths)).toEqual(expect.arrayContaining(["/erp/sessions/demo", "/erp/orders/{id}/confirm", "/erp/dashboard"]));
+
+    // A interface vem do CDN: na Vercel, os arquivos do node_modules não chegam à função.
+    const page = await request(app.getHttpServer()).get("/docs").expect(200);
+    expect(page.text).toContain("https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js");
+    expect(page.text).toContain("https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css");
   });
 
   it("limite de demos ativas: 503 demo_full", async () => {

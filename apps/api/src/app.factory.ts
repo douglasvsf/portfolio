@@ -3,6 +3,9 @@ import type { NestExpressApplication } from "@nestjs/platform-express";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { ErpExceptionFilter } from "./erp/common/errors";
 
+/** Interface do Swagger pelo CDN (linha 5, a mesma do swagger-ui-dist usado pelo @nestjs/swagger). */
+const SWAGGER_UI_CDN = "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5";
+
 /**
  * Configuração da aplicação, compartilhada por main.ts (servidor/Vercel) e
  * pelos testes E2E — os testes exercitam exatamente a mesma configuração.
@@ -26,7 +29,14 @@ export function configureApp(app: NestExpressApplication | INestApplication) {
       .addBearerAuth()
       .build(),
   );
-  SwaggerModule.setup("docs", app, document, { customSiteTitle: "GODZILLA ERP API", swaggerOptions: { persistAuthorization: true } });
+  SwaggerModule.setup("docs", app, document, {
+    customSiteTitle: "GODZILLA ERP API",
+    swaggerOptions: { persistAuthorization: true },
+    // Na Vercel a função não leva os arquivos do swagger-ui-dist (lidos do node_modules em
+    // tempo de execução) e a página ficava em branco: a interface vem do CDN.
+    customCssUrl: `${SWAGGER_UI_CDN}/swagger-ui.css`,
+    customJs: [`${SWAGGER_UI_CDN}/swagger-ui-bundle.js`, `${SWAGGER_UI_CDN}/swagger-ui-standalone-preset.js`],
+  });
   return app;
 }
 
