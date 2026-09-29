@@ -1,8 +1,10 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowUpRight, Boxes, FileCheck2, Lock, RefreshCw, Users } from "@godzilla/icons";
-import { Card } from "@godzilla/ui";
+import { ArrowUpRight, Boxes, FileCheck2, Lock, LogIn, RefreshCw, Users } from "@godzilla/icons";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@godzilla/ui";
+import { LoginForm } from "@/components/erp/account-forms";
 import { DemoEntry } from "@/components/erp/demo-entry";
-import { getSession } from "@/lib/erp/session";
+import { currentSession, setupAvailable } from "@/lib/erp/queries";
 
 const FEATURES = [
   { icon: Users, title: "Uma empresa só sua", text: "Cada visitante ganha um mercado isolado, com 40 produtos, 12 clientes e 6 meses de pedidos. Tudo some sozinho em 24h." },
@@ -13,7 +15,8 @@ const FEATURES = [
 
 export default async function ErpHome({ searchParams }: PageProps<"/erp">) {
   const { expirou } = await searchParams;
-  if ((await getSession()) && !expirou) redirect("/erp/dashboard");
+  if ((await currentSession()) && !expirou) redirect("/erp/dashboard");
+  const canSetup = await setupAvailable();
   const docsUrl = process.env.ERP_API_URL ? new URL("/docs", process.env.ERP_API_URL).toString() : undefined;
 
   return (
@@ -29,10 +32,9 @@ export default async function ErpHome({ searchParams }: PageProps<"/erp">) {
         </p>
         {expirou && (
           <p role="status" className="text-body-sm text-warning">
-            Sua demonstração expirou ou foi encerrada. Entre de novo para ganhar uma empresa nova.
+            Sua sessão terminou (a demonstração expirou, a senha foi trocada ou o acesso foi bloqueado). Entre de novo.
           </p>
         )}
-        <DemoEntry />
         {docsUrl && (
           <a href={docsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex w-fit items-center gap-1 font-mono text-body-sm text-muted-foreground underline-offset-4 hover:text-primary hover:underline">
             Ver a API (Swagger)
@@ -40,6 +42,37 @@ export default async function ErpHome({ searchParams }: PageProps<"/erp">) {
           </a>
         )}
       </section>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle as="h2">Testar sem conta</CardTitle>
+            <CardDescription>Uma empresa demo só sua, já com dados de um mercado. Some sozinha em 24h.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <DemoEntry />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle as="h2" className="flex items-center gap-2">
+              <LogIn className="size-(--size-icon-md) text-primary" aria-hidden="true" /> Entrar com sua conta
+            </CardTitle>
+            <CardDescription>Acesso só por convite do administrador da sua empresa.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <LoginForm />
+          </CardContent>
+        </Card>
+      </div>
+      {canSetup && (
+        <p className="text-body-sm text-muted-foreground">
+          Primeira vez neste servidor?{" "}
+          <Link href="/erp/instalar" className="text-primary underline-offset-4 hover:underline">
+            Instalar o sistema e criar a conta do dono
+          </Link>
+        </p>
+      )}
 
       <ul className="grid gap-4 sm:grid-cols-2">
         {FEATURES.map(({ icon: Icon, title, text }) => (

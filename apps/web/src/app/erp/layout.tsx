@@ -6,7 +6,7 @@ import { BackToPortfolio } from "@/components/layout/back-to-portfolio";
 import { ErpNav } from "@/components/erp/erp-nav";
 import { SessionBar } from "@/components/erp/session-bar";
 import { SITE_URL } from "@/config/site";
-import { getSession } from "@/lib/erp/session";
+import { currentSession } from "@/lib/erp/queries";
 import "../globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -21,7 +21,8 @@ export const metadata: Metadata = {
 
 /** O ERP é só em pt-BR (decisão do MVP) e usa o mesmo shell do Design System dos outros sistemas. */
 export default async function ErpLayout({ children }: LayoutProps<"/erp">) {
-  const session = await getSession();
+  const session = await currentSession();
+  const account = session?.kind === "account";
 
   return (
     <html lang="pt-BR" className={`dark ${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
@@ -41,7 +42,7 @@ export default async function ErpLayout({ children }: LayoutProps<"/erp">) {
               session ? (
                 <div className="border-t border-border">
                   <div className={cn(appContainerClassName, "flex flex-col gap-3 py-3 lg:flex-row lg:items-center lg:justify-between")}>
-                    <ErpNav className="-mx-1 overflow-x-auto px-1 [scrollbar-width:none]" />
+                    <ErpNav className="-mx-1 overflow-x-auto px-1 [scrollbar-width:none]" team={account && session.role === "admin"} owner={account && session.user?.isOwner} />
                     <SessionBar session={session} />
                   </div>
                 </div>
@@ -58,7 +59,7 @@ export default async function ErpLayout({ children }: LayoutProps<"/erp">) {
               </a>
             }
           >
-            Demonstração: dados fictícios de um mercado, apagados automaticamente em 24h.
+            {account ? "GODZILLA ERP — acesso por convite." : "Demonstração: dados fictícios de um mercado, apagados automaticamente em 24h."}
           </AppFooter>
         </I18nProvider>
       </body>

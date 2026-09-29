@@ -16,7 +16,7 @@ jest.mock("next/headers", () => ({
 }));
 
 const future = new Date(Date.now() + 3_600_000).toISOString();
-const session: ErpSession = { token: "jwt", role: "seller", workspace: { id: "a".repeat(24), name: "Mercado Godzilla #TEST" }, expiresAt: future };
+const session: ErpSession = { kind: "demo", token: "jwt", role: "seller", workspace: { id: "a".repeat(24), name: "Mercado Godzilla #TEST" }, expiresAt: future };
 
 describe("formatação do ERP", () => {
   it("dinheiro em centavos ↔ texto", () => {

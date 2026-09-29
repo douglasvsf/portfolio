@@ -3,50 +3,19 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { erp } from "@portfolio/shared";
-import type { z } from "zod";
 import type { ActionState } from "./action-state";
-import { ErpApiError, erpRequest } from "./client";
+import { fieldErrors, handle, optional, text, type ErrorState } from "./action-errors";
+import { erpRequest } from "./client";
 import { parseMoneyToCents, parseQuantity } from "./format";
 import { clearSession, saveSession } from "./session";
+
+export type { ErrorState };
 
 /**
  * Server actions do ERP (BFF). O formulário é validado com o MESMO schema Zod
  * da API (@portfolio/shared) antes de sair do servidor do site; a API valida
  * de novo (nunca confiar no cliente). Erros voltam como estado para a tela.
  */
-
-const text = (form: FormData, name: string) => {
-  const value = form.get(name);
-  return typeof value === "string" ? value.trim() : "";
-};
-const optional = (form: FormData, name: string) => text(form, name) || undefined;
-
-function fieldErrors(error: z.ZodError): Record<string, string> {
-  const result: Record<string, string> = {};
-  for (const issue of error.issues) result[issue.path.join(".") || "_"] ??= issue.message;
-  return result;
-}
-
-type ErrorState = Extract<ActionState, { status: "error" }>;
-
-/** Converte erros da API em estado de tela; sessão expirada volta para o início. */
-async function handle(error: unknown): Promise<ErrorState> {
-  if (!(error instanceof ErpApiError)) throw error; // inclui o redirect() do Next
-  if (error.code === "unauthorized") {
-    await clearSession();
-    redirect("/erp?expirou=1");
-  }
-  const details = error.details as { issues?: { path: string; message: string }[] } | erp.StockShortage[] | undefined;
-  if (error.code === "insufficient_stock" && Array.isArray(details)) return { status: "error", message: error.message, shortages: details };
-  if (error.code === "validation_error" && details && !Array.isArray(details) && details.issues) {
-    return { status: "error", message: error.message, fieldErrors: Object.fromEntries(details.issues.map((issue) => [issue.path, issue.message])) };
-  }
-  if (error.code === "conflict") {
-    const field = (error.details as { field?: string } | undefined)?.field;
-    return { status: "error", message: error.message, fieldErrors: field ? { [field]: error.message } : undefined };
-  }
-  return { status: "error", message: error.message };
-}
 
 // ---- Sessão -------------------------------------------------------------------
 
