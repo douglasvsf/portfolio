@@ -107,6 +107,14 @@ jobs:
           path: ~/.cache/Cypress
           key: cypress-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
 
+      # Binário do MongoDB usado pela API do ERP no E2E (Mongo em memória).
+      - name: Cache MongoDB binaries
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/mongodb-binaries
+          key: mongodb-binaries-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: mongodb-binaries-${{ runner.os }}-
+
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter web exec cypress install
 
@@ -115,8 +123,13 @@ jobs:
         run: pnpm turbo run build --filter=web
 
       # E2E contra o build de produção (next start), não contra o dev server.
+      # A API do ERP sobe junto, com Mongo em memória: o fluxo do ERP roda de
+      # verdade (site → BFF → NestJS → Mongo), sem banco externo nem segredo.
       - name: E2E (Cypress)
-        run: pnpm --filter web test:e2e:ci
+        run: pnpm --filter web exec start-server-and-test "pnpm --filter api e2e:server" http://localhost:3001/docs test:e2e:ci
+        env:
+          ERP_API_URL: http://localhost:3001
+          ERP_BFF_KEY: e2e-bff-key
 
       - uses: actions/upload-artifact@v4
         if: failure()

@@ -56,11 +56,14 @@ export {
   Moon,
   MoreHorizontal,
   Music,
+  Package,
   Palette,
+  Pencil,
   Play,
   Plus,
   RefreshCw,
   Search,
+  ShoppingCart,
   Sparkles,
   Sun,
   Trash2,
@@ -70,6 +73,7 @@ export {
   User,
   Users,
   Wallet,
+  Warehouse,
   X,
 } from "lucide-react";
 
