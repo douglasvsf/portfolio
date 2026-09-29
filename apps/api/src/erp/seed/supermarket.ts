@@ -209,8 +209,11 @@ export function buildDemoData(workspaceId: Types.ObjectId, now: Date, expiresAt:
     round3(events.filter((event) => event.productIndex === productIndex && event.type === "sale" && event.at < restockAt).reduce((sum, event) => sum - event.delta, 0)),
   );
   products.forEach((product, productIndex) => {
+    // Produto vendido por unidade tem saldo inteiro; por kg, múltiplo de 0,25.
     const target = LOW_STOCK.has(productIndex)
-      ? round3(product.minStock * 0.4)
+      ? product.unit === "un"
+        ? Math.floor(product.minStock * 0.4)
+        : Math.floor(product.minStock * 0.4 * 4) / 4
       : round3(product.minStock * 2 + (product.unit === "kg" ? Math.round(rand() * 20) : Math.floor(rand() * 40)));
     const needed = round3(grossSold[productIndex]! + target);
     const buffer = product.unit === "kg" ? 2 : 5;

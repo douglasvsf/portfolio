@@ -50,6 +50,14 @@ describe("dados da demo (mercado)", () => {
     expect(soldFromLedger).toBeCloseTo(soldFromOrders, 3);
   });
 
+  it("produto vendido por unidade nunca tem saldo fracionado", () => {
+    for (const product of data.products.filter((candidate) => candidate.unit === "un")) expect(Number.isInteger(product.stock)).toBe(true);
+    for (const movement of data.movements) {
+      const product = data.products.find((candidate) => candidate._id.equals(movement.productId))!;
+      if (product.unit === "un") expect(Number.isInteger(movement.balanceAfter)).toBe(true);
+    }
+  });
+
   it("alguns produtos terminam abaixo do mínimo (alimenta os alertas do dashboard)", () => {
     expect(data.products.filter((product) => product.stock < product.minStock).length).toBeGreaterThan(0);
   });
