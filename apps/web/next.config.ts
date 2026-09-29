@@ -23,6 +23,10 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "coin-images.coingecko.com" },
     ],
   },
+  experimental: {
+    // 404 única para endereços inexistentes (o site tem vários layouts raiz): app/global-not-found.tsx.
+    globalNotFound: true,
+  },
   async redirects() {
     return [{ source: "/design-system", destination: "/design-system/index.html", permanent: false }];
   },
