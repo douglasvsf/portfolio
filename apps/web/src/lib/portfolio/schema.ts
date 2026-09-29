@@ -1,6 +1,11 @@
 import { z } from "zod";
 import { resilientArray } from "@/lib/http/contract";
 
+// Este schema roda no navegador. Sem "jitless", o Zod testa `new Function` para
+// compilar validadores — a CSP do site (sem 'unsafe-eval') recusa, e o Chrome
+// registra um aviso de segurança. O modo sem JIT dá o mesmo resultado.
+z.config({ jitless: true });
+
 /**
  * Modelo da carteira. Tudo fica no navegador do usuário (localStorage), então
  * o schema também protege contra dado velho ou editado à mão: o que não bate

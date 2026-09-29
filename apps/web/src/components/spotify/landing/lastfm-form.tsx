@@ -18,7 +18,7 @@ export function LastfmForm({ error, dict }: { error?: string; dict: SpotifyDicti
         <h2 className="text-h3 font-bold">{t.title}</h2>
         <p className="text-body-sm text-muted-foreground">
           {before}
-          <a href="https://www.last.fm/settings/applications" target="_blank" rel="noreferrer" className="text-primary underline-offset-4 hover:underline">
+          <a href="https://www.last.fm/settings/applications" target="_blank" rel="noreferrer" className="text-primary underline underline-offset-4">
             Last.fm
           </a>
           {after}

@@ -33,7 +33,8 @@ const CONTENT_SECURITY_POLICY = [
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
-  ...(isDev ? [] : ["upgrade-insecure-requests"]),
+  // Sem upgrade-insecure-requests: o HSTS já força HTTPS, todo recurso externo já é
+  // HTTPS, e a diretiva quebrava o build servido em http://localhost (E2E e Lighthouse).
 ].join("; ");
 
 const SECURITY_HEADERS = [
