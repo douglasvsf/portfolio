@@ -84,7 +84,7 @@ export const PROJECT_DATA: ProjectData[] = [
     metrics: [],
     liveUrl: "/erp",
     codeUrl: `${REPO}/tree/main/apps/api/src/erp`,
-    hasCase: false,
+    hasCase: true,
   },
   {
     id: "kaiju-stocks",

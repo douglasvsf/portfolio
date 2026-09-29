@@ -44,7 +44,7 @@ export interface ProjectData {
   /** Produto no ar (pessoais) e código no GitHub. */
   liveUrl?: string;
   codeUrl?: string;
-  /** Profissionais têm página de case. */
+  /** Página de case: todos os profissionais e os pessoais com história para contar. */
   hasCase: boolean;
 }
 

@@ -72,8 +72,18 @@ export function ProjectCard({ project, copy, caseHref, headingLevel = "h4" }: { 
   );
 }
 
-/** Projeto pessoal: no ar e com código aberto. */
-export function PersonalProjectCard({ project, copy, headingLevel = "h4" }: { project: ProjectCardData; copy: ProjectCardCopy; headingLevel?: "h3" | "h4" }) {
+/** Projeto pessoal: no ar, com código aberto e, quando houver, o case. */
+export function PersonalProjectCard({
+  project,
+  copy,
+  caseHref,
+  headingLevel = "h4",
+}: {
+  project: ProjectCardData;
+  copy: ProjectCardCopy;
+  caseHref?: string;
+  headingLevel?: "h3" | "h4";
+}) {
   const Heading = headingLevel;
   return (
     <article className={cn(cardClassName, "gap-5 p-6")}>
@@ -88,15 +98,22 @@ export function PersonalProjectCard({ project, copy, headingLevel = "h4" }: { pr
       <ProjectTechnologies items={project.technologies} />
 
       <footer className="mt-auto flex flex-wrap items-center justify-between gap-4 border-t border-border pt-4">
-        {project.codeUrl ? (
-          <a href={project.codeUrl} target="_blank" rel="noopener noreferrer" className={secondaryLink}>
-            {copy.code}
-            <span className="sr-only">: {project.title}</span>
-            <ArrowUpRight className="size-3.5" aria-hidden="true" />
-          </a>
-        ) : (
-          <span />
-        )}
+        <span className="flex flex-wrap items-center gap-4">
+          {caseHref && (
+            <Link href={caseHref} className={secondaryLink}>
+              {copy.viewCase}
+              <span className="sr-only">: {project.title}</span>
+              <ArrowRight className="size-3.5" aria-hidden="true" />
+            </Link>
+          )}
+          {project.codeUrl && (
+            <a href={project.codeUrl} target="_blank" rel="noopener noreferrer" className={secondaryLink}>
+              {copy.code}
+              <span className="sr-only">: {project.title}</span>
+              <ArrowUpRight className="size-3.5" aria-hidden="true" />
+            </a>
+          )}
+        </span>
         {project.liveUrl && (
           // Outros apps (/stocks, /spotify, /design-system) têm layout raiz próprio: navegação completa.
           <a href={project.liveUrl} className={stretchedLink}>

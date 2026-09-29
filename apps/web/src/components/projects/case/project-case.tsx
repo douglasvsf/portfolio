@@ -38,7 +38,7 @@ export function ProjectCase({ project, copy, locale, previous, next }: ProjectCa
         {labels.back}
       </Link>
 
-      <ProjectCaseHeader project={project} companySiteLabel={copy.companySite} />
+      <ProjectCaseHeader project={project} copy={copy} />
 
       <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-16">
         <aside className="flex flex-col gap-8 lg:order-2 lg:sticky lg:top-24 lg:self-start">

@@ -12,7 +12,7 @@ export function ProjectMetrics({ metrics, className }: { metrics: Metric[]; clas
     <Stagger as="dl" stagger={0.06} className={cn("grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(9rem,1fr))]", className)}>
       {metrics.map((metric) => (
         <StaggerItem key={metric.key} className="flex flex-col-reverse gap-1 rounded-md border border-border bg-background/60 px-4 py-3">
-          <ProjectMetric {...metric} />
+          <ProjectMetric value={metric.value} label={metric.label} />
         </StaggerItem>
       ))}
     </Stagger>

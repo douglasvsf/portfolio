@@ -59,7 +59,7 @@ export function ProjectsExplorer({ projects, copy, locale }: { projects: Project
             <Stagger as="ul" className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {personal.map((project) => (
                 <StaggerItem as="li" key={project.id}>
-                  <PersonalProjectCard project={project} copy={copy} />
+                  <PersonalProjectCard project={project} copy={copy} caseHref={project.hasCase ? `/${locale}/projetos/${project.id}` : undefined} />
                 </StaggerItem>
               ))}
             </Stagger>

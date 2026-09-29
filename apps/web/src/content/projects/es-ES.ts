@@ -175,6 +175,50 @@ export const esES: ProjectsCopy = {
       title: "GODZILLA ERP",
       summary:
         "Mini-ERP de supermercado con API REST en NestJS, MongoDB y Swagger: libro mayor de inventario inmutable, pedidos confirmados en transacción, multi-tenant por empresa demo y control de acceso por rol.",
+      case: {
+        context: "Proyecto personal para mostrar back-end de un sistema de gestión funcionando de verdad, no solo pantallas: un mini-ERP de supermercado con productos, inventario, clientes, pedidos y dashboard, y una API en NestJS pública y documentada en Swagger.",
+        challenge: "Permitir que cualquier visitante use el sistema completo — registrar, vender, confirmar pedidos — sin crear cuenta, sin tocar los datos de otros y sin costo de infraestructura (planes gratuitos de Vercel y MongoDB Atlas). Todo manteniendo las reglas de un ERP real: inventario que nunca queda negativo, historial que no se borra y dinero sin errores de redondeo.",
+        role: [
+          "API REST en NestJS con MongoDB: productos, clientes, movimientos de inventario, pedidos y un dashboard con aggregation pipelines, documentada en Swagger.",
+          "Una empresa demo por visitante, con datos de supermercado generados de forma determinista (40 productos, 12 clientes y 6 meses de pedidos) que se borran solos a las 24 horas.",
+          "Autenticación JWT por empresa, con los roles Administrador y Vendedor verificados en la API.",
+          "Pantallas en Next.js 16 con Server Components y server actions, usando el Design System del portafolio, con máscaras y validación en los formularios.",
+          "Tests: E2E de la API con Mongo en memoria (incluidas confirmaciones simultáneas y aislamiento entre empresas), tests unitarios de la capa BFF y el flujo completo en Cypress, dentro del CI.",
+        ],
+        architecture: [
+          { label: "Navegador", detail: "pantallas en React" },
+          { label: "Next.js (BFF)", detail: "server actions · cookie httpOnly" },
+          { label: "API NestJS", detail: "JWT · rate limit · Swagger" },
+          { label: "MongoDB Atlas", detail: "transacciones · índice TTL" },
+        ],
+        result: "En producción en /erp, con la API pública en Swagger. Cada visitante crea su propia empresa en segundos y recorre el flujo completo: registrar, vender, confirmar y ver cambiar el inventario y el dashboard.",
+        decisions: [
+          {
+            title: "Inventario descontado en transacción",
+            description: "Confirmar un pedido descuenta todos los ítems dentro de una transacción de MongoDB, y cada descuento es un update condicional (solo si hay saldo). Dos pedidos simultáneos nunca dejan el inventario negativo: o salen todos los ítems, o ninguno.",
+          },
+          {
+            title: "Libro mayor inmutable",
+            description: "El saldo nunca se edita directamente: entradas, salidas, ajustes, ventas y cancelaciones se convierten en movimientos con el saldo resultante. El dinero se guarda en centavos enteros, sin errores de punto flotante.",
+          },
+          {
+            title: "Multi-tenant con expiración",
+            description: "Cada documento lleva su empresa y su fecha de expiración, y cada consulta filtra por la empresa del token. Un índice TTL borra toda la demo a las 24 horas, sin job de limpieza.",
+          },
+          {
+            title: "Contratos compartidos",
+            description: "Los schemas Zod viven en un paquete del monorepo: el mismo schema valida el formulario en Next.js, la petición en NestJS y genera la documentación de Swagger.",
+          },
+          {
+            title: "BFF entre el navegador y la API",
+            description: "El navegador nunca habla con la API: el token vive en una cookie httpOnly y las llamadas salen del servidor de Next.js, con una clave propia y la IP real del visitante para que el rate limit aplique por persona.",
+          },
+          {
+            title: "Serverless y costo cero",
+            description: "La API corre como función en Vercel, con Nest inicializado una vez por instancia, sobre el plan gratuito de Atlas. Un límite de empresas simultáneas protege el plan.",
+          },
+        ],
+      },
     },
     "kaiju-stocks": {
       title: "Kaiju Stocks",

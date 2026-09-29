@@ -175,6 +175,50 @@ export const enUS: ProjectsCopy = {
       title: "GODZILLA ERP",
       summary:
         "A grocery-store mini-ERP with a NestJS REST API, MongoDB and Swagger: immutable stock ledger, orders confirmed in a transaction, multi-tenant demo companies and role-based access control.",
+      case: {
+        context: "A personal project to show real management-system back-end work, not just screens: a grocery-store mini-ERP with products, stock, customers, orders and a dashboard, backed by a NestJS API that is public and documented in Swagger.",
+        challenge: "Let any visitor use the whole system — register products, sell, confirm orders — without signing up, without touching anyone else's data and at zero infrastructure cost (Vercel and MongoDB Atlas free tiers). All while keeping real ERP rules: stock that never goes negative, history that is never erased and money without rounding errors.",
+        role: [
+          "NestJS REST API on MongoDB: products, customers, stock movements, orders and a dashboard built with aggregation pipelines, documented in Swagger.",
+          "One demo company per visitor, with deterministically generated store data (40 products, 12 customers and 6 months of orders) that deletes itself after 24 hours.",
+          "Per-company JWT authentication, with Admin and Seller roles enforced by the API.",
+          "Next.js 16 screens with Server Components and server actions, using the portfolio's Design System, with input masks and form validation.",
+          "Tests: API E2E with in-memory Mongo (including concurrent confirmations and tenant isolation), BFF unit tests and the full flow in Cypress, all in CI.",
+        ],
+        architecture: [
+          { label: "Browser", detail: "React screens" },
+          { label: "Next.js (BFF)", detail: "server actions · httpOnly cookie" },
+          { label: "NestJS API", detail: "JWT · rate limit · Swagger" },
+          { label: "MongoDB Atlas", detail: "transactions · TTL index" },
+        ],
+        result: "Live at /erp, with the public API in Swagger. Each visitor creates their own company in seconds and goes through the full flow: register, sell, confirm and watch stock and the dashboard change.",
+        decisions: [
+          {
+            title: "Stock deducted in a transaction",
+            description: "Confirming an order deducts every item inside a MongoDB transaction, and each deduction is a conditional update (only if there is enough stock). Two simultaneous orders never drive stock negative: either all items go out, or none do.",
+          },
+          {
+            title: "Immutable ledger",
+            description: "Stock is never edited directly: purchases, removals, adjustments, sales and cancellations become movements carrying the resulting balance. Money is stored as integer cents, with no floating-point errors.",
+          },
+          {
+            title: "Multi-tenant with expiration",
+            description: "Every document carries its company and expiration date, and every query filters by the token's company. A TTL index deletes the whole demo after 24 hours, with no cleanup job.",
+          },
+          {
+            title: "Shared contracts",
+            description: "Zod schemas live in a monorepo package: the same schema validates the form in Next.js, the request in NestJS and generates the Swagger docs.",
+          },
+          {
+            title: "BFF between browser and API",
+            description: "The browser never talks to the API: the token lives in an httpOnly cookie and calls leave the Next.js server with their own key and the visitor's real IP, so rate limiting applies per person.",
+          },
+          {
+            title: "Serverless at zero cost",
+            description: "The API runs as a Vercel function, with Nest initialized once per instance, on Atlas's free tier. A cap on simultaneous companies protects the plan.",
+          },
+        ],
+      },
     },
     "kaiju-stocks": {
       title: "Kaiju Stocks",

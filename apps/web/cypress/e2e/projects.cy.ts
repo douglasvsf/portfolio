@@ -64,6 +64,19 @@ describe("Projetos", () => {
     cy.contains("a", "Voltar aos projetos").should("have.attr", "href", "/pt-BR#projects");
   });
 
+  it("projeto pessoal com case: card leva ao case, que leva ao produto e ao código", () => {
+    cy.visit("/pt-BR#projects");
+    cy.contains("article", "GODZILLA ERP").contains("a", "Ver case").click();
+
+    cy.location("pathname").should("eq", "/pt-BR/projetos/godzilla-erp");
+    cy.contains("h1", "GODZILLA ERP").should("be.visible");
+    cy.contains("Projeto pessoal").should("be.visible");
+    cy.contains("a", "Abrir GODZILLA ERP").should("have.attr", "href", "/erp");
+    cy.contains("a", "Código").should("have.attr", "href").and("include", "apps/api/src/erp");
+    cy.contains("h2", "Decisões técnicas").should("exist");
+    cy.contains("Estoque baixado em transação").should("exist");
+  });
+
   it("case sem resultado documentado não mostra a seção Resultado", () => {
     cy.visit("/pt-BR/projetos/inoa");
     cy.contains("h1", "Plataforma de mercado de capitais").should("be.visible");

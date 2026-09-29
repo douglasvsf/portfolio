@@ -179,6 +179,50 @@ export const ptBR: ProjectsCopy = {
       title: "GODZILLA ERP",
       summary:
         "Mini-ERP de mercado com API REST em NestJS, MongoDB e Swagger: estoque com livro-razão imutável, pedidos confirmados em transação, multi-tenant por empresa demo e controle de acesso por papel.",
+      case: {
+        context: "Projeto pessoal para mostrar back-end de sistema de gestão funcionando de verdade, não só telas: um mini-ERP de mercado com produtos, estoque, clientes, pedidos e dashboard, e uma API em NestJS publicada e aberta no Swagger.",
+        challenge: "Deixar qualquer visitante usar o sistema inteiro — cadastrar, vender, confirmar pedido — sem criar conta, sem um mexer nos dados do outro e sem custo de infraestrutura (planos gratuitos da Vercel e do MongoDB Atlas). Tudo isso mantendo as regras de um ERP real: estoque que nunca fica negativo, histórico que não se apaga e dinheiro sem erro de arredondamento.",
+        role: [
+          "API REST em NestJS com MongoDB: produtos, clientes, movimentações de estoque, pedidos e dashboard com aggregation pipelines, documentada no Swagger.",
+          "Uma empresa demo por visitante, com dados de mercado gerados de forma determinística (40 produtos, 12 clientes e 6 meses de pedidos) e apagados sozinhos em 24 horas.",
+          "Autenticação JWT por empresa, com os papéis Administrador e Vendedor verificados na API.",
+          "Telas em Next.js 16 com Server Components e server actions, usando o Design System do portfólio, com máscaras e validação nos formulários.",
+          "Testes: E2E da API com Mongo em memória (inclusive confirmações simultâneas e isolamento entre empresas), testes unitários da camada BFF e o fluxo completo no Cypress, dentro do CI.",
+        ],
+        architecture: [
+          { label: "Navegador", detail: "telas em React" },
+          { label: "Next.js (BFF)", detail: "server actions · cookie httpOnly" },
+          { label: "API NestJS", detail: "JWT · rate limit · Swagger" },
+          { label: "MongoDB Atlas", detail: "transações · índice TTL" },
+        ],
+        result: "No ar em /erp, com a API pública no Swagger. Cada visitante cria a própria empresa em segundos e percorre o fluxo completo: cadastrar, vender, confirmar e ver o estoque e o dashboard mudarem.",
+        decisions: [
+          {
+            title: "Estoque baixado em transação",
+            description: "Confirmar um pedido baixa todos os itens numa transação do MongoDB, e cada baixa é um update condicional (só se houver saldo). Dois pedidos simultâneos nunca deixam o estoque negativo: ou todos os itens saem, ou nenhum.",
+          },
+          {
+            title: "Livro-razão imutável",
+            description: "O saldo nunca é editado direto: entrada, saída, ajuste, venda e cancelamento viram movimentações com o saldo resultante. Dinheiro fica em centavos inteiros, sem erro de ponto flutuante.",
+          },
+          {
+            title: "Multi-tenant com expiração",
+            description: "Todo documento carrega a empresa e a data de expiração, e toda consulta filtra pela empresa do token. Um índice TTL apaga a demo inteira em 24 horas, sem job de limpeza.",
+          },
+          {
+            title: "Contratos compartilhados",
+            description: "Os schemas Zod ficam num pacote do monorepo: o mesmo schema valida o formulário no Next.js, a requisição no NestJS e gera a documentação do Swagger.",
+          },
+          {
+            title: "BFF entre o navegador e a API",
+            description: "O navegador nunca fala com a API: o token fica em cookie httpOnly e as chamadas saem do servidor do Next.js, com uma chave própria e o IP real do visitante para o rate limit valer por pessoa.",
+          },
+          {
+            title: "Serverless e custo zero",
+            description: "A API roda como função na Vercel, com o Nest inicializado uma vez por instância, e o banco é o plano gratuito do Atlas. Um limite de empresas simultâneas protege o plano.",
+          },
+        ],
+      },
     },
     "kaiju-stocks": {
       title: "Kaiju Stocks",
