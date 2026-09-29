@@ -78,10 +78,13 @@ describe("troca de tokens", () => {
 
 describe("sessão cifrada", () => {
   it("cifra e decifra com a mesma chave", () => {
-    const session = sessionFromToken({ access_token: "at", token_type: "Bearer", scope: "", expires_in: 3600, refresh_token: "rt" }, undefined, 0);
+    // Token longo e inconfundível: "at" aparecia por acaso no base64 aleatório (~3% das rodadas).
+    const accessToken = "token-de-acesso-que-nao-pode-vazar";
+    const session = sessionFromToken({ access_token: accessToken, token_type: "Bearer", scope: "", expires_in: 3600, refresh_token: "rt" }, undefined, 0);
     const sealed = sealSession(session, "secret");
-    expect(sealed).not.toContain("at");
-    expect(unsealSession(sealed, "secret")).toEqual({ accessToken: "at", refreshToken: "rt", expiresAt: 3_600_000 });
+    expect(sealed).not.toContain(accessToken);
+    expect(Buffer.from(sealed, "base64url").toString("utf8")).not.toContain(accessToken);
+    expect(unsealSession(sealed, "secret")).toEqual({ accessToken, refreshToken: "rt", expiresAt: 3_600_000 });
   });
 
   it("rejeita cookie adulterado ou cifrado com outra chave", () => {
