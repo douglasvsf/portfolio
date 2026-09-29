@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { erp } from "@portfolio/shared";
+import { SITE_URL } from "@/config/site";
 import type { ActionState } from "./action-state";
 import { fieldErrors, handle, secret, text, type ErrorState } from "./action-errors";
 import { erpRequest, isApiError } from "./client";
@@ -25,7 +26,13 @@ const refresh = () => {
   revalidatePath("/erp/admin");
 };
 
+/**
+ * Base dos links enviados às pessoas. Na Vercel é sempre o domínio oficial —
+ * não confia no cabeçalho Host (um Host forjado não gera link para outro site).
+ * Localmente, o host usado no navegador.
+ */
 async function siteUrl(path: string) {
+  if (process.env.VERCEL) return new URL(path, SITE_URL).toString();
   const list = await headers();
   const host = list.get("x-forwarded-host") ?? list.get("host") ?? "localhost:3000";
   const proto = list.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");

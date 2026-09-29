@@ -108,6 +108,14 @@ describe("equipe e painel do dono", () => {
     });
     expect(erpRequest).toHaveBeenLastCalledWith("/erp/team/invites", { method: "POST", body: { email: "ana@x.com", role: "seller" } });
 
+    // Na Vercel, o link usa o domínio oficial, não o Host da requisição.
+    process.env.VERCEL = "1";
+    erpRequest.mockResolvedValueOnce({ token: TOKEN, expiresAt: "2099-01-01T00:00:00Z" });
+    await expect(accounts.createInvite("team", IDLE, form({ email: "c@x.com", role: "seller" }))).resolves.toMatchObject({
+      link: expect.stringMatching(new RegExp(`/erp/convite/${TOKEN}$`)),
+    });
+    delete process.env.VERCEL;
+
     erpRequest.mockResolvedValueOnce({ token: TOKEN, expiresAt: "2099-01-01T00:00:00Z" });
     await accounts.createInvite("owner", IDLE, form({ email: "b@x.com", role: "admin", workspaceId: ID }));
     expect(erpRequest).toHaveBeenLastCalledWith("/erp/owner/invites", { method: "POST", body: { email: "b@x.com", role: "admin", workspaceId: ID } });
