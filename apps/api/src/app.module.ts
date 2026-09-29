@@ -10,6 +10,24 @@ import { ExperienceModule } from "./experience/experience.module";
 import { ErpModule } from "./erp/erp.module";
 import { ClientIpThrottlerGuard } from "./erp/common/throttler";
 
+/**
+ * String de conexão do MongoDB. Tolera o erro mais comum ao colar na Vercel
+ * (aspas e espaços em volta) e, se ainda assim for inválida, falha com uma
+ * mensagem clara no log — sem mostrar a string (ela contém a senha).
+ */
+export function mongoUri(raw: string | undefined) {
+  if (!raw) return "mongodb://127.0.0.1:27017/portfolio";
+  const uri = raw
+    .trim()
+    .replace(/^MONGODB_URI=/, "")
+    .replace(/^["']|["']$/g, "")
+    .trim();
+  if (!/^mongodb(\+srv)?:\/\//.test(uri)) {
+    throw new Error("MONGODB_URI inválido: o valor precisa começar com mongodb+srv:// (ou mongodb://). Confira a variável no projeto da Vercel.");
+  }
+  return uri;
+}
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -17,9 +35,7 @@ import { ClientIpThrottlerGuard } from "./erp/common/throttler";
     }),
     MongooseModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        uri: config.get<string>("MONGODB_URI") ?? "mongodb://127.0.0.1:27017/portfolio",
-      }),
+      useFactory: (config: ConfigService) => ({ uri: mongoUri(config.get<string>("MONGODB_URI")) }),
     }),
     HealthModule,
     SkillsModule,
