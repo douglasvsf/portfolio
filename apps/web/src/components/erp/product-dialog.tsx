@@ -79,6 +79,15 @@ function ProductForm({ product, onDone }: { product?: erp.Product; onDone: () =>
       <FormField label="Custo (R$)" error={errors.costCents} required>
         <MaskedInput mask="money" name="cost" inputMode="numeric" defaultValue={product ? centsToMasked(product.costCents) : ""} placeholder="0,00" maxLength={MAX_LENGTH.money} />
       </FormField>
+      <FormField
+        label="Código de barras"
+        error={errors.barcode}
+        optional
+        description="EAN-13 do produto embalado ou PLU de 5 dígitos da balança (vendido por kg)."
+        className="sm:col-span-2"
+      >
+        <MaskedInput mask="barcode" name="barcode" inputMode="numeric" defaultValue={product?.barcode ?? ""} placeholder="7891234567895" maxLength={MAX_LENGTH.barcode} className="font-mono" autoComplete="off" />
+      </FormField>
       <FormField label="Estoque mínimo" error={errors.minStock} required description="Abaixo disso, o produto entra nos alertas.">
         <MaskedInput
           mask="quantity-decimal"

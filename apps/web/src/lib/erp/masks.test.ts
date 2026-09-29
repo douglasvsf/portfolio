@@ -51,6 +51,7 @@ describe("máscaras do ERP", () => {
 
   it("applyMask escolhe a máscara pelo tipo", () => {
     expect(applyMask("sku", "ab")).toBe("AB");
+    expect(applyMask("barcode", "789-1234 5678 9555")).toBe("7891234567895");
     expect(applyMask("document", "52998224725")).toBe("529.982.247-25");
     expect(applyMask("phone", "4432221111")).toBe("(44) 3222-1111");
     expect(applyMask("money", "1290")).toBe("12,90");

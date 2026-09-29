@@ -187,7 +187,7 @@ export const esES: SiteContent = {
     description: "Construidos y publicados junto con este sitio: ábrelos y pruébalos.",
     openLabel: "Abrir",
     items: systemItems({
-      erp: "Mini-ERP de supermercado con API en NestJS y MongoDB: productos, inventario con libro mayor, clientes, pedidos que descuentan el stock en una transacción, dashboard y roles de acceso. Cada visitante recibe su propia empresa demo.",
+      erp: "Mini-ERP de supermercado con API en NestJS y MongoDB: productos, inventario con libro mayor, clientes, pedidos que descuentan el stock en una transacción, punto de venta (PDV) con código de barras, dashboard y roles de acceso. Cada visitante recibe su propia empresa demo.",
       spotify: "Dashboard de estadísticas musicales con OAuth de Spotify, Last.fm y vitrina en vivo: artistas, canciones, géneros y lo que suena ahora.",
       stocks: "Cotizaciones de la B3 casi en tiempo real, historial con gráficos y una cartera con precio medio, dividendos, comparación con el CDI e importación de la hoja de la B3.",
       designSystem: "La biblioteca de componentes detrás de todos los sistemas: Atomic Design, accesible, con i18n y documentada en Storybook.",

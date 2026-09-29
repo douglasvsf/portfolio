@@ -1,17 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "@godzilla/icons";
-import { Card, CardContent, CardHeader, CardTitle, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@godzilla/ui";
+import { ArrowLeft, Printer } from "@godzilla/icons";
+import { Button, Card, CardContent, CardHeader, CardTitle, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@godzilla/ui";
 import { erp } from "@portfolio/shared";
 import { OrderActions } from "@/components/erp/order-actions";
 import { OrderStatusBadge } from "@/components/erp/ui";
-import { formatDateTime, money, quantity } from "@/lib/erp/format";
+import { customerLabel, formatDateTime, money, quantity } from "@/lib/erp/format";
 import { getOrder, requireSession } from "@/lib/erp/queries";
 
 export async function generateMetadata({ params }: PageProps<"/erp/pedidos/[id]">): Promise<Metadata> {
   const order = await getOrder((await params).id);
-  return { title: order ? `Pedido #${order.number}` : "Pedido" };
+  return { title: order ? `${order.channel === "pos" ? "Venda PDV" : "Pedido"} #${order.number}` : "Pedido" };
 }
 
 export default async function OrderPage({ params, searchParams }: PageProps<"/erp/pedidos/[id]">) {
@@ -21,8 +21,12 @@ export default async function OrderPage({ params, searchParams }: PageProps<"/er
   if (!order) notFound();
 
   const timeline: { label: string; at: string; by?: string }[] = [
-    { label: "Criado", at: order.createdAt, by: erp.ROLE_LABELS[order.createdByRole] },
-    ...(order.confirmedAt ? [{ label: "Confirmado — estoque baixado", at: order.confirmedAt }] : []),
+    ...(order.channel === "pos"
+      ? [{ label: "Venda no caixa — estoque baixado", at: order.createdAt, by: erp.ROLE_LABELS[order.createdByRole] }]
+      : [
+          { label: "Criado", at: order.createdAt, by: erp.ROLE_LABELS[order.createdByRole] },
+          ...(order.confirmedAt ? [{ label: "Confirmado — estoque baixado", at: order.confirmedAt }] : []),
+        ]),
     ...(order.cancelledAt ? [{ label: order.confirmedAt ? "Cancelado — estoque devolvido" : "Cancelado", at: order.cancelledAt }] : []),
   ];
 
@@ -35,14 +39,23 @@ export default async function OrderPage({ params, searchParams }: PageProps<"/er
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex flex-col gap-1">
           <h1 className="flex items-center gap-3 text-h2 font-bold tracking-tight">
-            Pedido <span className="font-mono text-primary">#{order.number}</span>
+            {order.channel === "pos" ? "Venda PDV" : "Pedido"} <span className="font-mono text-primary">#{order.number}</span>
             <OrderStatusBadge status={order.status} />
           </h1>
           <p className="text-body-sm text-muted-foreground">
-            {order.customer.name} · {formatDateTime(order.createdAt)}
+            {customerLabel(order)} · {formatDateTime(order.createdAt)}
           </p>
         </div>
-        <OrderActions order={order} />
+        <div className="flex flex-col items-start gap-3 sm:items-end">
+          {order.channel === "pos" && order.status === "confirmed" && (
+            <Button asChild variant="outline" size="sm">
+              <a href={`/erp/pdv/cupom/${order.id}`} target="_blank" rel="noopener">
+                <Printer aria-hidden="true" /> Cupom
+              </a>
+            </Button>
+          )}
+          <OrderActions order={order} />
+        </div>
       </header>
 
       {criado && order.status === "draft" && (
@@ -97,6 +110,22 @@ export default async function OrderPage({ params, searchParams }: PageProps<"/er
                   <dd className="font-mono tabular-nums text-primary">{money(order.totalCents)}</dd>
                 </div>
               </dl>
+              {order.payments && (
+                <dl className="mt-4 flex flex-col gap-1 border-t border-border pt-3 text-body-sm">
+                  {order.payments.map((payment, index) => (
+                    <div key={index} className="flex justify-between">
+                      <dt className="text-muted-foreground">{erp.PAYMENT_METHOD_LABELS[payment.method]}</dt>
+                      <dd className="font-mono tabular-nums">{money(payment.amountCents)}</dd>
+                    </div>
+                  ))}
+                  {!!order.changeCents && (
+                    <div className="flex justify-between">
+                      <dt className="text-muted-foreground">Troco</dt>
+                      <dd className="font-mono tabular-nums">{money(order.changeCents)}</dd>
+                    </div>
+                  )}
+                </dl>
+              )}
               {order.notes && <p className="mt-4 text-caption text-muted-foreground">Obs.: {order.notes}</p>}
             </CardContent>
           </Card>

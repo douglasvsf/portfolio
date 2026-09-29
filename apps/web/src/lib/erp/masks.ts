@@ -11,6 +11,8 @@ const digits = (value: string) => value.replace(/\D/g, "");
 /** Limites de caracteres por campo — iguais aos da API. */
 export const MAX_LENGTH = {
   sku: 20,
+  /** EAN-13 */
+  barcode: 13,
   productName: 80,
   customerName: 100,
   email: 120,
@@ -34,6 +36,9 @@ export const maskSku = (value: string) =>
     .toUpperCase()
     .replace(/[^A-Z0-9-]/g, "")
     .slice(0, MAX_LENGTH.sku);
+
+/** Código de barras / PLU: só dígitos, até 13. */
+export const maskBarcode = (value: string) => digits(value).slice(0, MAX_LENGTH.barcode);
 
 /** CPF até 11 dígitos; a partir do 12º vira CNPJ. */
 export function maskDocument(value: string) {
@@ -86,12 +91,14 @@ export function maskQuantity(value: string, unit: erp.Unit | undefined) {
 /** Quantidade numérica → valor inicial já mascarado. */
 export const quantityToMasked = (value: number, unit: erp.Unit | undefined) => maskQuantity(String(value).replace(".", ","), unit);
 
-export type MaskKind = "sku" | "document" | "phone" | "money" | "quantity-un" | "quantity-decimal";
+export type MaskKind = "sku" | "barcode" | "document" | "phone" | "money" | "quantity-un" | "quantity-decimal";
 
 export function applyMask(kind: MaskKind, value: string) {
   switch (kind) {
     case "sku":
       return maskSku(value);
+    case "barcode":
+      return maskBarcode(value);
     case "document":
       return maskDocument(value);
     case "phone":

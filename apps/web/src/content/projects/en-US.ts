@@ -182,6 +182,7 @@ export const enUS: ProjectsCopy = {
           "NestJS REST API on MongoDB: products, customers, stock movements, orders and a dashboard built with aggregation pipelines, documented in Swagger.",
           "One demo company per visitor, with deterministically generated store data (40 products, 12 customers and 6 months of orders) that deletes itself after 24 hours.",
           "Per-company JWT authentication, with Admin and Seller roles enforced by the API.",
+          "Point of sale (POS): EAN and scale-label scanning, the \"3*code\" multiplier, keyboard shortcuts, Pix, card and cash with change, and a printable receipt.",
           "Next.js 16 screens with Server Components and server actions, using the portfolio's Design System, with input masks and form validation.",
           "Tests: API E2E with in-memory Mongo (including concurrent confirmations and tenant isolation), BFF unit tests and the full flow in Cypress, all in CI.",
         ],
@@ -216,6 +217,16 @@ export const enUS: ProjectsCopy = {
           {
             title: "Serverless at zero cost",
             description: "The API runs as a Vercel function, with Nest initialized once per instance, on Atlas's free tier. A cap on simultaneous companies protects the plan.",
+          },
+          {
+            title: "Idempotent checkout",
+            description:
+              "Each POS sale carries an idempotency key. A double click or a network drop after the write returns the same sale from the API, without charging or deducting stock twice — enforced by a unique index, even for simultaneous requests.",
+          },
+          {
+            title: "Barcodes and scales",
+            description:
+              "EAN with check digit for packaged goods and PLU for weighed ones: the scale label (prefix 2) carries the weight, and the POS adds the quantity in kg. The same parser runs in the browser and is tested in the API.",
           },
         ],
       },

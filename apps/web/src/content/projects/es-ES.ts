@@ -182,6 +182,7 @@ export const esES: ProjectsCopy = {
           "API REST en NestJS con MongoDB: productos, clientes, movimientos de inventario, pedidos y un dashboard con aggregation pipelines, documentada en Swagger.",
           "Una empresa demo por visitante, con datos de supermercado generados de forma determinista (40 productos, 12 clientes y 6 meses de pedidos) que se borran solos a las 24 horas.",
           "Autenticación JWT por empresa, con los roles Administrador y Vendedor verificados en la API.",
+          "Punto de venta (PDV): lectura de EAN y de etiquetas de balanza, multiplicador \"3*código\", atajos de teclado, Pix, tarjeta y efectivo con cambio, y ticket para imprimir.",
           "Pantallas en Next.js 16 con Server Components y server actions, usando el Design System del portafolio, con máscaras y validación en los formularios.",
           "Tests: E2E de la API con Mongo en memoria (incluidas confirmaciones simultáneas y aislamiento entre empresas), tests unitarios de la capa BFF y el flujo completo en Cypress, dentro del CI.",
         ],
@@ -216,6 +217,16 @@ export const esES: ProjectsCopy = {
           {
             title: "Serverless y costo cero",
             description: "La API corre como función en Vercel, con Nest inicializado una vez por instancia, sobre el plan gratuito de Atlas. Un límite de empresas simultáneas protege el plan.",
+          },
+          {
+            title: "Venta idempotente en caja",
+            description:
+              "Cada venta del PDV lleva una clave de idempotencia. Doble clic o red que se cae después de guardar: la API devuelve la misma venta, sin cobrar ni descontar el inventario dos veces — garantizado por un índice único, incluso con peticiones simultáneas.",
+          },
+          {
+            title: "Código de barras y balanza",
+            description:
+              "EAN con dígito verificador para envasados y PLU para productos pesados: la etiqueta de la balanza (prefijo 2) trae el peso y el PDV carga la cantidad en kg. El mismo parser corre en el navegador y se prueba en la API.",
           },
         ],
       },

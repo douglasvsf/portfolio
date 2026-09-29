@@ -186,6 +186,7 @@ export const ptBR: ProjectsCopy = {
           "API REST em NestJS com MongoDB: produtos, clientes, movimentações de estoque, pedidos e dashboard com aggregation pipelines, documentada no Swagger.",
           "Uma empresa demo por visitante, com dados de mercado gerados de forma determinística (40 produtos, 12 clientes e 6 meses de pedidos) e apagados sozinhos em 24 horas.",
           "Autenticação JWT por empresa, com os papéis Administrador e Vendedor verificados na API.",
+          "Frente de caixa (PDV): leitura de EAN e de etiqueta de balança, multiplicador \"3*código\", atalhos de teclado, Pix, cartão e dinheiro com troco, e cupom para imprimir.",
           "Telas em Next.js 16 com Server Components e server actions, usando o Design System do portfólio, com máscaras e validação nos formulários.",
           "Testes: E2E da API com Mongo em memória (inclusive confirmações simultâneas e isolamento entre empresas), testes unitários da camada BFF e o fluxo completo no Cypress, dentro do CI.",
         ],
@@ -220,6 +221,16 @@ export const ptBR: ProjectsCopy = {
           {
             title: "Serverless e custo zero",
             description: "A API roda como função na Vercel, com o Nest inicializado uma vez por instância, e o banco é o plano gratuito do Atlas. Um limite de empresas simultâneas protege o plano.",
+          },
+          {
+            title: "Venda idempotente no caixa",
+            description:
+              "Cada venda do PDV leva uma chave de idempotência. Clique duplo ou rede que cai depois de gravar: a API devolve a mesma venda, sem cobrar nem baixar o estoque duas vezes — garantido por índice único, inclusive com requisições simultâneas.",
+          },
+          {
+            title: "Código de barras e balança",
+            description:
+              "EAN com dígito verificador para embalados e PLU para pesados: a etiqueta da balança (prefixo 2) traz o peso, e o PDV já lança a quantidade em kg. O mesmo parser roda no navegador e é testado na API.",
           },
         ],
       },

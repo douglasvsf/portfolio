@@ -45,9 +45,11 @@ interface RequestOptions {
   query?: Record<string, string | number | boolean | undefined>;
   /** Sem sessão (ex.: criar a demo). */
   anonymous?: boolean;
+  /** Headers extras (ex.: Idempotency-Key da venda no PDV). */
+  headers?: Record<string, string>;
 }
 
-export async function erpRequest<T>(path: string, { method = "GET", body, query, anonymous }: RequestOptions = {}): Promise<T> {
+export async function erpRequest<T>(path: string, { method = "GET", body, query, anonymous, headers: extraHeaders }: RequestOptions = {}): Promise<T> {
   const url = new URL(apiUrl(path.replace(/^\//, "")));
   for (const [key, value] of Object.entries(query ?? {})) if (value !== undefined && value !== "") url.searchParams.set(key, String(value));
 
@@ -67,6 +69,7 @@ export async function erpRequest<T>(path: string, { method = "GET", body, query,
         ...(session ? { authorization: `Bearer ${session.token}` } : {}),
         ...(process.env.ERP_BFF_KEY ? { "x-bff-key": process.env.ERP_BFF_KEY } : {}),
         ...(ip ? { "x-client-ip": ip } : {}),
+        ...extraHeaders,
       },
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });

@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Plus } from "@godzilla/icons";
-import { Button, Card, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@godzilla/ui";
+import { Badge, Button, Card, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@godzilla/ui";
 import { erp } from "@portfolio/shared";
 import { EmptyState, FilterLink, OrderStatusBadge, PageHeader, Pagination, withQuery } from "@/components/erp/ui";
-import { formatDate, money } from "@/lib/erp/format";
+import { customerLabel, formatDate, money } from "@/lib/erp/format";
 import { listOrders, requireSession } from "@/lib/erp/queries";
 
 export const metadata: Metadata = { title: "Pedidos" };
@@ -22,13 +22,13 @@ export default async function OrdersPage({ searchParams }: PageProps<"/erp/pedid
   };
   const result = await listOrders(query);
   const current = { status: query.status, customerId: query.customerId };
-  const customerName = query.customerId ? result.items[0]?.customer.name : undefined;
+  const customerName = query.customerId ? result.items[0]?.customer?.name : undefined;
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Pedidos"
-        description="Rascunho → confirmado (baixa o estoque) → cancelado (devolve o estoque)."
+        description="Rascunho → confirmado (baixa o estoque) → cancelado (devolve o estoque). Vendas do caixa aparecem com a marca PDV."
         actions={
           <Button asChild>
             <Link href="/erp/pedidos/novo">
@@ -79,8 +79,13 @@ export default async function OrdersPage({ searchParams }: PageProps<"/erp/pedid
                     <Link href={`/erp/pedidos/${order.id}`} className="font-mono font-semibold underline-offset-4 hover:text-primary hover:underline">
                       #{order.number}
                     </Link>
+                    {order.channel === "pos" && (
+                      <Badge variant="outline" className="ml-2 font-mono text-caption">
+                        PDV
+                      </Badge>
+                    )}
                   </TableCell>
-                  <TableCell>{order.customer.name}</TableCell>
+                  <TableCell className={order.customer ? undefined : "text-muted-foreground"}>{customerLabel(order)}</TableCell>
                   <TableCell className="text-right font-mono tabular-nums">{order.items.length}</TableCell>
                   <TableCell className="text-right font-mono tabular-nums">{money(order.totalCents)}</TableCell>
                   <TableCell>

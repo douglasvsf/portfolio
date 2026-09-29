@@ -162,6 +162,27 @@ describe("pedidos", () => {
   });
 });
 
+describe("PDV", () => {
+  const sale = { items: [{ productId: ID, quantity: 2 }], payments: [{ method: "cash" as const, amountCents: 5000 }] };
+  const KEY = "pdv-0123456789abcdef";
+
+  it("manda a venda com a chave de idempotência no header", async () => {
+    erpRequest.mockResolvedValueOnce({ id: "v1", number: 49 });
+    await expect(actions.finalizeSale(sale, KEY)).resolves.toEqual({ status: "success", order: { id: "v1", number: 49 } });
+    expect(erpRequest).toHaveBeenCalledWith("/erp/pos/sales", { method: "POST", body: { ...sale, discountCents: 0 }, headers: { "idempotency-key": KEY } });
+  });
+
+  it("venda vazia, chave inválida e falta de estoque", async () => {
+    await expect(actions.finalizeSale({ ...sale, items: [] }, KEY)).resolves.toMatchObject({ status: "error" });
+    await expect(actions.finalizeSale(sale, "curta")).resolves.toMatchObject({ status: "error", message: expect.stringMatching(/recarregue/) });
+    expect(erpRequest).not.toHaveBeenCalled();
+
+    const shortages = [{ productId: ID, name: "Arroz", requested: 2, available: 1 }];
+    erpRequest.mockRejectedValueOnce(new ErpApiError(409, "insufficient_stock", "Estoque insuficiente: Arroz", shortages));
+    await expect(actions.finalizeSale(sale, KEY)).resolves.toEqual({ status: "error", message: "Estoque insuficiente: Arroz", shortages });
+  });
+});
+
 describe("leituras das páginas", () => {
   it("repassa filtros e devolve só os itens nos seletores", async () => {
     erpRequest.mockResolvedValue({ items: [{ id: 1 }], total: 1 });

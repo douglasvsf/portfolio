@@ -187,7 +187,7 @@ export const enUS: SiteContent = {
     description: "Built and shipped alongside this site — open them and try them out.",
     openLabel: "Open",
     items: systemItems({
-      erp: "A grocery-store mini-ERP with a NestJS + MongoDB API: products, stock ledger, customers, orders that deduct stock in a transaction, a dashboard and access roles. Every visitor gets their own demo company.",
+      erp: "A grocery-store mini-ERP with a NestJS + MongoDB API: products, stock ledger, customers, orders that deduct stock in a transaction, a barcode-driven point of sale, a dashboard and access roles. Every visitor gets their own demo company.",
       spotify: "Music stats dashboard with Spotify OAuth, Last.fm and a live showcase: top artists, tracks, genres and what's playing right now.",
       stocks: "Near real-time B3 quotes, price history charts and a portfolio tracker with average price, dividends, a CDI benchmark and B3 spreadsheet import.",
       designSystem: "The component library behind every system here — Atomic Design, accessible, with i18n and documented in Storybook.",

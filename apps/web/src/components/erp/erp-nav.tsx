@@ -6,6 +6,7 @@ import { appNavLinkClassName, cn } from "@godzilla/ui";
 
 const ITEMS = [
   { href: "/erp/dashboard", label: "Dashboard" },
+  { href: "/erp/pdv", label: "PDV" },
   { href: "/erp/pedidos", label: "Pedidos" },
   { href: "/erp/produtos", label: "Produtos" },
   { href: "/erp/estoque", label: "Estoque" },

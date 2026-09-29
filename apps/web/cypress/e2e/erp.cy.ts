@@ -49,6 +49,39 @@ describe("GODZILLA ERP", () => {
       });
   });
 
+  it("PDV: bipa, lê etiqueta da balança, paga em dinheiro, dá troco e gera o cupom", () => {
+    enterDemo();
+    cy.visit("/erp/pdv");
+    cy.get("#pos-code").should("have.attr", "placeholder").and("include", "Enter adiciona");
+
+    cy.get("[aria-labelledby='test-codes'] button").as("codes");
+    cy.get("@codes").eq(0).click();
+    cy.get("@codes").eq(0).click();
+    cy.get("@codes").eq(4).click();
+    cy.get("table tbody tr").should("have.length", 2);
+    cy.get("table tbody tr").first().find("input").should("have.value", "2");
+    cy.get("table tbody tr").eq(1).find("input").should("have.value", "1,25");
+
+    cy.contains("button", "Dinheiro").click();
+    cy.get("input[aria-label='Valor em Dinheiro']").type("100000{enter}");
+    cy.get("[data-testid='pos-balance']").parent().should("contain.text", "Troco");
+    cy.contains("button", "Finalizar venda").click();
+
+    cy.contains("Venda #49 concluída", { timeout: 20_000 }).should("be.visible");
+    cy.contains("Troco:").should("be.visible");
+    cy.contains("a", "Imprimir cupom")
+      .invoke("attr", "href")
+      .then((href) => {
+        cy.visit(href!);
+        cy.contains("CUPOM NÃO FISCAL").should("be.visible");
+        cy.contains("Cliente: Consumidor final").should("exist");
+        cy.contains("Dinheiro").should("exist");
+      });
+
+    cy.visit("/erp/pedidos");
+    cy.get("table tbody tr").first().should("contain.text", "#49").and("contain.text", "PDV").and("contain.text", "Consumidor final");
+  });
+
   it("vendedor não vê ações nem dados restritos ao administrador", () => {
     enterDemo();
     cy.contains("button", "Vendedor").click();

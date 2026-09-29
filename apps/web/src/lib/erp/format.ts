@@ -17,6 +17,9 @@ export const formatDate = (iso: string) => dateOnly.format(new Date(iso));
 /** "2026-04" → "abr. de 26". */
 export const formatMonth = (month: string) => monthLabel.format(new Date(`${month}-01T00:00:00Z`)).replace(" de ", "/");
 
+/** Cliente do pedido; venda de balcão sem cliente é "Consumidor final". */
+export const customerLabel = (order: Pick<erp.Order, "customer">) => order.customer?.name ?? "Consumidor final";
+
 /** "12,90" / "12.90" / "1.234,56" → 1290 centavos. `NaN` se não for número. */
 export function parseMoneyToCents(value: string) {
   const text = value.replace(/R\$|\s/g, "");

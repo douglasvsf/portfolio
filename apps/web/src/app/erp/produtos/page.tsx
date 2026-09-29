@@ -86,7 +86,10 @@ export default async function ProductsPage({ searchParams }: PageProps<"/erp/pro
                     <TableCell>
                       <span className="flex flex-col">
                         <span className="font-medium">{product.name}</span>
-                        <span className="font-mono text-caption text-muted-foreground">{product.sku}</span>
+                        <span className="font-mono text-caption text-muted-foreground">
+                          {product.sku}
+                          {product.barcode ? ` · ${product.barcode}` : ""}
+                        </span>
                       </span>
                     </TableCell>
                     <TableCell className="text-muted-foreground">{erp.CATEGORY_LABELS[product.category]}</TableCell>
