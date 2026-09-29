@@ -1,13 +1,11 @@
 import type { INestApplication } from "@nestjs/common";
-import { NestFactory } from "@nestjs/core";
 import type { NestExpressApplication } from "@nestjs/platform-express";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
-import { AppModule } from "./app.module";
 import { ErpExceptionFilter } from "./erp/common/errors";
 
 /**
  * Configuração da aplicação, compartilhada por main.ts (servidor/Vercel) e
- * pelos testes E2E — os testes exercitam exatamente o mesmo app.
+ * pelos testes E2E — os testes exercitam exatamente a mesma configuração.
  */
 export function configureApp(app: NestExpressApplication | INestApplication) {
   // Atrás do proxy da Vercel: req.ip vem do X-Forwarded-For.
@@ -32,7 +30,3 @@ export function configureApp(app: NestExpressApplication | INestApplication) {
   return app;
 }
 
-export async function createApp() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
-  return configureApp(app);
-}
