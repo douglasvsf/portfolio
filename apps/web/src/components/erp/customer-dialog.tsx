@@ -6,6 +6,8 @@ import { Button, Dialog, DialogContent, DialogDescription, DialogFooter, DialogH
 import { erp } from "@portfolio/shared";
 import { IDLE, type ActionState } from "@/lib/erp/action-state";
 import { saveCustomer } from "@/lib/erp/actions";
+import { MAX_LENGTH, maskPhone } from "@/lib/erp/masks";
+import { MaskedInput } from "./masked-input";
 import { FormMessage } from "./ui";
 
 /** Cadastro/edição de cliente. CPF ou CNPJ validados pelos dígitos verificadores (mesmo schema da API). */
@@ -47,19 +49,26 @@ function CustomerForm({ customer, onDone }: { customer?: erp.Customer; onDone: (
     <form action={action} noValidate className="mt-4 grid gap-4 sm:grid-cols-2">
       {customer && <input type="hidden" name="id" value={customer.id} />}
       <FormField label="Nome ou razão social" error={errors.name} required className="sm:col-span-2">
-        <Input name="name" defaultValue={customer?.name} autoComplete="off" />
+        <Input name="name" defaultValue={customer?.name} autoComplete="off" maxLength={MAX_LENGTH.customerName} />
       </FormField>
       <FormField label="CPF ou CNPJ" error={errors.document} required>
-        <Input name="document" defaultValue={customer ? erp.formatDocument(customer.document) : ""} inputMode="numeric" placeholder="000.000.000-00" />
+        <MaskedInput
+          mask="document"
+          name="document"
+          defaultValue={customer ? erp.formatDocument(customer.document) : ""}
+          inputMode="numeric"
+          placeholder="000.000.000-00"
+          maxLength={MAX_LENGTH.document}
+        />
       </FormField>
       <FormField label="Cidade" error={errors.city} optional>
-        <Input name="city" defaultValue={customer?.city} />
+        <Input name="city" defaultValue={customer?.city} maxLength={MAX_LENGTH.city} />
       </FormField>
       <FormField label="E-mail" error={errors.email} optional>
-        <Input name="email" type="email" defaultValue={customer?.email} />
+        <Input name="email" type="email" defaultValue={customer?.email} maxLength={MAX_LENGTH.email} />
       </FormField>
       <FormField label="Telefone" error={errors.phone} optional>
-        <Input name="phone" inputMode="tel" defaultValue={customer?.phone} placeholder="(44) 99999-0000" />
+        <MaskedInput mask="phone" name="phone" inputMode="tel" defaultValue={customer?.phone ? maskPhone(customer.phone) : ""} placeholder="(44) 99999-0000" maxLength={MAX_LENGTH.phone} />
       </FormField>
       <div className="sm:col-span-2">
         <FormMessage state={state} />

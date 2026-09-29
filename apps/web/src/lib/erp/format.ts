@@ -33,9 +33,6 @@ export function parseQuantity(value: string) {
   return Number(text.includes(",") ? text.replace(/\./g, "").replace(",", ".") : text);
 }
 
-/** Centavos → texto do input ("12,90"). */
-export const centsToInput = (cents: number) => (cents / 100).toFixed(2).replace(".", ",");
-
 /** Quanto falta para a demo expirar ("23 h", "40 min"). */
 export function timeLeft(expiresAt: string, now = Date.now()) {
   const minutes = Math.max(0, Math.round((new Date(expiresAt).getTime() - now) / 60_000));

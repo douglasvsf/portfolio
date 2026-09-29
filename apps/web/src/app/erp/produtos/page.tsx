@@ -7,6 +7,7 @@ import { ProductDialog } from "@/components/erp/product-dialog";
 import { EmptyState, FilterLink, PageHeader, Pagination, withQuery } from "@/components/erp/ui";
 import { deactivateProduct } from "@/lib/erp/actions";
 import { money, quantity } from "@/lib/erp/format";
+import { MAX_LENGTH } from "@/lib/erp/masks";
 import { listProducts, requireSession } from "@/lib/erp/queries";
 
 export const metadata: Metadata = { title: "Produtos" };
@@ -38,7 +39,7 @@ export default async function ProductsPage({ searchParams }: PageProps<"/erp/pro
         <form method="get" className="flex max-w-md gap-2" role="search">
           {query.category && <input type="hidden" name="category" value={query.category} />}
           {query.lowStock && <input type="hidden" name="lowStock" value="true" />}
-          <Input name="search" defaultValue={query.search} placeholder="Buscar por nome ou SKU" aria-label="Buscar produtos" />
+          <Input name="search" defaultValue={query.search} maxLength={MAX_LENGTH.search} placeholder="Buscar por nome ou SKU" aria-label="Buscar produtos" />
           <Button type="submit" variant="outline" size="icon" aria-label="Buscar">
             <Search aria-hidden="true" />
           </Button>

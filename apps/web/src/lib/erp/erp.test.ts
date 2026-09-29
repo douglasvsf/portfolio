@@ -1,5 +1,5 @@
 import type { erp } from "@portfolio/shared";
-import { centsToInput, formatMonth, money, parseMoneyToCents, parseQuantity, quantity, timeLeft } from "./format";
+import { formatMonth, money, parseMoneyToCents, parseQuantity, quantity, timeLeft } from "./format";
 import { decodeSession, encodeSession, type ErpSession } from "./session";
 
 jest.mock("server-only", () => ({}));
@@ -25,7 +25,6 @@ describe("formatação do ERP", () => {
     expect(parseMoneyToCents("R$ 1.234,56")).toBe(123456);
     expect(parseMoneyToCents("12.9")).toBe(1290);
     expect(parseMoneyToCents("abc")).toBeNaN();
-    expect(centsToInput(1290)).toBe("12,90");
   });
 
   it("quantidades com vírgula e unidade", () => {

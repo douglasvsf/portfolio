@@ -7,6 +7,8 @@ import { erp } from "@portfolio/shared";
 import { IDLE, type ActionState } from "@/lib/erp/action-state";
 import { registerMovement } from "@/lib/erp/actions";
 import { quantity } from "@/lib/erp/format";
+import { MAX_LENGTH, quantityMask } from "@/lib/erp/masks";
+import { MaskedInput } from "./masked-input";
 import { FormMessage, selectClassName } from "./ui";
 
 type ManualType = "in" | "out" | "adjust";
@@ -67,10 +69,17 @@ function MovementForm({ products, onDone }: { products: erp.Product[]; onDone: (
         </select>
       </FormField>
       <FormField label={type === "adjust" ? "Saldo contado" : "Quantidade"} error={errors.quantity} required>
-        <Input name="quantity" inputMode="decimal" placeholder={product?.unit === "un" ? "10" : "2,5"} />
+        <MaskedInput
+          key={product?.unit}
+          mask={quantityMask(product?.unit)}
+          name="quantity"
+          inputMode={product?.unit === "un" ? "numeric" : "decimal"}
+          placeholder={product?.unit === "un" ? "10" : "2,5"}
+          maxLength={MAX_LENGTH.quantity}
+        />
       </FormField>
       <FormField label="Motivo" error={errors.reason} required>
-        <Input name="reason" placeholder={type === "in" ? "Compra — fornecedor" : type === "out" ? "Avaria no transporte" : "Inventário mensal"} />
+        <Input name="reason" maxLength={MAX_LENGTH.reason} placeholder={type === "in" ? "Compra — fornecedor" : type === "out" ? "Avaria no transporte" : "Inventário mensal"} />
       </FormField>
       <FormMessage state={state} />
       <DialogFooter>

@@ -7,6 +7,7 @@ import { ConfirmAction } from "@/components/erp/confirm-action";
 import { CustomerDialog } from "@/components/erp/customer-dialog";
 import { EmptyState, PageHeader, Pagination, withQuery } from "@/components/erp/ui";
 import { deleteCustomer } from "@/lib/erp/actions";
+import { MAX_LENGTH } from "@/lib/erp/masks";
 import { listCustomers, requireSession } from "@/lib/erp/queries";
 
 export const metadata: Metadata = { title: "Clientes" };
@@ -25,7 +26,7 @@ export default async function CustomersPage({ searchParams }: PageProps<"/erp/cl
       <PageHeader title="Clientes" description="Pessoas e empresas que compram no mercado." actions={<CustomerDialog />} />
 
       <form method="get" className="flex max-w-md gap-2" role="search">
-        <Input name="search" defaultValue={query.search} placeholder="Buscar por nome ou CPF/CNPJ" aria-label="Buscar clientes" />
+        <Input name="search" defaultValue={query.search} maxLength={MAX_LENGTH.search} placeholder="Buscar por nome ou CPF/CNPJ" aria-label="Buscar clientes" />
         <Button type="submit" variant="outline" size="icon" aria-label="Buscar">
           <Search aria-hidden="true" />
         </Button>

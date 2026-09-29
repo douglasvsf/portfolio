@@ -7,6 +7,7 @@ import { erp } from "@portfolio/shared";
 import { IDLE } from "@/lib/erp/action-state";
 import { createOrder } from "@/lib/erp/actions";
 import { money, parseMoneyToCents, parseQuantity, quantity } from "@/lib/erp/format";
+import { MAX_LENGTH, maskMoney, maskQuantity } from "@/lib/erp/masks";
 import { FormMessage, selectClassName } from "./ui";
 
 interface Line {
@@ -113,10 +114,11 @@ export function OrderBuilder({ products, customers }: { products: erp.Product[];
                   <TableCell>
                     <Input
                       value={line.quantity}
-                      inputMode="decimal"
+                      inputMode={product.unit === "un" ? "numeric" : "decimal"}
+                      maxLength={MAX_LENGTH.quantity}
                       aria-label={`Quantidade de ${product.name} (${erp.UNIT_LABELS[product.unit]})`}
                       aria-invalid={!Number.isFinite(qty) || qty <= 0 || (product.unit === "un" && !Number.isInteger(qty)) || undefined}
-                      onChange={(event) => setLines((current) => current.map((item, i) => (i === index ? { ...item, quantity: event.target.value } : item)))}
+                      onChange={(event) => setLines((current) => current.map((item, i) => (i === index ? { ...item, quantity: maskQuantity(event.target.value, product.unit) } : item)))}
                     />
                   </TableCell>
                   <TableCell className="text-right font-mono tabular-nums text-muted-foreground">{money(product.priceCents)}</TableCell>
@@ -142,10 +144,10 @@ export function OrderBuilder({ products, customers }: { products: erp.Product[];
       <div className="grid gap-4 sm:grid-cols-2">
         <Card className="grid gap-4 p-5">
           <FormField label="Desconto (R$)" optional>
-            <Input value={discount} onChange={(event) => setDiscount(event.target.value)} inputMode="decimal" placeholder="0,00" />
+            <Input value={discount} onChange={(event) => setDiscount(maskMoney(event.target.value))} inputMode="numeric" placeholder="0,00" maxLength={MAX_LENGTH.money} />
           </FormField>
           <FormField label="Observações" optional>
-            <Input value={notes} onChange={(event) => setNotes(event.target.value)} maxLength={280} />
+            <Input value={notes} onChange={(event) => setNotes(event.target.value)} maxLength={MAX_LENGTH.notes} />
           </FormField>
         </Card>
         <Card className="flex flex-col justify-between gap-4 p-5">

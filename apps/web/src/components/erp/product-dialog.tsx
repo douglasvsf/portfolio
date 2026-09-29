@@ -6,7 +6,8 @@ import { Button, Dialog, DialogContent, DialogDescription, DialogFooter, DialogH
 import { erp } from "@portfolio/shared";
 import { IDLE, type ActionState } from "@/lib/erp/action-state";
 import { saveProduct } from "@/lib/erp/actions";
-import { centsToInput } from "@/lib/erp/format";
+import { MAX_LENGTH, centsToMasked, quantityToMasked } from "@/lib/erp/masks";
+import { MaskedInput } from "./masked-input";
 import { FormMessage, selectClassName } from "./ui";
 
 /** Cadastro/edição de produto (admin). Preço e custo em reais: "12,90". */
@@ -49,10 +50,10 @@ function ProductForm({ product, onDone }: { product?: erp.Product; onDone: () =>
     <form action={action} noValidate className="mt-4 grid gap-4 sm:grid-cols-2">
       {product && <input type="hidden" name="id" value={product.id} />}
       <FormField label="SKU" error={errors.sku} required>
-        <Input name="sku" defaultValue={product?.sku} placeholder="MER-ARR5" className="font-mono uppercase" autoComplete="off" />
+        <MaskedInput mask="sku" name="sku" defaultValue={product?.sku} placeholder="MER-ARR5" maxLength={MAX_LENGTH.sku} className="font-mono uppercase" autoComplete="off" />
       </FormField>
       <FormField label="Nome" error={errors.name} required>
-        <Input name="name" defaultValue={product?.name} placeholder="Arroz branco 5 kg" />
+        <Input name="name" defaultValue={product?.name} placeholder="Arroz branco 5 kg" maxLength={MAX_LENGTH.productName} />
       </FormField>
       <FormField label="Categoria" error={errors.category} required>
         <select name="category" defaultValue={product?.category ?? "mercearia"} className={selectClassName}>
@@ -73,13 +74,20 @@ function ProductForm({ product, onDone }: { product?: erp.Product; onDone: () =>
         </select>
       </FormField>
       <FormField label="Preço de venda (R$)" error={errors.priceCents} required>
-        <Input name="price" inputMode="decimal" defaultValue={product ? centsToInput(product.priceCents) : ""} placeholder="0,00" />
+        <MaskedInput mask="money" name="price" inputMode="numeric" defaultValue={product ? centsToMasked(product.priceCents) : ""} placeholder="0,00" maxLength={MAX_LENGTH.money} />
       </FormField>
       <FormField label="Custo (R$)" error={errors.costCents} required>
-        <Input name="cost" inputMode="decimal" defaultValue={product ? centsToInput(product.costCents) : ""} placeholder="0,00" />
+        <MaskedInput mask="money" name="cost" inputMode="numeric" defaultValue={product ? centsToMasked(product.costCents) : ""} placeholder="0,00" maxLength={MAX_LENGTH.money} />
       </FormField>
       <FormField label="Estoque mínimo" error={errors.minStock} required description="Abaixo disso, o produto entra nos alertas.">
-        <Input name="minStock" inputMode="decimal" defaultValue={product ? String(product.minStock).replace(".", ",") : ""} placeholder="10" />
+        <MaskedInput
+          mask="quantity-decimal"
+          name="minStock"
+          inputMode="decimal"
+          defaultValue={product ? quantityToMasked(product.minStock, product.unit) : ""}
+          placeholder="10"
+          maxLength={MAX_LENGTH.quantity}
+        />
       </FormField>
       <div className="sm:col-span-2">
         <FormMessage state={state} />
