@@ -7,18 +7,56 @@ export const orderStatusSchema = z.enum(ORDER_STATUSES);
 export type OrderStatus = z.infer<typeof orderStatusSchema>;
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = { draft: "Rascunho", confirmed: "Confirmado", cancelled: "Cancelado" };
 
-export const orderInputSchema = z.object({
-  customerId: objectIdSchema,
-  items: z
+/** Canal de venda: pedido (rascunho → confirmar) ou frente de caixa (venda direta). */
+export const ORDER_CHANNELS = ["order", "pos"] as const;
+export type OrderChannel = (typeof ORDER_CHANNELS)[number];
+export const ORDER_CHANNEL_LABELS: Record<OrderChannel, string> = { order: "Pedido", pos: "PDV" };
+
+export const PAYMENT_METHODS = ["pix", "debit", "credit", "cash"] as const;
+export const paymentMethodSchema = z.enum(PAYMENT_METHODS);
+export type PaymentMethod = z.infer<typeof paymentMethodSchema>;
+export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = { pix: "Pix", debit: "Débito", credit: "Crédito", cash: "Dinheiro" };
+
+const itemsSchema = (max: number) =>
+  z
     .array(z.object({ productId: objectIdSchema, quantity: quantitySchema }))
     .min(1, "o pedido precisa de pelo menos 1 item")
-    .max(50, "no máximo 50 itens por pedido")
-    .refine((items) => new Set(items.map((item) => item.productId)).size === items.length, "produto repetido: ajuste a quantidade do item"),
+    .max(max, `no máximo ${max} itens`)
+    .refine((items) => new Set(items.map((item) => item.productId)).size === items.length, "produto repetido: ajuste a quantidade do item");
+
+export const orderInputSchema = z.object({
+  customerId: objectIdSchema,
+  items: itemsSchema(50),
   discountCents: centsSchema.default(0),
   notes: z.string().trim().max(280).optional(),
 });
 export type OrderInput = z.input<typeof orderInputSchema>;
 export type OrderInputParsed = z.output<typeof orderInputSchema>;
+
+/**
+ * Venda no PDV: itens, desconto, cliente opcional (consumidor final) e até 4
+ * pagamentos. Cartão e Pix não passam do total; só dinheiro gera troco — a
+ * API confere os valores contra o total calculado por ela.
+ */
+export const posSaleInputSchema = z.object({
+  items: itemsSchema(100),
+  discountCents: centsSchema.default(0),
+  customerId: objectIdSchema.optional(),
+  payments: z
+    .array(z.object({ method: paymentMethodSchema, amountCents: centsSchema.refine((value) => value > 0, "valor precisa ser maior que zero") }))
+    .min(1, "informe o pagamento")
+    .max(4, "no máximo 4 formas de pagamento"),
+});
+export type PosSaleInput = z.input<typeof posSaleInputSchema>;
+export type PosSaleInputParsed = z.output<typeof posSaleInputSchema>;
+
+/** Chave de idempotência (header Idempotency-Key): repetir a mesma venda não duplica. */
+export const idempotencyKeySchema = z.string().regex(/^[A-Za-z0-9-]{16,64}$/, "Idempotency-Key: 16 a 64 letras, números ou hífen");
+
+export interface Payment {
+  method: PaymentMethod;
+  amountCents: number;
+}
 
 export const orderQuerySchema = paginationSchema.extend({
   status: orderStatusSchema.optional(),
@@ -40,12 +78,17 @@ export interface OrderItem {
 export interface Order {
   id: string;
   number: number;
-  customer: { id: string; name: string };
+  channel: OrderChannel;
+  /** `null` na venda de balcão sem cliente identificado (consumidor final). */
+  customer: { id: string; name: string } | null;
   items: OrderItem[];
   subtotalCents: number;
   discountCents: number;
   totalCents: number;
   status: OrderStatus;
+  /** Só no PDV. */
+  payments?: Payment[];
+  changeCents?: number;
   notes?: string;
   createdByRole: Role;
   createdAt: string;

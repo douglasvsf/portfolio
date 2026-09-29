@@ -17,6 +17,7 @@ export function toProduct(doc: WithMeta<Product>): erp.Product {
     priceCents: doc.priceCents,
     costCents: doc.costCents,
     minStock: doc.minStock,
+    ...(doc.barcode ? { barcode: doc.barcode } : {}),
     stock: doc.stock,
     active: doc.active,
     createdAt: iso(doc.createdAt),
@@ -56,7 +57,8 @@ export function toOrder(doc: WithMeta<Order>): erp.Order {
   return {
     id: doc._id.toString(),
     number: doc.number,
-    customer: { id: doc.customerId.toString(), name: doc.customerName },
+    channel: doc.channel ?? "order",
+    customer: doc.customerId ? { id: doc.customerId.toString(), name: doc.customerName ?? "" } : null,
     items: doc.items.map((item) => ({
       productId: item.productId.toString(),
       sku: item.sku,
@@ -70,6 +72,8 @@ export function toOrder(doc: WithMeta<Order>): erp.Order {
     discountCents: doc.discountCents,
     totalCents: doc.totalCents,
     status: doc.status,
+    ...(doc.payments?.length ? { payments: doc.payments.map((payment) => ({ method: payment.method, amountCents: payment.amountCents })) } : {}),
+    ...(doc.changeCents !== undefined ? { changeCents: doc.changeCents } : {}),
     ...(doc.notes ? { notes: doc.notes } : {}),
     createdByRole: doc.createdByRole,
     createdAt: iso(doc.createdAt),

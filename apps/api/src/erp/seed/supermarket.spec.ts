@@ -58,6 +58,24 @@ describe("dados da demo (mercado)", () => {
     }
   });
 
+  it("códigos de barras válidos e únicos: EAN para embalados, PLU para kg", () => {
+    const codes = data.products.map((product) => product.barcode);
+    expect(new Set(codes).size).toBe(codes.length);
+    for (const product of data.products) expect(product.unit === "kg" ? erp.isPlu(product.barcode) : erp.isValidEan(product.barcode)).toBe(true);
+  });
+
+  it("vendas de PDV: confirmadas na hora, pagamento fecha com o total e troco só em dinheiro", () => {
+    const pos = data.orders.filter((order) => order.channel === "pos");
+    expect(pos.length).toBeGreaterThan(5);
+    expect(pos.some((order) => !("customerId" in order))).toBe(true);
+    for (const order of pos) {
+      expect(order.status).toBe("confirmed");
+      const paid = order.payments!.reduce((sum, payment) => sum + payment.amountCents, 0);
+      expect(paid - order.totalCents).toBe(order.changeCents);
+      if (order.payments![0]!.method !== "cash") expect(order.changeCents).toBe(0);
+    }
+  });
+
   it("alguns produtos terminam abaixo do mínimo (alimenta os alertas do dashboard)", () => {
     expect(data.products.filter((product) => product.stock < product.minStock).length).toBeGreaterThan(0);
   });

@@ -1,7 +1,7 @@
 import { HttpStatus, Injectable } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
-import type { erp } from "@portfolio/shared";
+import { erp } from "@portfolio/shared";
 import type { ErpSession } from "../common/auth";
 import { ErpException, notFound } from "../common/errors";
 import { escapeRegex, paginate, toCustomer, toProduct } from "../mappers";
@@ -32,7 +32,7 @@ export class CatalogService {
     const filter = {
       workspaceId: tenant(session),
       active: true,
-      ...(search ? { $or: [{ name: search }, { sku: search }] } : {}),
+      ...(search ? { $or: [{ name: search }, { sku: search }, { barcode: query.search }] } : {}),
       ...(query.category ? { category: query.category } : {}),
       ...(query.lowStock ? { $expr: { $lt: ["$stock", "$minStock"] } } : {}),
     };
@@ -61,6 +61,16 @@ export class CatalogService {
   }
 
   async updateProduct(session: ErpSession, id: string, input: erp.ProductUpdate): Promise<erp.Product> {
+    // Código de barras depende da unidade: se só um dos dois mudou, confere com o que está salvo.
+    if ((input.barcode !== undefined) !== (input.unit !== undefined)) {
+      const current = await this.products.findOne({ _id: id, workspaceId: tenant(session), active: true }).lean();
+      if (!current) throw notFound("Produto");
+      const check = erp.productUpdateSchema.safeParse({ unit: input.unit ?? current.unit, barcode: input.barcode ?? current.barcode });
+      if (!check.success) {
+        const issues = check.error.issues.map((issue) => ({ path: issue.path.join("."), message: issue.message }));
+        throw new ErpException("validation_error", issues[0]!.message, HttpStatus.BAD_REQUEST, { issues });
+      }
+    }
     const product = await this.products.findOneAndUpdate({ _id: id, workspaceId: tenant(session), active: true }, { $set: input }, { returnDocument: "after", runValidators: true }).lean();
     if (!product) throw notFound("Produto");
     return toProduct(product);

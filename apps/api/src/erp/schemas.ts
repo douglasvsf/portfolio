@@ -28,6 +28,8 @@ export class Product {
   @Prop({ required: true, min: 1 }) priceCents!: number;
   @Prop({ required: true, min: 0 }) costCents!: number;
   @Prop({ required: true, min: 0 }) minStock!: number;
+  /** EAN (embalado) ou PLU da balança (kg). Único por empresa quando existe. */
+  @Prop() barcode?: string;
   /** Nunca negativo: o banco também recusa (min: 0), além da regra no serviço. */
   @Prop({ required: true, min: 0, default: 0 }) stock!: number;
   @Prop({ required: true, default: true }) active!: boolean;
@@ -35,6 +37,7 @@ export class Product {
 }
 export const ProductSchema = SchemaFactory.createForClass(Product);
 ProductSchema.index({ workspaceId: 1, sku: 1 }, { unique: true });
+ProductSchema.index({ workspaceId: 1, barcode: 1 }, { unique: true, partialFilterExpression: { barcode: { $type: "string" } } });
 
 @Schema({ timestamps: true, collection: "erp_customers" })
 export class Customer {
@@ -83,17 +86,31 @@ export class OrderItem {
 }
 const OrderItemSchema = SchemaFactory.createForClass(OrderItem);
 
+@Schema({ _id: false })
+export class Payment {
+  @Prop({ type: String, required: true, enum: erp.PAYMENT_METHODS }) method!: erp.PaymentMethod;
+  @Prop({ required: true, min: 1 }) amountCents!: number;
+}
+const PaymentSchema = SchemaFactory.createForClass(Payment);
+
 @Schema({ timestamps: true, collection: "erp_orders" })
 export class Order {
   @Prop(tenant) workspaceId!: Types.ObjectId;
   @Prop({ required: true }) number!: number;
-  @Prop({ type: Types.ObjectId, required: true }) customerId!: Types.ObjectId;
-  @Prop({ required: true }) customerName!: string;
+  @Prop({ type: String, required: true, enum: erp.ORDER_CHANNELS, default: "order" }) channel!: erp.OrderChannel;
+  /** Ausente na venda de balcão sem cliente (consumidor final). */
+  @Prop({ type: Types.ObjectId }) customerId?: Types.ObjectId;
+  @Prop() customerName?: string;
   @Prop({ type: [OrderItemSchema], required: true }) items!: OrderItem[];
   @Prop({ required: true }) subtotalCents!: number;
   @Prop({ required: true, default: 0 }) discountCents!: number;
   @Prop({ required: true }) totalCents!: number;
   @Prop({ type: String, required: true, enum: erp.ORDER_STATUSES, default: "draft" }) status!: erp.OrderStatus;
+  @Prop({ type: [PaymentSchema], default: undefined }) payments?: Payment[];
+  @Prop() changeCents?: number;
+  /** Idempotency-Key da venda no PDV e a impressão digital do corpo enviado. */
+  @Prop() idempotencyKey?: string;
+  @Prop() idempotencyHash?: string;
   @Prop() notes?: string;
   @Prop({ type: String, required: true, enum: erp.ROLES }) createdByRole!: erp.Role;
   @Prop() confirmedAt?: Date;
@@ -104,6 +121,7 @@ export class Order {
 export const OrderSchema = SchemaFactory.createForClass(Order);
 OrderSchema.index({ workspaceId: 1, number: 1 }, { unique: true });
 OrderSchema.index({ workspaceId: 1, status: 1, createdAt: -1 });
+OrderSchema.index({ workspaceId: 1, idempotencyKey: 1 }, { unique: true, partialFilterExpression: { idempotencyKey: { $type: "string" } } });
 
 /** Sequência por empresa (número do pedido), incrementada de forma atômica. */
 @Schema({ collection: "erp_counters" })

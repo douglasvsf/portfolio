@@ -9,11 +9,13 @@ import {
   CustomersController,
   DashboardController,
   OrdersController,
+  PosController,
   ProductsController,
   SessionController,
   StockController,
 } from "./erp.controllers";
 import { OrdersService } from "./orders/orders.service";
+import { PosService } from "./pos/pos.service";
 import {
   Counter,
   CounterSchema,
@@ -51,7 +53,7 @@ import { WorkspacesService } from "./workspaces/workspaces.service";
       },
     }),
   ],
-  controllers: [SessionController, ProductsController, StockController, CustomersController, OrdersController, DashboardController],
-  providers: [WorkspacesService, CatalogService, StockService, OrdersService, DashboardService, SessionGuard],
+  controllers: [SessionController, ProductsController, StockController, CustomersController, OrdersController, PosController, DashboardController],
+  providers: [WorkspacesService, CatalogService, StockService, OrdersService, PosService, DashboardService, SessionGuard],
 })
 export class ErpModule {}

@@ -8,7 +8,8 @@ import { erp } from "@portfolio/shared";
  *
  * Regras garantidas (e testadas): saldo nunca negativo, saldo de cada
  * movimentação bate com a soma das anteriores, estoque final = último saldo,
- * CPF/CNPJ válidos, alguns produtos abaixo do mínimo para os alertas.
+ * CPF/CNPJ válidos, EAN com dígito verificador, alguns produtos abaixo do
+ * mínimo para os alertas e vendas de PDV com pagamento que fecha com o total.
  */
 
 type P = [sku: string, name: string, category: erp.ProductCategory, unit: erp.Unit, priceCents: number];
@@ -89,6 +90,15 @@ function random(seed: number) {
 }
 
 const round3 = (value: number) => Math.round(value * 1000) / 1000;
+
+/**
+ * Código de barras fictício: EAN-13 com prefixo 789 (Brasil) para embalados;
+ * PLU de balança (5 dígitos) para os vendidos por kg.
+ */
+export const demoBarcode = (unit: erp.Unit, index: number) =>
+  unit === "kg" ? String(101 + index).padStart(5, "0") : erp.completeEan(`7890000${String(10001 + index).padStart(5, "0")}`);
+
+const POS_METHODS: erp.PaymentMethod[] = ["pix", "pix", "debit", "credit", "cash"];
 const slug = (name: string) =>
   name.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, ".").replace(/^\.|\.$/g, "");
 
@@ -102,13 +112,14 @@ export function buildDemoData(workspaceId: Types.ObjectId, now: Date, expiresAt:
   };
   const base = { workspaceId, expiresAt };
 
-  const products = PRODUCTS.map(([sku, name, category, unit, priceCents]) => ({
+  const products = PRODUCTS.map(([sku, name, category, unit, priceCents], index) => ({
     _id: new Types.ObjectId(),
     ...base,
     sku,
     name,
     category,
     unit,
+    barcode: demoBarcode(unit, index),
     priceCents,
     costCents: Math.round((priceCents * (0.62 + rand() * 0.12)) / 10) * 10,
     minStock: unit === "kg" ? 5 + Math.floor(rand() * 11) : 10 + Math.floor(rand() * 21),
@@ -134,7 +145,7 @@ export function buildDemoData(workspaceId: Types.ObjectId, now: Date, expiresAt:
   const orders = Array.from({ length: ORDER_COUNT }, (_, index) => {
     const age = Math.round(HISTORY_DAYS - ((index + rand() * 0.8) * HISTORY_DAYS) / ORDER_COUNT);
     const createdAt = daysAgo(Math.max(age, 0), 8 + Math.floor(rand() * 9));
-    const customer = pick(customers);
+    let customer: (typeof customers)[number] | undefined = pick(customers);
     const itemCount = 2 + Math.floor(rand() * 5);
     const chosen = new Set<number>();
     while (chosen.size < itemCount) chosen.add(Math.floor(rand() * products.length));
@@ -156,22 +167,30 @@ export function buildDemoData(workspaceId: Types.ObjectId, now: Date, expiresAt:
     const subtotalCents = items.reduce((sum, item) => sum + item.totalCents, 0);
     const discountCents = rand() < 0.2 ? Math.round(subtotalCents * 0.05) : 0;
 
-    // Os 3 mais recentes seguem em rascunho; ~1 em 10 foi cancelado depois de confirmado.
+    // Os 3 mais recentes seguem em rascunho; ~1 em 3 foi venda no caixa (PDV), que já nasce
+    // confirmada e quase sempre sem cliente; ~1 em 10 pedidos foi cancelado depois de confirmado.
     const isDraft = index >= ORDER_COUNT - 3;
-    const isCancelled = !isDraft && rand() < 0.1;
-    const confirmedAt = isDraft ? undefined : new Date(createdAt.getTime() + 3_600_000 * (1 + Math.floor(rand() * 5)));
+    const isPos = !isDraft && rand() < 0.35;
+    if (isPos && rand() < 0.7) customer = undefined;
+    const isCancelled = !isDraft && !isPos && rand() < 0.1;
+    const confirmedAt = isDraft ? undefined : isPos ? createdAt : new Date(createdAt.getTime() + 3_600_000 * (1 + Math.floor(rand() * 5)));
+    const totalCents = subtotalCents - discountCents;
+    const method = isPos ? pick(POS_METHODS) : undefined;
+    // Dinheiro: o cliente paga com a próxima nota "redonda" de R$ 10 e recebe troco.
+    const paidCents = method === "cash" ? Math.ceil(totalCents / 1000) * 1000 : totalCents;
     const cancelledAt = isCancelled ? new Date(confirmedAt!.getTime() + 86_400_000 * (1 + Math.floor(rand() * 3))) : undefined;
 
     return {
       _id: new Types.ObjectId(),
       ...base,
       number: index + 1,
-      customerId: customer._id,
-      customerName: customer.name,
+      channel: (isPos ? "pos" : "order") as erp.OrderChannel,
+      ...(customer ? { customerId: customer._id, customerName: customer.name } : {}),
       items,
       subtotalCents,
       discountCents,
-      totalCents: subtotalCents - discountCents,
+      totalCents,
+      ...(method ? { payments: [{ method, amountCents: paidCents }], changeCents: paidCents - totalCents } : {}),
       status: (isDraft ? "draft" : isCancelled ? "cancelled" : "confirmed") as erp.OrderStatus,
       createdByRole: (rand() < 0.7 ? "seller" : "admin") as erp.Role,
       createdAt,
@@ -193,7 +212,8 @@ export function buildDemoData(workspaceId: Types.ObjectId, now: Date, expiresAt:
     for (const item of order.items) {
       const productIndex = products.findIndex((product) => product._id.equals(item.productId));
       const meta = { productIndex, orderId: order._id, orderNumber: order.number, role: order.createdByRole };
-      events.push({ ...meta, at: order.confirmedAt, delta: -item.quantity, type: "sale", reason: `Venda — pedido #${order.number}` });
+      const reason = order.channel === "pos" ? `Venda no PDV — #${order.number}` : `Venda — pedido #${order.number}`;
+      events.push({ ...meta, at: order.confirmedAt, delta: -item.quantity, type: "sale", reason });
       grossSold[productIndex] = round3(grossSold[productIndex]! + item.quantity);
       if (order.cancelledAt) {
         events.push({ ...meta, at: order.cancelledAt, delta: item.quantity, type: "sale_cancel", reason: `Cancelamento — pedido #${order.number}` });

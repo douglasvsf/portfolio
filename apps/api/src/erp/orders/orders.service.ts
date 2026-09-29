@@ -59,12 +59,8 @@ export class OrdersService {
   async create(session: ErpSession, input: erp.OrderInputParsed): Promise<erp.Order> {
     const workspaceId = tenant(session);
     const draft = await this.buildDraft(session, input);
-    const counter = await this.counters.findOneAndUpdate(
-      { workspaceId, name: "order" },
-      { $inc: { value: 1 }, $setOnInsert: { expiresAt: draft.expiresAt } },
-      { returnDocument: "after", upsert: true },
-    );
-    const [order] = await this.orders.create([{ ...draft, workspaceId, number: counter.value, status: "draft", createdByRole: session.role }]);
+    const number = await this.nextNumber(workspaceId, draft.expiresAt);
+    const [order] = await this.orders.create([{ ...draft, workspaceId, number, channel: "order", status: "draft", createdByRole: session.role }]);
     return toOrder(order!.toObject());
   }
 
@@ -85,31 +81,7 @@ export class OrdersService {
       if (!order) throw notFound("Pedido");
       if (order.status !== "draft") throw invalidState("Só pedidos em rascunho podem ser confirmados");
 
-      // Checa tudo antes de baixar: o cliente recebe a lista completa do que falta.
-      const stocks = await this.products
-        .find({ _id: { $in: order.items.map((item) => item.productId) }, workspaceId: tenant(session) })
-        .session(db)
-        .lean();
-      const shortages: erp.StockShortage[] = order.items
-        .map((item) => {
-          const product = stocks.find((candidate) => candidate._id.equals(item.productId));
-          const available = product?.active ? product.stock : 0;
-          return { productId: item.productId.toString(), name: item.name, requested: item.quantity, available };
-        })
-        .filter((line) => line.available < line.requested);
-      if (shortages.length) throw this.insufficient(shortages);
-
-      for (const item of order.items) {
-        const applied = await this.stock.applyDelta(
-          session,
-          item.productId,
-          -item.quantity,
-          { type: "sale", reason: `Venda — pedido #${order.number}`, orderId: order._id, orderNumber: order.number },
-          db,
-        );
-        // Corrida com outra venda entre a checagem e a baixa: desfaz tudo.
-        if (!applied) throw this.insufficient([{ productId: item.productId.toString(), name: item.name, requested: item.quantity, available: 0 }]);
-      }
+      await this.deductStock(session, order, `Venda — pedido #${order.number}`, db);
 
       order.status = "confirmed";
       order.confirmedAt = new Date();
@@ -130,7 +102,7 @@ export class OrdersService {
             session,
             item.productId,
             item.quantity,
-            { type: "sale_cancel", reason: `Cancelamento — pedido #${order.number}`, orderId: order._id, orderNumber: order.number },
+            { type: "sale_cancel", reason: `Cancelamento — ${order.channel === "pos" ? "venda PDV" : "pedido"} #${order.number}`, orderId: order._id, orderNumber: order.number },
             db,
           );
         }
@@ -142,15 +114,69 @@ export class OrdersService {
     });
   }
 
+  /**
+   * Baixa o estoque de todos os itens (dentro da transação de quem chama).
+   * Checa tudo antes: quem vende recebe a lista completa do que falta.
+   */
+  async deductStock(session: ErpSession, order: { _id: Types.ObjectId; number: number; items: OrderItem[] }, reason: string, db: ClientSession) {
+    const stocks = await this.products
+      .find({ _id: { $in: order.items.map((item) => item.productId) }, workspaceId: tenant(session) })
+      .session(db)
+      .lean();
+    const shortages: erp.StockShortage[] = order.items
+      .map((item) => {
+        const product = stocks.find((candidate) => candidate._id.equals(item.productId));
+        const available = product?.active ? product.stock : 0;
+        return { productId: item.productId.toString(), name: item.name, requested: item.quantity, available };
+      })
+      .filter((line) => line.available < line.requested);
+    if (shortages.length) throw this.insufficient(shortages);
+
+    for (const item of order.items) {
+      const applied = await this.stock.applyDelta(session, item.productId, -item.quantity, { type: "sale", reason, orderId: order._id, orderNumber: order.number }, db);
+      // Corrida com outra venda entre a checagem e a baixa: desfaz tudo.
+      if (!applied) throw this.insufficient([{ productId: item.productId.toString(), name: item.name, requested: item.quantity, available: 0 }]);
+    }
+  }
+
+  /** Próximo número de venda da empresa (pedidos e PDV dividem a sequência). */
+  async nextNumber(workspaceId: Types.ObjectId, expiresAt: Date, db?: ClientSession) {
+    const counter = await this.counters.findOneAndUpdate(
+      { workspaceId, name: "order" },
+      { $inc: { value: 1 }, $setOnInsert: { expiresAt } },
+      { returnDocument: "after", upsert: true, session: db },
+    );
+    return counter.value;
+  }
+
   /** Valida cliente e produtos da empresa e congela nome, SKU e preço de cada item. */
   private async buildDraft(session: ErpSession, input: erp.OrderInputParsed) {
     const workspaceId = tenant(session);
     const customer = await this.customers.findOne({ _id: input.customerId, workspaceId }).lean();
     if (!customer) throw notFound("Cliente");
 
-    const ids = input.items.map((item) => new Types.ObjectId(item.productId));
+    const { items, subtotalCents } = await this.buildItems(session, input.items);
+    if (input.discountCents > subtotalCents) {
+      throw new ErpException("validation_error", "O desconto não pode ser maior que o subtotal", HttpStatus.BAD_REQUEST);
+    }
+    return {
+      customerId: customer._id,
+      customerName: customer.name,
+      items,
+      subtotalCents,
+      discountCents: input.discountCents,
+      totalCents: subtotalCents - input.discountCents,
+      notes: input.notes,
+      expiresAt: customer.expiresAt,
+    };
+  }
+
+  /** Produtos ativos da empresa, com nome, SKU e preço congelados em cada item. */
+  async buildItems(session: ErpSession, lines: { productId: string; quantity: number }[]) {
+    const workspaceId = tenant(session);
+    const ids = lines.map((item) => new Types.ObjectId(item.productId));
     const products = await this.products.find({ _id: { $in: ids }, workspaceId, active: true }).lean();
-    const items: OrderItem[] = input.items.map((line) => {
+    const items: OrderItem[] = lines.map((line) => {
       const product = products.find((candidate) => candidate._id.equals(line.productId));
       if (!product) throw notFound("Produto");
       if (product.unit === "un" && !Number.isInteger(line.quantity)) {
@@ -168,20 +194,7 @@ export class OrdersService {
       };
     });
 
-    const subtotalCents = items.reduce((sum, item) => sum + item.totalCents, 0);
-    if (input.discountCents > subtotalCents) {
-      throw new ErpException("validation_error", "O desconto não pode ser maior que o subtotal", HttpStatus.BAD_REQUEST);
-    }
-    return {
-      customerId: customer._id,
-      customerName: customer.name,
-      items,
-      subtotalCents,
-      discountCents: input.discountCents,
-      totalCents: subtotalCents - input.discountCents,
-      notes: input.notes,
-      expiresAt: customer.expiresAt,
-    };
+    return { items, subtotalCents: items.reduce((sum, item) => sum + item.totalCents, 0) };
   }
 
   private insufficient(shortages: erp.StockShortage[]) {
@@ -190,7 +203,7 @@ export class OrdersService {
   }
 
   /** withTransaction repete sozinho em erro transitório; erro de negócio aborta e sobe. */
-  private async inTransaction<T>(work: (db: ClientSession) => Promise<T>): Promise<T> {
+  async inTransaction<T>(work: (db: ClientSession) => Promise<T>): Promise<T> {
     const db = await this.connection.startSession();
     try {
       let result: T | undefined;

@@ -249,3 +249,108 @@ describe("proteções", () => {
     await request(app.getHttpServer()).post("/erp/sessions/demo").set("x-bff-key", "errada").set("x-client-ip", "10.2.2.2").expect(201);
   });
 });
+
+describe("PDV (frente de caixa)", () => {
+  const key = () => `venda-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
+  const sell = (token: string, body: object, idempotencyKey?: string) => {
+    const call = request(app.getHttpServer()).post("/erp/pos/sales").set("Authorization", `Bearer ${token}`);
+    return (idempotencyKey ? call.set("Idempotency-Key", idempotencyKey) : call).send(body);
+  };
+  const packaged = async (token: string) => {
+    const { body } = await api(token).get("/erp/products?pageSize=100").expect(200);
+    return (body.items as erp.Product[]).find((product) => product.unit === "un" && product.stock >= 5)!;
+  };
+
+  it("venda sem cliente, em dinheiro: nasce confirmada, calcula o troco e baixa o estoque", async () => {
+    const demo = await newDemo();
+    const product = await packaged(demo.token);
+    const total = product.priceCents * 2;
+    const paid = Math.ceil(total / 1000) * 1000 + 1000;
+
+    const { body: sale } = await sell(demo.token, { items: [{ productId: product.id, quantity: 2 }], payments: [{ method: "cash", amountCents: paid }] }, key()).expect(201);
+    expect(sale).toMatchObject({ channel: "pos", status: "confirmed", customer: null, totalCents: total, changeCents: paid - total, payments: [{ method: "cash", amountCents: paid }] });
+
+    const { body: after } = await api(demo.token).get(`/erp/products/${product.id}`).expect(200);
+    expect(after.stock).toBe(product.stock - 2);
+    const { body: ledger } = await api(demo.token).get(`/erp/stock/movements?productId=${product.id}`).expect(200);
+    expect(ledger.items[0]).toMatchObject({ type: "sale", delta: -2, reason: `Venda no PDV — #${sale.number}` });
+  });
+
+  it("idempotência: repetir a mesma venda devolve a mesma (200) e não baixa o estoque de novo", async () => {
+    const demo = await newDemo();
+    const product = await packaged(demo.token);
+    const body = { items: [{ productId: product.id, quantity: 1 }], payments: [{ method: "pix", amountCents: product.priceCents }] };
+    const sameKey = key();
+
+    const first = await sell(demo.token, body, sameKey).expect(201);
+    const retry = await sell(demo.token, body, sameKey).expect(200);
+    expect(retry.headers["idempotent-replayed"]).toBe("true");
+    expect(retry.body.id).toBe(first.body.id);
+
+    const other = await sell(demo.token, { ...body, items: [{ productId: product.id, quantity: 2 }] }, sameKey).expect(409);
+    expect(other.body.error).toBe("conflict");
+
+    const { body: after } = await api(demo.token).get(`/erp/products/${product.id}`).expect(200);
+    expect(after.stock).toBe(product.stock - 1);
+  });
+
+  it("mesma chave ao mesmo tempo (clique duplo): uma venda só", async () => {
+    const demo = await newDemo();
+    const product = await packaged(demo.token);
+    const body = { items: [{ productId: product.id, quantity: 1 }], payments: [{ method: "debit", amountCents: product.priceCents }] };
+    const sameKey = key();
+
+    const responses = await Promise.all([1, 2, 3].map(() => sell(demo.token, body, sameKey)));
+    expect(responses.map((response) => response.status).sort()).toEqual([200, 200, 201]);
+    expect(new Set(responses.map((response) => response.body.id)).size).toBe(1);
+
+    const { body: after } = await api(demo.token).get(`/erp/products/${product.id}`).expect(200);
+    expect(after.stock).toBe(product.stock - 1);
+  });
+
+  it("pagamento: falta dinheiro, cartão acima do total e chave ausente são recusados", async () => {
+    const demo = await newDemo();
+    const product = await packaged(demo.token);
+    const items = [{ productId: product.id, quantity: 1 }];
+
+    const short = await sell(demo.token, { items, payments: [{ method: "pix", amountCents: product.priceCents - 1 }] }, key()).expect(400);
+    expect(short.body.message).toMatch(/Pagamento insuficiente/);
+    const overCard = await sell(demo.token, { items, payments: [{ method: "credit", amountCents: product.priceCents + 100 }] }, key()).expect(400);
+    expect(overCard.body.message).toMatch(/Cartão e Pix/);
+    await sell(demo.token, { items, payments: [{ method: "pix", amountCents: product.priceCents }] }).expect(400);
+
+    // Pagamento dividido: Pix + dinheiro com troco.
+    const split = await sell(demo.token, { items, payments: [{ method: "pix", amountCents: 100 }, { method: "cash", amountCents: product.priceCents }] }, key()).expect(201);
+    expect(split.body.changeCents).toBe(100);
+  });
+
+  it("vendedor também vende; cancelar a venda devolve o estoque", async () => {
+    const demo = await newDemo();
+    const { body: seller } = await api(demo.token).post("/erp/sessions/role", { role: "seller" });
+    const product = await packaged(seller.token);
+    const { body: sale } = await sell(seller.token, { items: [{ productId: product.id, quantity: 3 }], payments: [{ method: "credit", amountCents: product.priceCents * 3 }] }, key()).expect(201);
+    expect(sale.createdByRole).toBe("seller");
+
+    await api(demo.token).post(`/erp/orders/${sale.id}/cancel`).expect(200);
+    const { body: after } = await api(demo.token).get(`/erp/products/${product.id}`).expect(200);
+    expect(after.stock).toBe(product.stock);
+  });
+
+  it("código de barras: busca pelo EAN, EAN inválido, PLU só para kg e duplicado na empresa", async () => {
+    const demo = await newDemo();
+    const product = await packaged(demo.token);
+    const found = await api(demo.token).get(`/erp/products?search=${product.barcode}`).expect(200);
+    expect(found.body.items.map((item: erp.Product) => item.id)).toEqual([product.id]);
+
+    const base = { sku: "EAN-001", name: "Produto com EAN", category: "mercearia", unit: "un", priceCents: 1000, costCents: 500, minStock: 1 };
+    const badDigit = await api(demo.token).post("/erp/products", { ...base, barcode: "7891234567890" }).expect(400);
+    expect(badDigit.body.details.issues[0]).toMatchObject({ path: "barcode" });
+    await api(demo.token).post("/erp/products", { ...base, barcode: "00123" }).expect(400);
+    await api(demo.token).post("/erp/products", { ...base, unit: "kg", barcode: "7891234567895" }).expect(400);
+    const duplicate = await api(demo.token).post("/erp/products", { ...base, barcode: product.barcode }).expect(409);
+    expect(duplicate.body.details.field).toBe("barcode");
+
+    // Edição só da unidade: confere com o código salvo.
+    await api(demo.token).patch(`/erp/products/${product.id}`, { unit: "kg" }).expect(400);
+  });
+});

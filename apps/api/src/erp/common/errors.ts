@@ -68,7 +68,7 @@ export class ErpExceptionFilter implements ExceptionFilter {
   }
 }
 
-const FIELD_LABELS: Record<string, string> = { sku: "SKU", document: "CPF/CNPJ" };
+const FIELD_LABELS: Record<string, string> = { sku: "SKU", document: "CPF/CNPJ", barcode: "código de barras" };
 
 function isDuplicateKey(error: unknown): error is { code: 11000; keyPattern?: Record<string, number> } {
   return typeof error === "object" && error !== null && (error as { code?: unknown }).code === 11000;

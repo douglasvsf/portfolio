@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { centsSchema, paginationSchema, quantitySchema, objectIdSchema, type Role } from "./common";
+import { isInStoreEan, isPlu, isValidEan } from "./barcode";
 import { isValidDocument, onlyDigits } from "./documents";
 
 // ---- Produtos ---------------------------------------------------------------
@@ -24,7 +25,31 @@ export const unitSchema = z.enum(UNITS);
 export type Unit = z.infer<typeof unitSchema>;
 export const UNIT_LABELS: Record<Unit, string> = { un: "un", kg: "kg", l: "L" };
 
-export const productInputSchema = z.object({
+/**
+ * Código de barras: EAN-13/EAN-8 para produto embalado; PLU de 5 dígitos
+ * (código da balança) para produto vendido por kg. Opcional.
+ */
+const barcodeSchema = z
+  .string()
+  .trim()
+  .regex(/^\d{5}$|^\d{8}$|^\d{13}$/, "use EAN-13, EAN-8 ou PLU de 5 dígitos")
+  .refine((code) => isPlu(code) || isValidEan(code), "dígito verificador do EAN inválido");
+
+/** Regra que depende de dois campos: vale no cadastro e na edição (quando os dois vêm). */
+function checkBarcodeForUnit(value: { unit?: Unit; barcode?: string }, context: z.RefinementCtx) {
+  if (!value.barcode || !value.unit) return;
+  if (value.unit === "kg" && !isPlu(value.barcode)) {
+    context.addIssue({ code: "custom", path: ["barcode"], message: "produto por kg usa o PLU da balança (5 dígitos)" });
+  }
+  if (value.unit !== "kg" && isPlu(value.barcode)) {
+    context.addIssue({ code: "custom", path: ["barcode"], message: "PLU de balança é só para produto vendido por kg" });
+  }
+  if (isInStoreEan(value.barcode)) {
+    context.addIssue({ code: "custom", path: ["barcode"], message: "EAN iniciado em 2 é reservado para etiquetas da balança" });
+  }
+}
+
+const productFields = z.object({
   sku: z
     .string()
     .trim()
@@ -36,10 +61,16 @@ export const productInputSchema = z.object({
   priceCents: centsSchema.refine((value) => value > 0, "preço precisa ser maior que zero"),
   costCents: centsSchema,
   minStock: z.number().min(0).max(1_000_000),
+  barcode: barcodeSchema.optional(),
 });
+
+export const productInputSchema = productFields.superRefine(checkBarcodeForUnit);
 export type ProductInput = z.infer<typeof productInputSchema>;
 
-export const productUpdateSchema = productInputSchema.partial().refine((value) => Object.keys(value).length > 0, "nada para atualizar");
+export const productUpdateSchema = productFields
+  .partial()
+  .superRefine(checkBarcodeForUnit)
+  .refine((value) => Object.keys(value).length > 0, "nada para atualizar");
 export type ProductUpdate = z.infer<typeof productUpdateSchema>;
 
 export const productQuerySchema = paginationSchema.extend({

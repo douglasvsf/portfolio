@@ -1,12 +1,15 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, UseGuards } from "@nestjs/common";
-import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
+import { Body, Controller, Delete, Get, Headers, HttpCode, HttpStatus, Param, Patch, Post, Query, Res, UseGuards } from "@nestjs/common";
+import { ApiBearerAuth, ApiHeader, ApiOperation, ApiTags } from "@nestjs/swagger";
+import type { Response } from "express";
 import { Throttle } from "@nestjs/throttler";
 import { erp } from "@portfolio/shared";
 import { Roles, Session, SessionGuard, type ErpSession } from "./common/auth";
 import { ApiZodBody, ApiZodQuery, ZodPipe } from "./common/zod";
 import { CatalogService } from "./catalog/catalog.service";
 import { DashboardService } from "./dashboard/dashboard.service";
+import { ErpException } from "./common/errors";
 import { OrdersService } from "./orders/orders.service";
+import { PosService } from "./pos/pos.service";
 import { StockService } from "./stock/stock.service";
 import { WorkspacesService } from "./workspaces/workspaces.service";
 
@@ -202,6 +205,32 @@ export class OrdersController {
   @ApiOperation({ summary: "Cancela; se já confirmado, devolve o estoque" })
   cancel(@Session() session: ErpSession, @Param("id", id) orderId: string) {
     return this.orders.cancel(session, orderId);
+  }
+}
+
+@ApiTags("PDV")
+@ApiBearerAuth()
+@UseGuards(SessionGuard)
+@Controller("erp/pos")
+export class PosController {
+  constructor(private readonly pos: PosService) {}
+
+  @Post("sales")
+  @ApiZodBody(erp.posSaleInputSchema)
+  @ApiHeader({ name: "Idempotency-Key", required: true, description: "Uma chave por venda (ex.: UUID). Repetir a chave devolve a mesma venda." })
+  @ApiOperation({ summary: "Venda no caixa: já nasce confirmada, baixa o estoque e registra os pagamentos (idempotente)" })
+  async sell(
+    @Session() session: ErpSession,
+    @Headers("idempotency-key") key: string | undefined,
+    @Body(new ZodPipe(erp.posSaleInputSchema)) body: erp.PosSaleInputParsed,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const parsedKey = erp.idempotencyKeySchema.safeParse(key ?? "");
+    if (!parsedKey.success) throw new ErpException("validation_error", parsedKey.error.issues[0]!.message, HttpStatus.BAD_REQUEST);
+    const { order, replayed } = await this.pos.sell(session, body, parsedKey.data);
+    response.status(replayed ? HttpStatus.OK : HttpStatus.CREATED);
+    if (replayed) response.setHeader("Idempotent-Replayed", "true");
+    return order;
   }
 }
 
