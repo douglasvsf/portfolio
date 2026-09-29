@@ -76,6 +76,17 @@ export const PROJECT_DATA: ProjectData[] = [
     hasCase: true,
   },
   {
+    id: "godzilla-erp",
+    category: "personal",
+    discipline: "fullstack",
+    period: "2026",
+    technologies: ["NestJS", "MongoDB", "Next.js", "Zod", "JWT", "Swagger"],
+    metrics: [],
+    liveUrl: "/erp",
+    codeUrl: `${REPO}/tree/main/apps/api/src/erp`,
+    hasCase: false,
+  },
+  {
     id: "kaiju-stocks",
     category: "personal",
     discipline: "fullstack",

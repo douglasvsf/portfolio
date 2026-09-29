@@ -175,6 +175,11 @@ export const ptBR: ProjectsCopy = {
         ],
       },
     },
+    "godzilla-erp": {
+      title: "GODZILLA ERP",
+      summary:
+        "Mini-ERP de mercado com API REST em NestJS, MongoDB e Swagger: estoque com livro-razão imutável, pedidos confirmados em transação, multi-tenant por empresa demo e controle de acesso por papel.",
+    },
     "kaiju-stocks": {
       title: "Kaiju Stocks",
       summary:

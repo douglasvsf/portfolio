@@ -33,8 +33,15 @@ export function navLinks(labels: Record<(typeof NAV_SECTIONS)[number], string>) 
  * Sistemas publicados junto com o site (seção "Produtos"). Nome, link, prévia
  * e tags são iguais em todos os idiomas — cada idioma só fornece a descrição.
  */
-export function systemItems(descriptions: Record<"spotify" | "stocks" | "designSystem", string>) {
+export function systemItems(descriptions: Record<"erp" | "spotify" | "stocks" | "designSystem", string>) {
   return [
+    {
+      name: "GODZILLA ERP",
+      href: ERP_LINK.href,
+      image: "/images/systems/erp.webp",
+      description: descriptions.erp,
+      tags: ["NestJS", "MongoDB", "Next.js", "Zod", "Swagger"],
+    },
     {
       name: "GODZILLA Spotify Stats",
       href: SPOTIFY_LINK.href,
@@ -97,6 +104,9 @@ export function contactLinks(emailLabel: string) {
     { icon: "linkedin" as const, label: "LinkedIn", value: CONTACT.linkedinLabel, href: CONTACT.linkedinUrl },
   ];
 }
+
+/** GODZILLA ERP — mini-ERP de mercado com API em NestJS (ver src/app/erp e apps/api). */
+export const ERP_LINK = { label: "GODZILLA ERP", href: "/erp" };
 
 /** GODZILLA Spotify Stats — dashboard de estatísticas musicais (ver src/app/spotify). */
 export const SPOTIFY_LINK = { label: "Spotify Stats", href: "/spotify" };

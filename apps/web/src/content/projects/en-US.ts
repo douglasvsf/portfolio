@@ -171,6 +171,11 @@ export const enUS: ProjectsCopy = {
         ],
       },
     },
+    "godzilla-erp": {
+      title: "GODZILLA ERP",
+      summary:
+        "A grocery-store mini-ERP with a NestJS REST API, MongoDB and Swagger: immutable stock ledger, orders confirmed in a transaction, multi-tenant demo companies and role-based access control.",
+    },
     "kaiju-stocks": {
       title: "Kaiju Stocks",
       summary:

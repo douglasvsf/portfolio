@@ -187,6 +187,7 @@ export const ptBR: SiteContent = {
     description: "Construí e publiquei junto com este site — é só abrir e usar.",
     openLabel: "Abrir",
     items: systemItems({
+      erp: "Mini-ERP de mercado com API em NestJS e MongoDB: produtos, estoque com livro-razão, clientes, pedidos que baixam o estoque em transação, dashboard e papéis de acesso. Cada visitante ganha a própria empresa demo.",
       spotify: "Dashboard de estatísticas musicais com OAuth da Spotify, Last.fm e vitrine ao vivo: top artistas, músicas, gêneros e o que está tocando agora.",
       stocks: "Cotações da B3 em tempo quase real, histórico com gráficos e uma carteira com preço médio, proventos, comparação com o CDI e importação da planilha da B3.",
       designSystem: "A biblioteca de componentes que dá cara a todos os sistemas — Atomic Design, acessível, com i18n e documentada no Storybook.",

@@ -12,12 +12,13 @@ describe("Projetos", () => {
       cy.contains("Engineering snapshot").should("be.visible");
       cy.contains("dd", "400K+").should("exist");
 
-      cy.get("article").should("have.length", 7);
+      cy.get("article").should("have.length", 8);
       cy.contains("button", "Todos").should("have.attr", "aria-pressed", "true");
 
       cy.contains("button", "Pessoais").click().should("have.attr", "aria-pressed", "true");
-      cy.get("article").should("have.length", 3);
+      cy.get("article").should("have.length", 4);
       cy.contains("h3", "Profissionais").should("not.exist");
+      cy.contains("article", "GODZILLA ERP").find("a").contains("Abrir").should("have.attr", "href", "/erp");
       cy.contains("article", "Kaiju Stocks").find("a").contains("Abrir").should("have.attr", "href", "/stocks");
 
       cy.contains("button", "Frontend").click();
