@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -16,12 +16,35 @@ export function localeFromPath(pathname: string | null): Locale {
   return isLocale(first) ? first : DEFAULT_LOCALE;
 }
 
+const noopSubscribe = () => () => {};
+
+/** false no HTML do servidor e na hidratação; true logo depois, já no navegador. */
+function useHydrated() {
+  return useSyncExternalStore(
+    noopSubscribe,
+    () => true,
+    () => false,
+  );
+}
+
+type NotFoundViewProps = {
+  /**
+   * A 404 global é gerada uma vez no build (em /_not-found), sem saber qual
+   * endereço falhou. Nesse caso a hidratação usa o mesmo HTML estático (idioma
+   * padrão) e só depois troca para o endereço real — senão o texto do servidor
+   * diverge do cliente e o React quebra a hidratação (erro #418).
+   */
+  prerendered?: boolean;
+};
+
 /**
  * 404 do portfólio: mesma identidade do site (grade, verde, kaiju), o endereço
  * que falhou em tom de terminal e o caminho de volta para a home no idioma certo.
  */
-export function NotFoundView() {
-  const pathname = usePathname();
+export function NotFoundView({ prerendered = false }: NotFoundViewProps) {
+  const currentPath = usePathname();
+  const hydrated = useHydrated();
+  const pathname = prerendered && !hydrated ? null : currentPath;
   const locale = localeFromPath(pathname);
   const copy = NOT_FOUND_COPY[locale];
   const home = `/${locale}`;

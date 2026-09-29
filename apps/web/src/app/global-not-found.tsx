@@ -21,7 +21,7 @@ export default function GlobalNotFound() {
   return (
     <html lang="pt-BR" className={`dark ${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full">
-        <NotFoundView />
+        <NotFoundView prerendered />
       </body>
     </html>
   );
