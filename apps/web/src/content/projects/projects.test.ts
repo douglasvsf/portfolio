@@ -32,19 +32,23 @@ describe("projetos — dados", () => {
     expect(leafPaths(esES).sort()).toEqual(expected);
   });
 
-  it("profissionais têm empresa, site e case completo; pessoais têm link do produto e do código", () => {
+  it("profissionais têm empresa, site e case completo; pessoais têm link do produto e do código (e case só se tiver)", () => {
+    const expectFullCase = (story: ReturnType<typeof getProjects>[number]["case"]) => {
+      expect(story?.role.length).toBeGreaterThan(0);
+      expect(story?.architecture.length).toBeGreaterThanOrEqual(3);
+      expect(story?.decisions.length).toBeGreaterThan(0);
+    };
     for (const locale of locales) {
       for (const project of getProjects(locale)) {
         expect(project.technologies.length).toBeGreaterThan(0);
         expect(project.technologies.length).toBeLessThanOrEqual(6);
         if (project.category === "professional") {
           expect(project).toMatchObject({ hasCase: true, company: expect.any(String), companyUrl: expect.stringMatching(/^https:\/\//) });
-          expect(project.case?.role.length).toBeGreaterThan(0);
-          expect(project.case?.architecture.length).toBeGreaterThanOrEqual(3);
-          expect(project.case?.decisions.length).toBeGreaterThan(0);
+          expectFullCase(project.case);
         } else {
-          expect(project).toMatchObject({ hasCase: false, liveUrl: expect.stringMatching(/^\//), codeUrl: expect.stringMatching(/^https:\/\/github\.com\//) });
-          expect(project.case).toBeUndefined();
+          expect(project).toMatchObject({ liveUrl: expect.stringMatching(/^\//), codeUrl: expect.stringMatching(/^https:\/\/github\.com\//) });
+          if (project.hasCase) expectFullCase(project.case);
+          else expect(project.case).toBeUndefined();
         }
       }
     }
@@ -72,8 +76,9 @@ describe("projetos — dados", () => {
 });
 
 describe("projetos — navegação entre cases", () => {
-  it("CASE_IDS são os profissionais, na ordem da página", () => {
-    expect(CASE_IDS).toEqual(PROJECT_DATA.filter((project) => project.category === "professional").map((project) => project.id));
+  it("CASE_IDS são os projetos com case (todos os profissionais e o ERP), na ordem da página", () => {
+    expect(CASE_IDS).toEqual(PROJECT_DATA.filter((project) => project.hasCase).map((project) => project.id));
+    expect(CASE_IDS).toEqual(expect.arrayContaining([...PROJECT_DATA.filter((project) => project.category === "professional").map((project) => project.id), "godzilla-erp"]));
   });
 
   it("anterior/próximo nas pontas e no meio", () => {
