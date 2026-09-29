@@ -1,5 +1,6 @@
 import type { INestApplication } from "@nestjs/common";
 import { getConnectionToken } from "@nestjs/mongoose";
+import { JwtService } from "@nestjs/jwt";
 import { Test } from "@nestjs/testing";
 import { MongoMemoryReplSet } from "mongodb-memory-server";
 import type { Connection } from "mongoose";
@@ -550,5 +551,80 @@ describe("pedidos de acesso", () => {
     await api(session.token).post(`/erp/owner/access-requests/${maria!.id}/reject`).expect(403);
     await api(owner.token).post(`/erp/owner/access-requests/${maria!.id}/reject`).expect(204);
     expect((await api(owner.token).get("/erp/owner/access-requests").expect(200)).body).toEqual([]);
+  });
+});
+
+describe("segurança", () => {
+  const visitor = () => {
+    const ip = `10.7.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}`;
+    const server = app.getHttpServer();
+    return {
+      post: (path: string, body: unknown) => request(server).post(path).set("x-bff-key", "test-bff-key").set("x-client-ip", ip).send(body as object),
+      get: (path: string) => request(server).get(path).set("x-bff-key", "test-bff-key").set("x-client-ip", ip),
+    };
+  };
+
+  it("injeção NoSQL no login não passa: operador no lugar de texto é 400", async () => {
+    for (const body of [
+      { email: { $ne: null }, password: { $ne: null } },
+      { email: "dono@exemplo.com.br", password: { $gt: "" } },
+      { email: { $regex: ".*" }, password: "qualquer-coisa" },
+    ]) {
+      const response = await visitor().post("/erp/auth/login", body).expect(400);
+      expect(response.body.error).toBe("validation_error");
+    }
+  });
+
+  it("injeção NoSQL na query e nos ids também é 400", async () => {
+    const demo = await newDemo();
+    // A query do Express 5 não vira objeto: "search[$ne]" é só uma chave desconhecida, descartada.
+    const { body: all } = await api(demo.token).get("/erp/products").expect(200);
+    const { body: injected } = await api(demo.token).get("/erp/products?search[$ne]=x").expect(200);
+    expect(injected.total).toBe(all.total);
+    await api(demo.token).get("/erp/customers?search[$regex]=.*").expect(200);
+    const { body: orders } = await api(demo.token).get("/erp/orders?customerId[$ne]=000000000000000000000000").expect(200);
+    expect(orders.total).toBe((await api(demo.token).get("/erp/orders").expect(200)).body.total);
+    // Operador no lugar do próprio valor: o texto não é id válido.
+    await api(demo.token).get("/erp/orders?customerId=%7B%22$ne%22:null%7D").expect(400);
+    await api(demo.token).get("/erp/products/%7B%22$ne%22:null%7D").expect(400);
+    await visitor().get("/erp/auth/invites/%7B%24ne%3Anull%7D").expect(400);
+  });
+
+  it("busca com caracteres de regex é tratada como texto (sem ReDoS nem vazamento)", async () => {
+    const demo = await newDemo();
+    const { body } = await api(demo.token).get(`/erp/products?search=${encodeURIComponent(".*")}`).expect(200);
+    expect(body.total).toBe(0);
+    await api(demo.token).get(`/erp/products?search=${encodeURIComponent("(a+)+$")}`).expect(200);
+  });
+
+  it("campos extras no corpo são descartados (sem mass assignment)", async () => {
+    const demo = await newDemo();
+    const { body } = await api(demo.token)
+      .post("/erp/products", { sku: "SEC-1", name: "Produto", category: "mercearia", unit: "un", priceCents: 100, costCents: 50, minStock: 1, stock: 999, workspaceId: "000000000000000000000000", active: false })
+      .expect(201);
+    expect(body).toMatchObject({ stock: 0, active: true });
+    const { body: products } = await api(demo.token).get("/erp/products?search=SEC-1").expect(200);
+    expect(products.total).toBe(1);
+  });
+
+  it("token forjado (outro algoritmo, sem assinatura ou outro segredo) é 401", async () => {
+    const demo = await newDemo();
+    const [, payload] = demo.token.split(".");
+    const unsigned = `${Buffer.from(JSON.stringify({ alg: "none", typ: "JWT" })).toString("base64url")}.${payload}.`;
+    await api(unsigned).get("/erp/products").expect(401);
+    const jwt = app.get(JwtService);
+    const otherSecret = await jwt.signAsync({ sub: demo.workspace.id, role: "admin" }, { secret: "outro-segredo-qualquer-de-32-caracteres!!" });
+    await api(otherSecret).get("/erp/products").expect(401);
+    const hs512 = await jwt.signAsync({ sub: demo.workspace.id, role: "admin" }, { algorithm: "HS512" });
+    await api(hs512).get("/erp/products").expect(401);
+  });
+
+  it("cabeçalhos de segurança em todas as respostas", async () => {
+    const response = await request(app.getHttpServer()).get("/health");
+    expect(response.headers["x-powered-by"]).toBeUndefined();
+    expect(response.headers["x-content-type-options"]).toBe("nosniff");
+    expect(response.headers["x-frame-options"]).toBe("SAMEORIGIN");
+    expect(response.headers["strict-transport-security"]).toMatch(/max-age=/);
+    expect(response.headers["content-security-policy"]).toContain("frame-ancestors 'none'");
   });
 });

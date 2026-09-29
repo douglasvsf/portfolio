@@ -61,9 +61,15 @@ import { WorkspacesService } from "./workspaces/workspaces.service";
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
         const secret = config.get<string>("ERP_JWT_SECRET");
-        if (!secret && config.get("NODE_ENV") === "production") throw new Error("ERP_JWT_SECRET não configurado");
-        // Fora de produção, um segredo fixo de desenvolvimento (tokens locais não valem em produção).
-        return { secret: secret ?? "dev-only-erp-secret-change-me" };
+        const deployed = config.get("NODE_ENV") === "production" || Boolean(config.get("VERCEL"));
+        if (deployed && (!secret || secret.length < 32)) throw new Error("ERP_JWT_SECRET não configurado (mínimo de 32 caracteres)");
+        return {
+          // Fora do servidor, um segredo fixo de desenvolvimento (tokens locais não valem em produção).
+          secret: secret ?? "dev-only-erp-secret-change-me",
+          // Algoritmo fixo: um token com outro "alg" no cabeçalho é recusado.
+          signOptions: { algorithm: "HS256" },
+          verifyOptions: { algorithms: ["HS256"] },
+        };
       },
     }),
   ],
