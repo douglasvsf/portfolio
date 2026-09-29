@@ -194,3 +194,22 @@ export class PasswordReset {
 }
 export const PasswordResetSchema = SchemaFactory.createForClass(PasswordReset);
 PasswordResetSchema.index({ tokenHash: 1 }, { unique: true });
+
+/**
+ * Pedido de acesso feito na página pública. Pendente fica até o dono decidir;
+ * aprovado ou recusado some sozinho 30 dias depois (TTL).
+ */
+@Schema({ timestamps: { createdAt: true, updatedAt: false }, collection: "erp_access_requests" })
+export class AccessRequest {
+  @Prop({ required: true }) name!: string;
+  @Prop({ required: true }) email!: string;
+  @Prop() company?: string;
+  @Prop() message?: string;
+  @Prop({ type: String, required: true, enum: erp.ACCESS_REQUEST_STATUSES, default: "pending" }) status!: erp.AccessRequestStatus;
+  @Prop() decidedAt?: Date;
+  @Prop({ type: Date, index: { expires: 0 } }) expiresAt?: Date;
+  createdAt!: Date;
+}
+export const AccessRequestSchema = SchemaFactory.createForClass(AccessRequest);
+AccessRequestSchema.index({ email: 1 }, { unique: true, partialFilterExpression: { status: "pending" } });
+AccessRequestSchema.index({ status: 1, createdAt: -1 });

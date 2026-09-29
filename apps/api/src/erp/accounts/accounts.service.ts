@@ -6,7 +6,7 @@ import { Model, Types } from "mongoose";
 import type { erp } from "@portfolio/shared";
 import type { ErpSession, TokenPayload } from "../common/auth";
 import { ErpException, forbidden, invalidState, notFound } from "../common/errors";
-import { Invite, Order, PasswordReset, Product, User, Workspace } from "../schemas";
+import { AccessRequest, Invite, Order, PasswordReset, Product, User, Workspace } from "../schemas";
 import { dummyHash, hashPassword, hashToken, newLinkToken, safeEqual, verifyPassword } from "./password";
 
 /** Sessão de conta: 12 horas; depois, login de novo. */
@@ -16,6 +16,10 @@ const RESET_TTL_MS = 24 * 3_600_000;
 /** 5 senhas erradas seguidas bloqueiam o login da conta por 15 minutos. */
 const MAX_FAILED_LOGINS = 5;
 const LOCK_MS = 15 * 60_000;
+/** Teto de pedidos pendentes: protege o banco gratuito de enxurrada de robô. */
+const MAX_PENDING_REQUESTS = 200;
+/** Pedido já decidido fica 30 dias para consulta e depois some (TTL). */
+const DECIDED_TTL_MS = 30 * 24 * 3_600_000;
 
 const INVALID_LOGIN = "E-mail ou senha inválidos";
 
@@ -42,6 +46,7 @@ export class AccountsService {
     @InjectModel(User.name) private readonly users: Model<User>,
     @InjectModel(Invite.name) private readonly invites: Model<Invite>,
     @InjectModel(PasswordReset.name) private readonly resets: Model<PasswordReset>,
+    @InjectModel(AccessRequest.name) private readonly requests: Model<AccessRequest>,
     @InjectModel(Workspace.name) private readonly workspaces: Model<Workspace>,
     @InjectModel(Product.name) private readonly products: Model<Product>,
     @InjectModel(Order.name) private readonly orders: Model<Order>,
@@ -234,13 +239,14 @@ export class AccountsService {
 
   async overview(): Promise<erp.OwnerOverview> {
     const now = new Date();
-    const [companies, users, blockedUsers, pendingInvites, activeDemos, recent] = await Promise.all([
+    const [companies, users, blockedUsers, pendingInvites, activeDemos, recent, pendingRequests] = await Promise.all([
       this.workspaces.countDocuments({ kind: "real" }),
       this.users.countDocuments(),
       this.users.countDocuments({ status: "blocked" }),
       this.invites.countDocuments({ usedAt: { $exists: false }, expiresAt: { $gt: now } }),
       this.workspaces.countDocuments({ kind: { $ne: "real" }, expiresAt: { $gt: now } }),
       this.users.find({ lastLoginAt: { $exists: true } }).sort({ lastLoginAt: -1 }).limit(8).lean(),
+      this.requests.countDocuments({ status: "pending" }),
     ]);
     const names = await this.workspaceNames(recent.map((user) => user.workspaceId));
     return {
@@ -248,6 +254,7 @@ export class AccountsService {
       users,
       blockedUsers,
       pendingInvites,
+      pendingRequests,
       activeDemos,
       demoCapacity: Number(this.config.get("ERP_MAX_WORKSPACES") ?? 300),
       lastLogins: recent.map((user) => ({ name: user.name, email: user.email, workspace: names.get(user.workspaceId.toString()) ?? "—", at: iso(user.lastLoginAt!) })),
@@ -303,6 +310,60 @@ export class AccountsService {
     const invites = await this.invites.find({ usedAt: { $exists: false }, expiresAt: { $gt: new Date() } }).sort({ createdAt: -1 }).lean();
     const names = await this.workspaceNames(invites.map((invite) => invite.workspaceId));
     return invites.map((invite) => this.toInvite(invite, { id: invite.workspaceId.toString(), name: names.get(invite.workspaceId.toString()) ?? "—" }));
+  }
+
+  // ---- Pedidos de acesso -------------------------------------------------------------
+
+  /**
+   * Pedido público. A resposta é sempre a mesma ("recebido"), exista ou não
+   * conta ou pedido com esse e-mail: a página não serve para descobrir quem
+   * está cadastrado. Robô que preenche a armadilha (`website`) é ignorado.
+   */
+  async requestAccess(input: erp.AccessRequestInput): Promise<void> {
+    if (input.website) return;
+    if (await this.users.exists({ email: input.email })) return;
+    if ((await this.requests.countDocuments({ status: "pending" })) >= MAX_PENDING_REQUESTS) {
+      throw new ErpException("rate_limited", "Muitos pedidos no momento. Tente de novo mais tarde.", HttpStatus.SERVICE_UNAVAILABLE);
+    }
+    try {
+      await this.requests.create({ name: input.name, email: input.email, company: input.company || undefined, message: input.message || undefined });
+    } catch (error) {
+      if (!isDuplicateKey(error)) throw error; // já tem pedido pendente com esse e-mail
+    }
+  }
+
+  async accessRequests(): Promise<erp.AccessRequest[]> {
+    const list = await this.requests.find({ status: "pending" }).sort({ createdAt: 1 }).lean();
+    return list.map((request) => ({
+      id: request._id.toString(),
+      name: request.name,
+      email: request.email,
+      ...(request.company ? { company: request.company } : {}),
+      ...(request.message ? { message: request.message } : {}),
+      status: request.status,
+      createdAt: iso(request.createdAt),
+    }));
+  }
+
+  /** Aprovar vira convite (na empresa escolhida ou numa nova, criada com o nome informado). */
+  async approveRequest(session: ErpSession, id: string, input: erp.AccessApproveInput): Promise<erp.CreatedLink> {
+    const request = await this.requests.findOne({ _id: id, status: "pending" }).lean();
+    if (!request) throw notFound("Pedido");
+    const workspaceId = input.companyName ? (await this.createCompany(input.companyName)).id : input.workspaceId!;
+    const link = await this.createInvite(session, { email: request.email, role: input.companyName ? "admin" : input.role, workspaceId });
+    await this.decide(request._id, "approved");
+    return link;
+  }
+
+  async rejectRequest(id: string): Promise<void> {
+    const request = await this.requests.findOne({ _id: id, status: "pending" }).lean();
+    if (!request) throw notFound("Pedido");
+    await this.decide(request._id, "rejected");
+  }
+
+  private async decide(id: Types.ObjectId, status: "approved" | "rejected") {
+    const now = new Date();
+    await this.requests.updateOne({ _id: id }, { $set: { status, decidedAt: now, expiresAt: new Date(now.getTime() + DECIDED_TTL_MS) } });
   }
 
   // ---- Apoio -------------------------------------------------------------------------

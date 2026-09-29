@@ -19,6 +19,8 @@ import {
 import { OrdersService } from "./orders/orders.service";
 import { PosService } from "./pos/pos.service";
 import {
+  AccessRequest,
+  AccessRequestSchema,
   Counter,
   CounterSchema,
   Customer,
@@ -53,6 +55,7 @@ import { WorkspacesService } from "./workspaces/workspaces.service";
       { name: User.name, schema: UserSchema },
       { name: Invite.name, schema: InviteSchema },
       { name: PasswordReset.name, schema: PasswordResetSchema },
+      { name: AccessRequest.name, schema: AccessRequestSchema },
     ]),
     JwtModule.registerAsync({
       inject: [ConfigService],

@@ -148,7 +148,43 @@ export interface OwnerOverview {
   users: number;
   blockedUsers: number;
   pendingInvites: number;
+  pendingRequests: number;
   activeDemos: number;
   demoCapacity: number;
   lastLogins: { name: string; email: string; workspace: string; at: string }[];
+}
+
+// ---- Pedido de acesso (público) ---------------------------------------------------
+
+/**
+ * Quem não tem convite pode pedir acesso. O pedido só aparece no painel do
+ * dono; nada é criado até ele aprovar. O campo `website` é uma armadilha para
+ * robôs (fica escondido na tela; gente de verdade não preenche).
+ */
+export const accessRequestSchema = z.object({
+  name: personNameSchema,
+  email: emailSchema,
+  company: z.string().trim().max(60).optional(),
+  message: z.string().trim().max(500).optional(),
+  website: z.string().max(200).optional(),
+});
+export type AccessRequestInput = z.infer<typeof accessRequestSchema>;
+
+export const ACCESS_REQUEST_STATUSES = ["pending", "approved", "rejected"] as const;
+export type AccessRequestStatus = (typeof ACCESS_REQUEST_STATUSES)[number];
+
+/** Aprovar: numa empresa que já existe ou criando uma nova para a pessoa (ela vira administradora). */
+export const accessApproveSchema = z
+  .object({ role: roleSchema, workspaceId: objectIdSchema.optional(), companyName: companyNameSchema.optional() })
+  .refine((value) => Boolean(value.workspaceId) !== Boolean(value.companyName), "escolha uma empresa ou informe o nome da nova");
+export type AccessApproveInput = z.infer<typeof accessApproveSchema>;
+
+export interface AccessRequest {
+  id: string;
+  name: string;
+  email: string;
+  company?: string;
+  message?: string;
+  status: AccessRequestStatus;
+  createdAt: string;
 }

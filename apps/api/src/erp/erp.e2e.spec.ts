@@ -504,3 +504,46 @@ describe("contas por convite", () => {
     expect(companies[0].products).toBe(1);
   });
 });
+
+describe("pedidos de acesso", () => {
+  const visitor = () => {
+    const ip = `10.8.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}`;
+    return (path: string, body: object) => request(app.getHttpServer()).post(path).set("x-bff-key", "test-bff-key").set("x-client-ip", ip).send(body);
+  };
+  let owner: erp.AccountSession;
+
+  beforeAll(async () => {
+    const { body } = await visitor()("/erp/auth/login", { email: "dono@exemplo.com.br", password: "senha-forte-do-dono" }).expect(200);
+    owner = body;
+  });
+
+  it("pedido público chega ao painel; repetido, de conta existente ou de robô não duplica", async () => {
+    const ask = { name: "Carlos Pereira", email: "carlos@exemplo.com.br", company: "Empório do Carlos", message: "Quero testar no meu mercado" };
+    expect((await visitor()("/erp/auth/access-requests", ask).expect(202)).body).toEqual({ received: true });
+    await visitor()("/erp/auth/access-requests", ask).expect(202);
+    await visitor()("/erp/auth/access-requests", { name: "Dono", email: "dono@exemplo.com.br" }).expect(202);
+    await visitor()("/erp/auth/access-requests", { name: "Robô", email: "robo@exemplo.com.br", website: "http://spam" }).expect(202);
+    await visitor()("/erp/auth/access-requests", { name: "X", email: "invalido" }).expect(400);
+
+    const { body: pending } = await api(owner.token).get("/erp/owner/access-requests").expect(200);
+    expect(pending.map((item: erp.AccessRequest) => item.email)).toEqual(["carlos@exemplo.com.br"]);
+    expect(pending[0]).toMatchObject({ company: "Empório do Carlos", message: "Quero testar no meu mercado", status: "pending" });
+    expect((await api(owner.token).get("/erp/owner/overview").expect(200)).body.pendingRequests).toBe(1);
+  });
+
+  it("aprovar criando empresa nova: vira convite de administrador; recusar tira da lista", async () => {
+    const [carlos] = (await api(owner.token).get("/erp/owner/access-requests").expect(200)).body as erp.AccessRequest[];
+    await api(owner.token).post(`/erp/owner/access-requests/${carlos!.id}/approve`, { role: "seller" }).expect(400);
+    const { body: link } = await api(owner.token).post(`/erp/owner/access-requests/${carlos!.id}/approve`, { role: "seller", companyName: "Empório do Carlos" }).expect(201);
+
+    const { body: session } = await visitor()(`/erp/auth/invites/${link.token}/accept`, { name: "Carlos Pereira", password: "senha-do-carlos" }).expect(201);
+    expect(session).toMatchObject({ role: "admin", workspace: { name: "Empório do Carlos" } });
+    await api(owner.token).post(`/erp/owner/access-requests/${carlos!.id}/approve`, { role: "seller", companyName: "Outra" }).expect(404);
+
+    await visitor()("/erp/auth/access-requests", { name: "Maria", email: "maria@exemplo.com.br" }).expect(202);
+    const [maria] = (await api(owner.token).get("/erp/owner/access-requests").expect(200)).body as erp.AccessRequest[];
+    await api(session.token).post(`/erp/owner/access-requests/${maria!.id}/reject`).expect(403);
+    await api(owner.token).post(`/erp/owner/access-requests/${maria!.id}/reject`).expect(204);
+    expect((await api(owner.token).get("/erp/owner/access-requests").expect(200)).body).toEqual([]);
+  });
+});

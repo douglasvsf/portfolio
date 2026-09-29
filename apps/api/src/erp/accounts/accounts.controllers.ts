@@ -72,6 +72,16 @@ export class AuthController {
     return this.accounts.resetPassword(token, body.password);
   }
 
+  @Post("access-requests")
+  @HttpCode(202)
+  @Throttle({ default: { limit: 3, ttl: 3_600_000 } })
+  @ApiZodBody(erp.accessRequestSchema)
+  @ApiOperation({ summary: "Pedido de acesso (público): vai para o painel do dono. Resposta sempre igual, para não revelar quem tem conta" })
+  async requestAccess(@Body(new ZodPipe(erp.accessRequestSchema)) body: erp.AccessRequestInput) {
+    await this.accounts.requestAccess(body);
+    return { received: true };
+  }
+
   @Post("password")
   @HttpCode(200)
   @ApiBearerAuth()
@@ -148,6 +158,24 @@ export class OwnerController {
   @ApiZodBody(erp.companyCreateSchema)
   createCompany(@Body(new ZodPipe(erp.companyCreateSchema)) body: { name: string }) {
     return this.accounts.createCompany(body.name);
+  }
+
+  @Get("access-requests")
+  accessRequests() {
+    return this.accounts.accessRequests();
+  }
+
+  @Post("access-requests/:id/approve")
+  @ApiZodBody(erp.accessApproveSchema)
+  @ApiOperation({ summary: "Aprova o pedido: gera o convite (na empresa escolhida ou numa nova) e devolve o link" })
+  approve(@Session() session: ErpSession, @Param("id", id) requestId: string, @Body(new ZodPipe(erp.accessApproveSchema)) body: erp.AccessApproveInput) {
+    return this.accounts.approveRequest(session, requestId, body);
+  }
+
+  @Post("access-requests/:id/reject")
+  @HttpCode(204)
+  reject(@Param("id", id) requestId: string) {
+    return this.accounts.rejectRequest(requestId);
   }
 
   @Get("users")
