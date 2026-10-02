@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { Button, Typography } from "@godzilla/ui";
+import { KaijuStage } from "@/components/kaiju/kaiju-stage";
 import type { LinkItem } from "@/content/types";
 
 export interface HeroSectionProps {
@@ -65,16 +66,19 @@ export function HeroSection({ id, prompt, title, subtitle, description, primaryC
           aria-hidden="true"
         >
           <div className="absolute inset-[15%] hidden rounded-full bg-primary opacity-20 blur-[90px] lg:block" />
-          <Image
-            src="/images/godzilla-hero.webp"
-            alt=""
-            width={900}
-            height={875}
-            priority
-            draggable={false}
-            sizes="(min-width: 1024px) 520px, 384px"
-            className="animate-float relative mx-auto w-full max-w-[520px]"
-          />
+          {/* No desktop, a cena 3D carrega por cima da imagem depois que a página está pronta. */}
+          <KaijuStage>
+            <Image
+              src="/images/godzilla-hero.webp"
+              alt=""
+              width={900}
+              height={875}
+              priority
+              draggable={false}
+              sizes="(min-width: 1024px) 520px, 384px"
+              className="animate-float relative mx-auto w-full max-w-[520px]"
+            />
+          </KaijuStage>
         </div>
       </div>
 
