@@ -22,8 +22,9 @@ export const esES: SiteContent = {
   },
   hero: {
     prompt: "$ whoami",
-    title: "GODZILLA",
+    title: "Douglas Szapak",
     subtitle: "Full Stack Developer",
+    fanNote: "Fan declarado de Godzilla — de ahí el kaiju de al lado y el nombre GODZILLA.DEV.",
     description:
       "Portafolio personal construido con un stack moderno, que muestra proyectos, experiencia y mi forma de trabajar. En constante evolución — como un kaiju que nunca deja de crecer.",
     primaryCta: { label: "Ver proyectos", href: `#${SECTION_IDS.projects}` },

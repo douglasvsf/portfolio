@@ -13,7 +13,8 @@ describe("Homepage", () => {
     });
 
     it("deve carregar corretamente", () => {
-      cy.get("h1").should("contain.text", "GODZILLA");
+      cy.get("h1").should("contain.text", "Douglas").and("contain.text", "Szapak");
+      cy.contains("Fã de carteirinha do Godzilla").should("be.visible");
       cy.contains("Full Stack Developer").should("be.visible");
     });
 

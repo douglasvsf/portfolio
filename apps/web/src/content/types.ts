@@ -112,8 +112,11 @@ export interface SiteContent {
   };
   hero: {
     prompt: string;
+    /** Nome em destaque; cada palavra ocupa uma linha. */
     title: string;
     subtitle: string;
+    /** Explica o tema do site: o dono é fã do Godzilla. */
+    fanNote: string;
     description: string;
     primaryCta: LinkItem;
     secondaryCta: LinkItem;

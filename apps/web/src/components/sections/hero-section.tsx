@@ -7,14 +7,17 @@ export interface HeroSectionProps {
   id: string;
   /** Linha de "terminal" acima do título. */
   prompt: string;
+  /** Nome em destaque; cada palavra ocupa uma linha. */
   title: string;
   subtitle: string;
+  /** Linha discreta que explica o tema kaiju do site. */
+  fanNote: string;
   description: string;
   primaryCta: LinkItem;
   secondaryCta?: LinkItem;
 }
 
-export function HeroSection({ id, prompt, title, subtitle, description, primaryCta, secondaryCta }: HeroSectionProps) {
+export function HeroSection({ id, prompt, title, subtitle, fanNote, description, primaryCta, secondaryCta }: HeroSectionProps) {
   return (
     <section
       id={id}
@@ -32,8 +35,12 @@ export function HeroSection({ id, prompt, title, subtitle, description, primaryC
           <span className="font-mono text-body-sm text-primary">{prompt}</span>
 
           {/* Marca, não texto corrido: não "pinta" de azul ao selecionar a página. */}
-          <Typography variant="display" id={`${id}-title`} className="text-glow select-none text-6xl font-black sm:text-8xl">
-            {title}
+          <Typography variant="display" id={`${id}-title`} className="text-glow select-none text-6xl font-black uppercase sm:text-8xl">
+            {title.split(" ").map((word) => (
+              <span key={word} className="block">
+                {word}{" "}
+              </span>
+            ))}
           </Typography>
 
           <Typography variant="body-lg" className="font-mono text-muted-foreground sm:text-h4">
@@ -43,6 +50,13 @@ export function HeroSection({ id, prompt, title, subtitle, description, primaryC
           <Typography variant="body" className="max-w-xl text-muted-foreground">
             {description}
           </Typography>
+
+          <p className="flex max-w-xl items-start gap-2 font-mono text-body-sm text-muted-foreground">
+            <span className="text-primary" aria-hidden="true">
+              {"//"}
+            </span>
+            {fanNote}
+          </p>
 
           <div className="mt-4 flex flex-wrap gap-4">
             <Button asChild size="lg" className="font-mono font-semibold hover:shadow-glow">
