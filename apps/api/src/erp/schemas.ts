@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { HydratedDocument, Types } from "mongoose";
-import { erp } from "@portfolio/shared";
+import { contact, erp } from "@portfolio/shared";
 
 /**
  * Modelos do ERP. Multi-tenancy por coluna: todo documento tem `workspaceId`
@@ -213,3 +213,19 @@ export class AccessRequest {
 export const AccessRequestSchema = SchemaFactory.createForClass(AccessRequest);
 AccessRequestSchema.index({ email: 1 }, { unique: true, partialFilterExpression: { status: "pending" } });
 AccessRequestSchema.index({ status: 1, createdAt: -1 });
+
+/** Mensagem do formulário de contato do portfólio (vaga, freelance…). Some sozinha depois de um ano (TTL). */
+@Schema({ timestamps: { createdAt: true, updatedAt: false }, collection: "contact_messages" })
+export class ContactMessage {
+  @Prop({ type: String, required: true, enum: contact.CONTACT_KINDS }) kind!: contact.ContactKind;
+  @Prop({ required: true }) name!: string;
+  @Prop({ required: true }) email!: string;
+  @Prop() company?: string;
+  @Prop({ required: true }) message!: string;
+  @Prop() locale?: string;
+  @Prop({ type: String, required: true, enum: contact.CONTACT_STATUSES, default: "new" }) status!: contact.ContactStatus;
+  @Prop({ type: Date, required: true, index: { expires: 0 } }) expiresAt!: Date;
+  createdAt!: Date;
+}
+export const ContactMessageSchema = SchemaFactory.createForClass(ContactMessage);
+ContactMessageSchema.index({ status: 1, createdAt: -1 });

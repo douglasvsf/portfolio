@@ -149,6 +149,8 @@ export interface OwnerOverview {
   blockedUsers: number;
   pendingInvites: number;
   pendingRequests: number;
+  /** Mensagens do formulário de contato ainda não lidas. */
+  unreadMessages: number;
   activeDemos: number;
   demoCapacity: number;
   lastLogins: { name: string; email: string; workspace: string; at: string }[];

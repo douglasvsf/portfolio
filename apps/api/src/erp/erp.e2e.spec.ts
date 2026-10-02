@@ -628,3 +628,58 @@ describe("segurança", () => {
     expect(response.headers["content-security-policy"]).toContain("frame-ancestors 'none'");
   });
 });
+
+describe("formulário de contato", () => {
+  const visitor = () => {
+    const ip = `10.6.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}`;
+    return (body: object) => request(app.getHttpServer()).post("/contact").set("x-bff-key", "test-bff-key").set("x-client-ip", ip).send(body);
+  };
+  const valid = { kind: "freelance", name: "Marina Costa", email: "Marina@Exemplo.com.br", company: "Loja da Marina", message: "Preciso de um e-commerce com catálogo e checkout. Podemos conversar?", locale: "pt-BR" };
+  let owner: erp.AccountSession;
+
+  beforeAll(async () => {
+    const { body } = await request(app.getHttpServer())
+      .post("/erp/auth/login")
+      .set("x-bff-key", "test-bff-key")
+      .set("x-client-ip", "10.6.0.1")
+      .send({ email: "dono@exemplo.com.br", password: "senha-forte-do-dono" })
+      .expect(200);
+    owner = body;
+  });
+
+  it("mensagem válida é guardada; inválida é 400; robô é ignorado em silêncio", async () => {
+    expect((await visitor()(valid).expect(202)).body).toEqual({ received: true });
+    await visitor()({ ...valid, message: "curta" }).expect(400);
+    await visitor()({ ...valid, email: "nao-e-email" }).expect(400);
+    await visitor()({ ...valid, kind: "spam" }).expect(400);
+    await visitor()({ ...valid, name: { $ne: null } }).expect(400);
+    await visitor()({ ...valid, name: "Robô", website: "http://spam.example" }).expect(202);
+
+    const { body: messages } = await api(owner.token).get("/erp/owner/messages").expect(200);
+    expect(messages).toHaveLength(1);
+    expect(messages[0]).toMatchObject({ kind: "freelance", name: "Marina Costa", email: "marina@exemplo.com.br", company: "Loja da Marina", status: "new", locale: "pt-BR" });
+    expect((await api(owner.token).get("/erp/owner/overview").expect(200)).body.unreadMessages).toBe(1);
+  });
+
+  it("limite por visitante: a quarta mensagem em uma hora é 429", async () => {
+    const send = visitor();
+    for (let attempt = 0; attempt < 3; attempt++) await send({ ...valid, website: "robo" }).expect(202);
+    const blocked = await send(valid).expect(429);
+    expect(blocked.body.error).toBe("rate_limited");
+  });
+
+  it("só o dono lê, marca como lida e apaga", async () => {
+    const demo = await newDemo();
+    await api(demo.token).get("/erp/owner/messages").expect(403);
+    await request(app.getHttpServer()).get("/erp/owner/messages").expect(401);
+
+    const [message] = (await api(owner.token).get("/erp/owner/messages").expect(200)).body as { id: string }[];
+    const { body: read } = await api(owner.token).patch(`/erp/owner/messages/${message!.id}`, { status: "read" }).expect(200);
+    expect(read.status).toBe("read");
+    expect((await api(owner.token).get("/erp/owner/overview").expect(200)).body.unreadMessages).toBe(0);
+
+    await api(owner.token).delete(`/erp/owner/messages/${message!.id}`).expect(204);
+    await api(owner.token).delete(`/erp/owner/messages/${message!.id}`).expect(404);
+    expect((await api(owner.token).get("/erp/owner/messages").expect(200)).body).toEqual([]);
+  });
+});
