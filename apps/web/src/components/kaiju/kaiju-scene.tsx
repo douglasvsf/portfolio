@@ -32,6 +32,9 @@ const PALETTE: Record<string, { color: string; emissive?: string; intensity?: nu
   Black: { color: "#050505", emissive: NEON, intensity: 2.2, roughness: 0.3 },
 };
 
+/** Quadros desenhados antes de a cena substituir a imagem estática. */
+const READY_AFTER_FRAMES = 3;
+
 /** Espinha, do pescoço à ponta da cauda: as placas nascem ao longo dela. */
 const SPINE = ["Neck", "Shoulders", "Torso", "Hips", "Tail1", "Tail2", "Tail3", "Tail4"];
 
@@ -52,6 +55,7 @@ function Kaiju({ onReady }: { onReady: () => void }) {
   const { actions, mixer } = useAnimations(animations, group);
   const pointer = usePointer();
   const look = useRef(new THREE.Vector2());
+  const frames = useRef(0);
 
   const bones = useMemo(() => {
     const found: Record<string, THREE.Bone> = {};
@@ -99,15 +103,11 @@ function Kaiju({ onReady }: { onReady: () => void }) {
     addDorsalPlates(scene, bones, meshes, size.y * scale);
   }, [scene, bones]);
 
-  // Avisa o palco (fora do Canvas) só depois de montado, para trocar a imagem pela cena.
-  useEffect(() => {
-    onReady();
-  }, [onReady]);
-
   // Parado "respirando"; um clique faz o ataque (rugido) e volta.
   useEffect(() => {
     const idle = actions["Armature|TRex_Idle"];
-    idle?.reset().fadeIn(0.4).play();
+    // Sem transição na entrada: o primeiro quadro é igual à imagem estática que a cena substitui.
+    idle?.reset().play();
     const back = () => {
       actions["Armature|TRex_Attack"]?.fadeOut(0.3);
       idle?.reset().fadeIn(0.3).play();
@@ -130,6 +130,8 @@ function Kaiju({ onReady }: { onReady: () => void }) {
   useFrame((state, delta) => {
     const root = group.current;
     if (!root) return;
+    // Só avisa o palco depois de alguns quadros desenhados: a troca imagem → cena não pisca.
+    if (frames.current < READY_AFTER_FRAMES && ++frames.current === READY_AFTER_FRAMES) onReady();
     const ease = 1 - Math.exp(-delta * 4);
     look.current.lerp(pointer.current, ease);
 

@@ -7,6 +7,14 @@ import { cn } from "@godzilla/ui";
 // O three.js só é baixado quando a cena vai mesmo aparecer (nunca no servidor nem no celular).
 const KaijuScene = dynamic(() => import("./kaiju-scene"), { ssr: false });
 
+/**
+ * Caixa da cena, um pouco maior que o palco (a cidade passa das bordas) e com
+ * as bordas esmaecidas. A imagem estática e o canvas usam EXATAMENTE a mesma
+ * caixa: a imagem é uma captura do primeiro quadro da cena, então a troca de
+ * uma pela outra não se percebe.
+ */
+const SCENE_BOX = "absolute -inset-x-[18%] -inset-y-[10%] [mask-image:radial-gradient(ellipse_at_center,black_55%,transparent_78%)]";
+
 /** Tela grande, sem "reduzir movimento" e com WebGL: só então vale carregar o 3D. */
 function canRender3d() {
   if (!window.matchMedia("(min-width: 1024px)").matches) return false;
@@ -20,10 +28,11 @@ function canRender3d() {
 }
 
 /**
- * Palco do kaiju. A imagem (children) é o que todo mundo vê primeiro — e o que
- * fica no celular, sem WebGL ou com animações desligadas. No desktop, depois
- * que a página está pronta e ociosa, a cena 3D carrega por cima e a imagem some.
- * Fora da tela, a cena para de renderizar.
+ * Palco do kaiju. A imagem estática (children) é o que todo mundo vê primeiro —
+ * e o que fica no celular, sem WebGL ou com animações desligadas. No desktop,
+ * depois que a página está pronta e ociosa, a cena 3D carrega; quando já
+ * desenhou os primeiros quadros, entra no lugar da imagem. Fora da tela, a
+ * cena para de renderizar.
  */
 export function KaijuStage({ children }: { children: ReactNode }) {
   const stage = useRef<HTMLDivElement>(null);
@@ -50,19 +59,11 @@ export function KaijuStage({ children }: { children: ReactNode }) {
   }, [enabled]);
 
   return (
-    <div ref={stage} className="relative">
-      <div className={cn("transition-opacity duration-700", ready && "opacity-0")}>{children}</div>
+    // Mesma proporção e largura que a ilustração tinha: o layout do topo não muda.
+    <div ref={stage} className="relative mx-auto aspect-[900/875] w-full max-w-[520px]">
+      <div className={cn(SCENE_BOX, ready && "invisible")}>{children}</div>
       {enabled && (
-        <div
-          data-testid="kaiju-3d"
-          data-ready={ready}
-          className={cn(
-            "pointer-events-auto absolute -inset-x-[18%] -inset-y-[10%] opacity-0 transition-opacity duration-700",
-            // Some nas bordas: os prédios não são cortados pelo retângulo do canvas.
-            "[mask-image:radial-gradient(ellipse_at_center,black_55%,transparent_78%)]",
-            ready && "opacity-100",
-          )}
-        >
+        <div data-testid="kaiju-3d" data-ready={ready} className={cn(SCENE_BOX, "pointer-events-auto", !ready && "opacity-0")}>
           <KaijuScene active={visible} onReady={markReady} />
         </div>
       )}

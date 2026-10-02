@@ -7,7 +7,7 @@ describe("kaiju 3D", () => {
   it("no celular não carrega o 3D: fica a imagem", () => {
     cy.viewport(390, 844);
     cy.visit("/pt-BR");
-    cy.get("#hero img[src*='godzilla-hero']").should("exist");
+    cy.get("#hero img[src*='kaiju-poster']").should("exist");
     cy.wait(3000);
     cy.get("[data-testid='kaiju-3d']").should("not.exist");
   });
@@ -26,7 +26,7 @@ describe("kaiju 3D", () => {
       const canvas = win.document.createElement("canvas");
       if (!(canvas.getContext("webgl2") ?? canvas.getContext("webgl"))) {
         // Sem WebGL (alguns runners): vale o comportamento de reserva — a imagem continua.
-        cy.get("#hero img[src*='godzilla-hero']").should("be.visible");
+        cy.get("#hero img[src*='kaiju-poster']").should("be.visible");
         return;
       }
       cy.get("[data-testid='kaiju-3d']", { timeout: 30_000 }).should("have.attr", "data-ready", "true");
