@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { useAnimations, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
+import { createAtomicBreath, type AtomicBreath } from "./atomic-breath";
 import { MAX_RAGE, type RagePhase, type RageState } from "./rage";
 
 /**
@@ -46,7 +47,12 @@ const READY_AFTER_FRAMES = 3;
 const ATOMIC = "#52c8ff";
 /** No disparo ele vira quase de perfil: o raio atravessa a tela em vez de vir para a câmera. */
 const FIRE_YAW = -1.22;
-const BEAM_LENGTH = 17;
+/**
+ * Quanto o crânio levanta para abrir a boca (radianos). O modelo não tem osso
+ * de mandíbula: o maxilar de baixo é preso ao pescoço e o crânio ao osso da
+ * cabeça — a boca abre girando a cabeça para cima, como na animação de ataque.
+ */
+const JAW_OPEN = 0.5;
 /** Duração de cada fase do disparo, em segundos. */
 const PHASE_SECONDS = { charging: 0.9, firing: 2.4, cooling: 1.6 } as const;
 /** Sem cliques por este tempo, a fúria começa a baixar (um nível a cada DECAY_STEP). */
@@ -64,10 +70,7 @@ interface Effects {
   plates: Plate[];
   mouth?: THREE.MeshStandardMaterial;
   eyes?: THREE.MeshStandardMaterial;
-  beam?: THREE.Group;
-  beamCore?: THREE.Mesh;
-  beamGlow?: THREE.Mesh;
-  beamLight?: THREE.PointLight;
+  breath?: AtomicBreath;
 }
 
 /** Espinha, do pescoço à ponta da cauda: as placas nascem ao longo dela. */
@@ -92,7 +95,7 @@ function Kaiju({ onReady, onRage }: { onReady: () => void; onRage: (state: RageS
   const look = useRef(new THREE.Vector2());
   const frames = useRef(0);
   const effects = useRef<Effects>({ plates: [] });
-  const rage = useRef({ level: 0, phase: "calm" as RagePhase, phaseTime: 0, sinceClick: 0, decay: 0, yaw: BASE_YAW });
+  const rage = useRef({ level: 0, phase: "calm" as RagePhase, phaseTime: 0, sinceClick: 0, decay: 0, yaw: BASE_YAW, jaw: 0 });
 
   const bones = useMemo(() => {
     const found: Record<string, THREE.Bone> = {};
@@ -145,7 +148,7 @@ function Kaiju({ onReady, onRage }: { onReady: () => void; onRage: (state: RageS
       plates: addDorsalPlates(scene, bones, meshes, size.y * scale),
       mouth: materials.Red,
       eyes: materials.Black,
-      ...addAtomicBeam(scene, bones.Head, meshes),
+      breath: addAtomicBreath(scene, bones.Neck, meshes),
     };
   }, [scene, bones]);
 
@@ -207,7 +210,7 @@ function Kaiju({ onReady, onRage }: { onReady: () => void; onRage: (state: RageS
 
     actions["Armature|TRex_Idle"]?.setEffectiveTimeScale(1 + fury * 1.8);
     paintFury(effects.current, fury, state.phase, time);
-    fireBeam(effects.current, firing ? state.phaseTime : -1, time);
+    effects.current.breath?.update(state.phase, state.phaseTime, time, PHASE_SECONDS);
 
     // No disparo vira de perfil; depois volta ao 3/4.
     const targetYaw = charging || firing ? FIRE_YAW : BASE_YAW;
@@ -221,11 +224,17 @@ function Kaiju({ onReady, onRage }: { onReady: () => void; onRage: (state: RageS
     root.position.set(tremor, Math.sin(time * 0.8) * 0.03 + Math.abs(tremor) * 0.5, 0);
     frame.camera.position.set(CAMERA.x + (firing ? Math.sin(time * 53) * 0.035 : 0), CAMERA.y + (firing ? Math.cos(time * 47) * 0.03 : 0), CAMERA.z);
 
-    // Depois da animação do quadro: pescoço e cabeça seguem o ponteiro (no disparo, levanta um pouco o focinho).
+    // Depois da animação do quadro: o olhar segue o ponteiro. Quem gira é o pescoço (com um pouco dos
+    // ombros) — o maxilar de baixo é preso ao pescoço; girar só a cabeça entortaria a boca.
     const yaw = look.current.x * (firing ? 0.25 : 0.55);
-    const pitch = -look.current.y * 0.3 - (charging || firing ? 0.12 : 0);
-    turnBone(bones.Neck, root, yaw * 0.4, pitch * 0.4);
-    turnBone(bones.Head, root, yaw * 0.6, pitch * 0.6);
+    const pitch = -look.current.y * 0.3 - (charging || firing ? 0.1 : 0);
+    turnBone(bones.Shoulders, root, yaw * 0.3, pitch * 0.25);
+    turnBone(bones.Neck, root, yaw * 0.7, pitch * 0.75);
+
+    // Boca: entreabre conforme a fúria sobe, abre de vez ao carregar e fica aberta enquanto dispara.
+    const jawTarget = charging ? JAW_OPEN * Math.min(1, state.phaseTime / (PHASE_SECONDS.charging * 0.7)) : firing ? JAW_OPEN : Math.max(0, fury - 0.5) * 0.3;
+    state.jaw += (jawTarget - state.jaw) * (1 - Math.exp(-delta * 12));
+    openJaw(bones.Head, state.jaw + (firing ? Math.sin(time * 61) * 0.015 : 0));
   });
 
   return (
@@ -307,56 +316,54 @@ function paintFury(effects: Effects, fury: number, phase: RagePhase, time: numbe
   }
 }
 
-/** Sopro atômico: cresce a partir da boca, tremula enquanto dura e some no fim. `elapsed < 0` = desligado. */
-function fireBeam(effects: Effects, elapsed: number, time: number) {
-  const { beam, beamCore, beamGlow, beamLight } = effects;
-  if (!beam || !beamCore || !beamGlow || !beamLight) return;
-  beam.visible = elapsed >= 0;
-  if (elapsed < 0) return;
-
-  const grow = Math.min(1, elapsed / 0.16);
-  const fade = Math.min(1, (PHASE_SECONDS.firing - elapsed) / 0.3);
-  const flicker = 1 + 0.16 * Math.sin(time * 67) + 0.08 * Math.sin(time * 151);
-  beamCore.scale.set(flicker, flicker, BEAM_LENGTH * grow);
-  beamGlow.scale.set(flicker * 1.15, flicker * 1.15, BEAM_LENGTH * grow);
-  (beamCore.material as THREE.MeshBasicMaterial).opacity = 0.95 * fade;
-  (beamGlow.material as THREE.MeshBasicMaterial).opacity = 0.3 * fade * flicker;
-  beamLight.intensity = 90 * fade * flicker;
-}
-
 const UP = new THREE.Vector3();
 const SIDE = new THREE.Vector3();
 const parentQuaternion = new THREE.Quaternion();
 const turn = new THREE.Quaternion();
 
-/** Pose que a animação deixou em cada osso e o resultado do último quadro (com o olhar somado). */
+/** Pose que a animação deixou em cada osso e o resultado do último quadro (com os nossos ajustes somados). */
 const poses = new WeakMap<THREE.Bone, { base: THREE.Quaternion; result: THREE.Quaternion }>();
 
 /**
- * Vira o osso na direção do olhar, sempre a partir da pose da animação.
+ * Devolve o osso à pose da animação, para somar um ajuste em cima dela.
  *
  * O three só reescreve um osso quando o valor da animação muda; no "parado" a
  * cabeça quase não se mexe. Somar a rotação direto no osso a cada quadro
  * acumulava — a cabeça girava sem parar. Então: se o osso está como deixamos
  * no quadro anterior, a animação não mexeu e a base continua a mesma; se mudou,
- * a animação escreveu e essa é a base nova.
+ * a animação escreveu e essa é a base nova. Depois do ajuste, chame `keepPose`.
  */
-function turnBone(bone: THREE.Bone | undefined, body: THREE.Object3D, yaw: number, pitch: number) {
-  if (!bone?.parent) return;
+function animatedPose(bone: THREE.Bone) {
   let pose = poses.get(bone);
   if (!pose) {
     pose = { base: bone.quaternion.clone(), result: bone.quaternion.clone() };
     poses.set(bone, pose);
   }
   if (!bone.quaternion.equals(pose.result)) pose.base.copy(bone.quaternion);
+  bone.quaternion.copy(pose.base);
+  return pose;
+}
 
+/** Vira o osso na direção do olhar (em eixos do corpo do kaiju), a partir da pose da animação. */
+function turnBone(bone: THREE.Bone | undefined, body: THREE.Object3D, yaw: number, pitch: number) {
+  if (!bone?.parent) return;
+  const pose = animatedPose(bone);
   bone.parent.getWorldQuaternion(parentQuaternion).invert();
   UP.set(0, 1, 0).applyQuaternion(parentQuaternion);
   SIDE.set(1, 0, 0).applyQuaternion(body.quaternion).applyQuaternion(parentQuaternion);
-  bone.quaternion.copy(pose.base);
   bone.quaternion.premultiply(turn.setFromAxisAngle(UP, yaw));
   bone.quaternion.premultiply(turn.setFromAxisAngle(SIDE, pitch));
   pose.result.copy(bone.quaternion);
+}
+
+const JAW_AXIS = new THREE.Vector3(1, 0, 0);
+
+/** Abre a boca: levanta o crânio em torno do eixo lateral do próprio osso (o mesmo que a animação de ataque usa). */
+function openJaw(head: THREE.Bone | undefined, angle: number) {
+  if (!head) return;
+  const pose = animatedPose(head);
+  head.quaternion.multiply(turn.setFromAxisAngle(JAW_AXIS, angle));
+  pose.result.copy(head.quaternion);
 }
 
 /**
@@ -419,62 +426,29 @@ function addDorsalPlates(scene: THREE.Object3D, bones: Record<string, THREE.Bone
 }
 
 /**
- * Sopro atômico preso à cabeça: um núcleo branco-azulado dentro de um halo
- * azul, com mistura aditiva (soma luz, como um feixe de verdade) e uma luz na
- * boca. Nasce no interior da boca, apontando para a frente do kaiju; por estar
- * preso ao osso, acompanha a cabeça — e o mouse.
+ * Sopro atômico (ver atomic-breath.ts): nasce no meio da boca, apontando para a
+ * frente do modelo, preso ao osso do pescoço — o do maxilar de baixo —, e por
+ * isso acompanha a cabeça e o mouse. O modelo fica em cache entre montagens:
+ * se o sopro já foi criado, reaproveita.
  */
-function addAtomicBeam(scene: THREE.Object3D, head: THREE.Bone | undefined, meshes: THREE.SkinnedMesh[]): Pick<Effects, "beam" | "beamCore" | "beamGlow" | "beamLight"> {
-  const cached = scene.getObjectByName("atomic-beam") as THREE.Group | undefined;
-  if (cached) {
-    return {
-      beam: cached,
-      beamCore: cached.getObjectByName("atomic-beam-core") as THREE.Mesh,
-      beamGlow: cached.getObjectByName("atomic-beam-glow") as THREE.Mesh,
-      beamLight: cached.getObjectByName("atomic-beam-light") as THREE.PointLight,
-    };
-  }
+function addAtomicBreath(scene: THREE.Object3D, jaw: THREE.Bone | undefined, meshes: THREE.SkinnedMesh[]): AtomicBreath | undefined {
+  const cached = scene.userData.atomicBreath as AtomicBreath | undefined;
+  if (cached) return cached;
   const mouth = meshes.find((mesh) => (mesh.material as THREE.Material).name === "Red");
-  if (!head || !mouth) return {};
+  if (!jaw || !mouth) return undefined;
 
-  // Centro do interior da boca e a direção "para a frente" do modelo.
   mouth.computeBoundingBox();
   const mouthBox = mouth.boundingBox!.clone().applyMatrix4(mouth.matrixWorld);
+  const size = mouthBox.getSize(new THREE.Vector3());
   const orientation = scene.getWorldQuaternion(new THREE.Quaternion());
   const forward = new THREE.Vector3(0, 0, 1).applyQuaternion(orientation);
-  const origin = mouthBox.getCenter(new THREE.Vector3()).addScaledVector(forward, mouthBox.getSize(new THREE.Vector3()).z * 0.35);
+  // Um pouco à frente do centro da boca e acima dele: com a boca aberta, o vão fica mais alto.
+  const origin = mouthBox.getCenter(new THREE.Vector3()).addScaledVector(forward, size.z * 0.3);
+  origin.y += size.y * 0.35;
 
-  const beamMaterial = (color: string) =>
-    new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, fog: false, toneMapped: false, side: THREE.DoubleSide });
-  // Cilindro ao longo de +Z, da boca (z = 0) até z = 1; o comprimento vem da escala.
-  const tube = (near: number, far: number) => {
-    const geometry = new THREE.CylinderGeometry(far, near, 1, 14, 1, true);
-    geometry.rotateX(Math.PI / 2);
-    geometry.translate(0, 0, 0.5);
-    return geometry;
-  };
-
-  const beam = new THREE.Group();
-  beam.name = "atomic-beam";
-  beam.visible = false;
-  const beamCore = new THREE.Mesh(tube(0.05, 0.17), beamMaterial("#eafaff"));
-  beamCore.name = "atomic-beam-core";
-  const beamGlow = new THREE.Mesh(tube(0.13, 0.5), beamMaterial(ATOMIC));
-  beamGlow.name = "atomic-beam-glow";
-  const beamLight = new THREE.PointLight(ATOMIC, 0, 12);
-  beamLight.name = "atomic-beam-light";
-  beamLight.position.set(0, 0, 0.6);
-  for (const part of [beamCore, beamGlow]) {
-    part.frustumCulled = false;
-    part.renderOrder = 2;
-  }
-  beam.add(beamCore, beamGlow, beamLight);
-
-  beam.position.copy(origin);
-  beam.quaternion.copy(orientation);
-  beam.updateMatrixWorld(true);
-  head.attach(beam);
-  return { beam, beamCore, beamGlow, beamLight };
+  const breath = createAtomicBreath(jaw, origin, orientation);
+  scene.userData.atomicBreath = breath;
+  return breath;
 }
 
 /** Gerador determinístico: a cidade é sempre a mesma. */
