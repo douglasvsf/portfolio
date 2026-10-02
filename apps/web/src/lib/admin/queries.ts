@@ -18,3 +18,12 @@ export async function adminPanel(): Promise<{ session: AdminSession; messages: c
     throw error;
   }
 }
+
+/** O cadastro do login do painel só existe enquanto não houver nenhum. Na dúvida (API fora do ar), não oferece. */
+export async function adminSetupAvailable(): Promise<boolean> {
+  try {
+    return (await erpRequest<{ available: boolean }>("/admin/auth/setup", { anonymous: true })).available;
+  } catch {
+    return false;
+  }
+}

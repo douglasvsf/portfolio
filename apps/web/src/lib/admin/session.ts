@@ -1,11 +1,10 @@
 import "server-only";
 import { cookies } from "next/headers";
-import type { erp } from "@portfolio/shared";
+import type { admin } from "@portfolio/shared";
 
 /**
- * Sessão do painel administrativo do portfólio (/admin). Quem entra é o dono
- * do site — a mesma conta de dono da API —, mas o cookie é próprio e restrito
- * a /admin: o painel do site não depende de estar logado no ERP, e vice-versa.
+ * Sessão do painel administrativo do portfólio (/admin). O painel tem login
+ * próprio, separado das contas do ERP, e cookie próprio, restrito a /admin.
  * O token fica num cookie httpOnly; quem decide permissão é a API.
  */
 
@@ -35,8 +34,8 @@ export async function getAdminSession(): Promise<AdminSession | null> {
   return decodeAdminSession((await cookies()).get(ADMIN_COOKIE)?.value);
 }
 
-export async function saveAdminSession(session: erp.AccountSession) {
-  const stored: AdminSession = { token: session.token, name: session.user.name, email: session.user.email, expiresAt: session.expiresAt };
+export async function saveAdminSession(session: admin.AdminSession) {
+  const stored: AdminSession = { token: session.token, name: session.name, email: session.email, expiresAt: session.expiresAt };
   (await cookies()).set(ADMIN_COOKIE, Buffer.from(JSON.stringify(stored)).toString("base64url"), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

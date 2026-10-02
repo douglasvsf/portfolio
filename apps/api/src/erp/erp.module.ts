@@ -33,6 +33,8 @@ import {
   InviteSchema,
   PasswordReset,
   PasswordResetSchema,
+  SiteAdmin,
+  SiteAdminSchema,
   User,
   UserSchema,
   Order,
@@ -44,6 +46,8 @@ import {
   Workspace,
   WorkspaceSchema,
 } from "./schemas";
+import { SiteAdminController, SiteAdminGuard } from "./site-admin/site-admin.controller";
+import { SiteAdminService } from "./site-admin/site-admin.service";
 import { StockService } from "./stock/stock.service";
 import { WorkspacesService } from "./workspaces/workspaces.service";
 
@@ -61,6 +65,7 @@ import { WorkspacesService } from "./workspaces/workspaces.service";
       { name: PasswordReset.name, schema: PasswordResetSchema },
       { name: AccessRequest.name, schema: AccessRequestSchema },
       { name: ContactMessage.name, schema: ContactMessageSchema },
+      { name: SiteAdmin.name, schema: SiteAdminSchema },
     ]),
     JwtModule.registerAsync({
       inject: [ConfigService],
@@ -78,7 +83,7 @@ import { WorkspacesService } from "./workspaces/workspaces.service";
       },
     }),
   ],
-  controllers: [SessionController, AuthController, TeamController, OwnerController, ContactController, ProductsController, StockController, CustomersController, OrdersController, PosController, DashboardController],
-  providers: [AccountsService, ContactService, WorkspacesService, CatalogService, StockService, OrdersService, PosService, DashboardService, SessionGuard],
+  controllers: [SessionController, AuthController, TeamController, OwnerController, ContactController, SiteAdminController, ProductsController, StockController, CustomersController, OrdersController, PosController, DashboardController],
+  providers: [AccountsService, ContactService, SiteAdminService, SiteAdminGuard, WorkspacesService, CatalogService, StockService, OrdersService, PosService, DashboardService, SessionGuard],
 })
 export class ErpModule {}

@@ -635,16 +635,61 @@ describe("formulário de contato", () => {
     return (body: object) => request(app.getHttpServer()).post("/contact").set("x-bff-key", "test-bff-key").set("x-client-ip", ip).send(body);
   };
   const valid = { kind: "freelance", name: "Marina Costa", email: "Marina@Exemplo.com.br", company: "Loja da Marina", message: "Preciso de um e-commerce com catálogo e checkout. Podemos conversar?", locale: "pt-BR" };
+  const post = (path: string, body: object, ip = "10.6.0.1") => request(app.getHttpServer()).post(path).set("x-bff-key", "test-bff-key").set("x-client-ip", ip).send(body);
+  const PANEL = { email: "painel@exemplo.com.br", password: "senha-so-do-painel" };
   let owner: erp.AccountSession;
+  let panel: { token: string; name: string; email: string };
 
   beforeAll(async () => {
-    const { body } = await request(app.getHttpServer())
-      .post("/erp/auth/login")
-      .set("x-bff-key", "test-bff-key")
-      .set("x-client-ip", "10.6.0.1")
-      .send({ email: "dono@exemplo.com.br", password: "senha-forte-do-dono" })
-      .expect(200);
-    owner = body;
+    owner = (await post("/erp/auth/login", { email: "dono@exemplo.com.br", password: "senha-forte-do-dono" }).expect(200)).body;
+  });
+
+  it("login do painel: cadastro único, feito pelo dono, e que se fecha sozinho", async () => {
+    const status = () => request(app.getHttpServer()).get("/admin/auth/setup").set("x-bff-key", "test-bff-key");
+    expect((await status().expect(200)).body).toEqual({ available: true });
+
+    // Sem ser o dono, não cria: visitante, demonstração e senha fraca.
+    await post("/admin/auth/setup", PANEL).expect(401);
+    const demo = await newDemo();
+    await api(demo.token).post("/admin/auth/setup", PANEL).expect(403);
+    await api(owner.token).post("/admin/auth/setup", { ...PANEL, password: "curta" }).expect(400);
+    expect((await status().expect(200)).body).toEqual({ available: true });
+
+    panel = (await api(owner.token).post("/admin/auth/setup", { email: "Painel@Exemplo.com.br", password: PANEL.password }).expect(201)).body;
+    expect(panel).toMatchObject({ email: PANEL.email, name: expect.any(String), token: expect.any(String) });
+
+    expect((await status().expect(200)).body).toEqual({ available: false });
+    const again = await api(owner.token).post("/admin/auth/setup", { email: "outro@exemplo.com.br", password: "outra-senha-forte" }).expect(409);
+    expect(again.body.error).toBe("conflict");
+    await post("/admin/auth/login", { email: "outro@exemplo.com.br", password: "outra-senha-forte" }, "10.6.0.2").expect(401);
+  });
+
+  it("login do painel: senha certa entra, errada não, e a quinta errada trava", async () => {
+    const entered = (await post("/admin/auth/login", PANEL, "10.6.0.3").expect(200)).body;
+    expect(entered).toMatchObject({ email: PANEL.email, token: expect.any(String) });
+    expect(JSON.stringify(entered)).not.toContain("passwordHash");
+
+    // A conta de dono do ERP não é o login do painel.
+    await post("/admin/auth/login", { email: "dono@exemplo.com.br", password: "senha-forte-do-dono" }, "10.6.0.4").expect(401);
+    await post("/admin/auth/login", { email: { $ne: null }, password: PANEL.password }, "10.6.0.4").expect(400);
+
+    for (let attempt = 0; attempt < 5; attempt++) await post("/admin/auth/login", { ...PANEL, password: "senha-errada-123" }, "10.6.0.5").expect(401);
+    await post("/admin/auth/login", PANEL, "10.6.0.6").expect(429);
+    await app.get<Connection>(getConnectionToken()).collection("site_admins").updateOne({}, { $unset: { lockedUntil: 1 } });
+    await post("/admin/auth/login", PANEL, "10.6.0.6").expect(200);
+  });
+
+  it("cada token vale só no seu lugar: o do painel não entra no ERP, e o do ERP não lê as mensagens", async () => {
+    await api(panel.token).get("/admin/messages").expect(200);
+    await api(owner.token).get("/admin/messages").expect(401);
+    await api(panel.token).get("/erp/me").expect(401);
+    await api(panel.token).get("/erp/products").expect(401);
+    await api(panel.token).get("/erp/owner/overview").expect(401);
+
+    // Senha trocada (versão nova) derruba o token antigo na hora.
+    await app.get<Connection>(getConnectionToken()).collection("site_admins").updateOne({}, { $inc: { tokenVersion: 1 } });
+    await api(panel.token).get("/admin/messages").expect(401);
+    panel = (await post("/admin/auth/login", PANEL, "10.6.0.7").expect(200)).body;
   });
 
   it("mensagem válida é guardada; inválida é 400; robô é ignorado em silêncio", async () => {
@@ -655,7 +700,7 @@ describe("formulário de contato", () => {
     await visitor()({ ...valid, name: { $ne: null } }).expect(400);
     await visitor()({ ...valid, name: "Robô", website: "http://spam.example" }).expect(202);
 
-    const { body: messages } = await api(owner.token).get("/admin/messages").expect(200);
+    const { body: messages } = await api(panel.token).get("/admin/messages").expect(200);
     expect(messages).toHaveLength(1);
     expect(messages[0]).toMatchObject({ kind: "freelance", name: "Marina Costa", email: "marina@exemplo.com.br", company: "Loja da Marina", status: "new", locale: "pt-BR" });
   });
@@ -669,16 +714,16 @@ describe("formulário de contato", () => {
 
   it("só o dono lê, marca como lida e apaga", async () => {
     const demo = await newDemo();
-    await api(demo.token).get("/admin/messages").expect(403);
+    await api(demo.token).get("/admin/messages").expect(401);
     await request(app.getHttpServer()).get("/admin/messages").expect(401);
 
-    const [message] = (await api(owner.token).get("/admin/messages").expect(200)).body as { id: string }[];
-    const { body: read } = await api(owner.token).patch(`/admin/messages/${message!.id}`, { status: "read" }).expect(200);
+    const [message] = (await api(panel.token).get("/admin/messages").expect(200)).body as { id: string }[];
+    const { body: read } = await api(panel.token).patch(`/admin/messages/${message!.id}`, { status: "read" }).expect(200);
     expect(read.status).toBe("read");
-    expect((await api(owner.token).get("/admin/messages").expect(200)).body[0].status).toBe("read");
+    expect((await api(panel.token).get("/admin/messages").expect(200)).body[0].status).toBe("read");
 
-    await api(owner.token).delete(`/admin/messages/${message!.id}`).expect(204);
-    await api(owner.token).delete(`/admin/messages/${message!.id}`).expect(404);
-    expect((await api(owner.token).get("/admin/messages").expect(200)).body).toEqual([]);
+    await api(panel.token).delete(`/admin/messages/${message!.id}`).expect(204);
+    await api(panel.token).delete(`/admin/messages/${message!.id}`).expect(404);
+    expect((await api(panel.token).get("/admin/messages").expect(200)).body).toEqual([]);
   });
 });

@@ -1,24 +1,24 @@
 import { LogOut } from "@godzilla/icons";
 import { Card, CardContent, CardDescription, CardHeader } from "@godzilla/ui";
-import { AdminLoginForm } from "@/components/admin/admin-login";
+import { AdminLoginForm, AdminSetupForm } from "@/components/admin/admin-login";
 import { ContactMessageCard } from "@/components/admin/contact-messages";
 import { adminLogout } from "@/lib/admin/actions";
-import { adminPanel } from "@/lib/admin/queries";
+import { adminPanel, adminSetupAvailable } from "@/lib/admin/queries";
 
 /** Painel do site: as mensagens que chegam pelo formulário de contato. Sem sessão, mostra o login. */
 export default async function AdminPage() {
   const panel = await adminPanel();
 
   if (!panel) {
+    // Enquanto não existir login do painel, aparece o cadastro (uma vez só); depois, só o login.
+    const setup = await adminSetupAvailable();
     return (
       <Card className="mx-auto w-full max-w-md">
         <CardHeader>
           <h1 className="text-h4 font-semibold">Painel do site</h1>
-          <CardDescription>Área restrita ao dono do portfólio.</CardDescription>
+          <CardDescription>{setup ? "Crie o login do painel. Isso só pode ser feito uma vez." : "Área restrita ao dono do portfólio."}</CardDescription>
         </CardHeader>
-        <CardContent>
-          <AdminLoginForm />
-        </CardContent>
+        <CardContent>{setup ? <AdminSetupForm /> : <AdminLoginForm />}</CardContent>
       </Card>
     );
   }

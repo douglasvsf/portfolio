@@ -8,6 +8,7 @@
  */
 const SETUP_TOKEN = "e2e-setup-token-0123456789";
 const OWNER = { email: "dono@exemplo.com.br", password: "senha-forte-do-dono" };
+const PANEL = { email: "painel@exemplo.com.br", password: "senha-so-do-painel-e2e" };
 
 const asVisitor = () => {
   const ip = `198.51.100.${Math.floor(Math.random() * 250) + 1}`;
@@ -147,16 +148,36 @@ describe("GODZILLA ERP — contas por convite", () => {
     });
     cy.get("[data-testid='contact-success']", { timeout: 20_000 }).should("contain", "Mensagem enviada!");
 
-    // As mensagens ficam no painel do site (/admin), que tem login próprio — não no ERP.
+    // As mensagens ficam no painel do site (/admin), que tem login próprio — não é a conta do ERP.
     cy.visit("/admin");
     cy.contains("h1", "Painel do site").should("be.visible");
     cy.contains(email).should("not.exist");
+    cy.get("body").then(($body) => {
+      // Cadastro único do login do painel: só aparece enquanto não existe nenhum.
+      if ($body.find("[data-testid='admin-setup']").length === 0) return;
+      cy.get("input[name='ownerEmail']").type(OWNER.email);
+      cy.get("input[name='ownerPassword']").type("senha-errada-12345", { log: false });
+      cy.get("input[name='email']").type(PANEL.email);
+      fillPassword(PANEL.password);
+      cy.contains("button", "Criar login do painel").click();
+      cy.contains("A conta de dono informada não confere.").should("be.visible");
+      cy.get("input[name='ownerEmail']").should("have.value", OWNER.email);
+      cy.get("input[name='ownerPassword']").type(OWNER.password, { log: false });
+      fillPassword(PANEL.password);
+      cy.contains("button", "Criar login do painel").click();
+      cy.contains("h2", "Mensagens de contato", { timeout: 20_000 }).should("be.visible");
+      cy.contains("button", "Sair").click();
+    });
+
+    // Depois de criado, o cadastro some e só o login novo entra: a conta de dono do ERP não vale aqui.
+    cy.get("input[name='password']").should("be.visible");
+    cy.get("[data-testid='admin-setup']").should("not.exist");
     cy.get("input[name='email']").type(OWNER.email);
-    cy.get("input[name='password']").type("senha-errada-12345", { log: false });
+    cy.get("input[name='password']").type(OWNER.password, { log: false });
     cy.contains("button", /^Entrar$/).click();
     cy.contains("E-mail ou senha inválidos.").should("be.visible");
-    cy.get("input[name='email']").clear().type(OWNER.email);
-    cy.get("input[name='password']").clear().type(OWNER.password, { log: false });
+    cy.get("input[name='email']").clear().type(PANEL.email);
+    cy.get("input[name='password']").clear().type(PANEL.password, { log: false });
     cy.contains("button", /^Entrar$/).click();
     cy.contains("h2", "Mensagens de contato", { timeout: 20_000 }).should("be.visible");
     cy.getCookie("admin_session").should("have.property", "httpOnly", true);

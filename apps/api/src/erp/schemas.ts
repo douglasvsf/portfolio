@@ -229,3 +229,18 @@ export class ContactMessage {
 }
 export const ContactMessageSchema = SchemaFactory.createForClass(ContactMessage);
 ContactMessageSchema.index({ status: 1, createdAt: -1 });
+
+/** Login do painel administrativo do portfólio (/admin). Um só: `slot` é fixo e tem índice único. */
+@Schema({ timestamps: true, collection: "site_admins" })
+export class SiteAdmin {
+  @Prop({ required: true, unique: true, default: "site" }) slot!: string;
+  @Prop({ required: true }) name!: string;
+  @Prop({ required: true }) email!: string;
+  @Prop({ required: true }) passwordHash!: string;
+  @Prop({ required: true, default: 0 }) failedLogins!: number;
+  @Prop() lockedUntil?: Date;
+  /** Sobe quando a senha muda: derruba as sessões abertas. */
+  @Prop({ required: true, default: 0 }) tokenVersion!: number;
+  @Prop() lastLoginAt?: Date;
+}
+export const SiteAdminSchema = SchemaFactory.createForClass(SiteAdmin);

@@ -30,6 +30,8 @@ export interface TokenPayload {
   role: erp.Role;
   uid?: string;
   ver?: number;
+  /** Só os tokens do painel do site têm público; aqui eles não valem. */
+  aud?: string;
 }
 
 type RequestWithSession = Request & { erpSession?: ErpSession };
@@ -59,6 +61,8 @@ export class SessionGuard implements CanActivate {
     } catch {
       throw expired();
     }
+
+    if (payload.aud) throw expired();
 
     let session: ErpSession = { workspaceId: payload.sub, role: payload.role };
     if (payload.uid) {
