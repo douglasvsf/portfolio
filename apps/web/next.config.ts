@@ -79,7 +79,8 @@ const nextConfig: NextConfig = {
     return [
       { source: "/:path*", headers: SECURITY_HEADERS },
       // O Storybook estático (/design-system) tem regras próprias de script; a CSP vale para o resto.
-      { source: "/((?!design-system/).*)", headers: [{ key: "Content-Security-Policy", value: CONTENT_SECURITY_POLICY }] },
+      // O currículo em PDF também fica de fora: a CSP de página (sem plugins) pode impedir o leitor de PDF do navegador.
+      { source: "/((?!design-system/)(?!.*\\.pdf$).*)", headers: [{ key: "Content-Security-Policy", value: CONTENT_SECURITY_POLICY }] },
     ];
   },
   async redirects() {

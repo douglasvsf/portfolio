@@ -11,6 +11,7 @@ import { SystemsSection } from "@/components/sections/systems-section";
 import { EngineeringSection } from "@/components/sections/engineering-section";
 import { ScrollProgress } from "@/components/motion/motion";
 import { SECTION_IDS, getContent } from "@/content";
+import { CV_COPY } from "@/content/cv";
 import { isLocale } from "@/i18n/config";
 import { JsonLd, homeJsonLd } from "@/lib/seo/json-ld";
 
@@ -19,6 +20,8 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
   if (!isLocale(lang)) notFound();
 
   const { meta, nav, hero, about, skills, projects, experience, contact, systems, engineering, footer } = getContent(lang);
+
+  const cv = CV_COPY[lang];
 
   return (
     <>
@@ -40,7 +43,7 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
         skipToContent={nav.skipToContent}
       />
       <main id="content" className="flex-1">
-        <HeroSection id={SECTION_IDS.hero} {...hero} />
+        <HeroSection id={SECTION_IDS.hero} {...hero} availability={cv.availability} cv={{ label: cv.download, href: `/${lang}/cv.pdf`, fileName: cv.fileName }} />
         <AboutSection id={SECTION_IDS.about} index="01" {...about} />
         <SkillsSection id={SECTION_IDS.skills} index="02" {...skills} />
         <ProjectsSection id={SECTION_IDS.projects} index="03" locale={lang} {...projects} />

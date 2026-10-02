@@ -15,6 +15,18 @@ describe("Homepage", () => {
     it("deve carregar corretamente", () => {
       cy.get("h1").should("contain.text", "Douglas").and("contain.text", "Szapak");
       cy.contains("Fã de carteirinha do Godzilla").should("be.visible");
+      cy.contains("Disponível para oportunidades").should("be.visible");
+    });
+
+    it("oferece o currículo em PDF, gerado do conteúdo do site", () => {
+      cy.contains("a", "Baixar CV").should("have.attr", "href", "/pt-BR/cv.pdf").and("have.attr", "download", "Douglas-Szapak-CV-pt-BR.pdf");
+      cy.request({ url: "/pt-BR/cv.pdf", encoding: "binary" }).then((response) => {
+        expect(response.status).to.eq(200);
+        expect(response.headers["content-type"]).to.eq("application/pdf");
+        expect(response.headers).not.to.have.property("content-security-policy");
+        expect(response.body.slice(0, 5)).to.eq("%PDF-");
+      });
+      cy.request({ url: "/en-US/cv.pdf", encoding: "binary" }).its("headers.content-disposition").should("contain", "Douglas-Szapak-Resume-en-US.pdf");
       cy.contains("Full Stack Developer").should("be.visible");
     });
 

@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { Download } from "@godzilla/icons";
 import { Button, Typography } from "@godzilla/ui";
 import { KaijuStage } from "@/components/kaiju/kaiju-stage";
 import type { LinkItem } from "@/content/types";
@@ -15,9 +16,13 @@ export interface HeroSectionProps {
   description: string;
   primaryCta: LinkItem;
   secondaryCta?: LinkItem;
+  /** Selo de disponibilidade acima do nome. */
+  availability?: string;
+  /** Download do currículo em PDF (gerado do conteúdo do site). */
+  cv?: LinkItem & { fileName: string };
 }
 
-export function HeroSection({ id, prompt, title, subtitle, fanNote, description, primaryCta, secondaryCta }: HeroSectionProps) {
+export function HeroSection({ id, prompt, title, subtitle, fanNote, description, primaryCta, secondaryCta, availability, cv }: HeroSectionProps) {
   return (
     <section
       id={id}
@@ -32,7 +37,19 @@ export function HeroSection({ id, prompt, title, subtitle, fanNote, description,
 
       <div className="relative mx-auto grid w-full max-w-6xl items-center gap-8 px-6 py-24 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
         <div className="relative z-10 flex flex-col gap-6">
-          <span className="font-mono text-body-sm text-primary">{prompt}</span>
+          {/* Selo na mesma linha do "$ whoami": não aumenta a altura do topo (os botões continuam à vista). */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <span className="font-mono text-body-sm text-primary">{prompt}</span>
+            {availability && (
+              <p className="flex w-fit items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 font-mono text-caption text-primary">
+                <span className="relative flex size-2" aria-hidden="true">
+                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-primary opacity-60 motion-reduce:animate-none" />
+                  <span className="relative inline-flex size-2 rounded-full bg-primary" />
+                </span>
+                {availability}
+              </p>
+            )}
+          </div>
 
           {/* Marca, não texto corrido: não "pinta" de azul ao selecionar a página. */}
           <Typography variant="display" id={`${id}-title`} className="text-glow select-none text-6xl font-black uppercase sm:text-8xl">
@@ -65,6 +82,15 @@ export function HeroSection({ id, prompt, title, subtitle, fanNote, description,
             {secondaryCta ? (
               <Button asChild size="lg" variant="outline" className="font-mono font-semibold hover:border-primary">
                 <a href={secondaryCta.href}>{secondaryCta.label}</a>
+              </Button>
+            ) : null}
+            {cv ? (
+              <Button asChild size="lg" variant="ghost" className="font-mono font-semibold hover:text-primary">
+                {/* Arquivo, não página: download direto, fora do roteador do Next. */}
+                <a href={cv.href} download={cv.fileName}>
+                  <Download aria-hidden="true" />
+                  {cv.label}
+                </a>
               </Button>
             ) : null}
           </div>
