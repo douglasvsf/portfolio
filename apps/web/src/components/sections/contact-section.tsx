@@ -1,9 +1,11 @@
 import type { LucideIcon } from "@godzilla/icons";
 import { Linkedin, Mail } from "@godzilla/icons";
 import { Card } from "@godzilla/ui";
-import type { ContactIcon, ContactLink } from "@/content/types";
+import type { ContactFormCopy, ContactIcon, ContactLink } from "@/content/types";
+import type { Locale } from "@/i18n/config";
 import { Section, type SectionProps } from "@/components/layout/section";
-import { Stagger, StaggerItem } from "@/components/motion/motion";
+import { Reveal, Stagger, StaggerItem } from "@/components/motion/motion";
+import { ContactForm } from "./contact-form";
 
 const icons: Record<ContactIcon, LucideIcon> = {
   mail: Mail,
@@ -12,11 +14,17 @@ const icons: Record<ContactIcon, LucideIcon> = {
 
 export interface ContactSectionProps extends Omit<SectionProps, "children"> {
   links: ContactLink[];
+  form: ContactFormCopy;
+  locale: Locale;
 }
 
-export function ContactSection({ links, ...section }: ContactSectionProps) {
+export function ContactSection({ links, form, locale, ...section }: ContactSectionProps) {
+  const email = links.find((link) => link.icon === "mail")?.value ?? "";
   return (
     <Section {...section}>
+      <Reveal className="mb-6">
+        <ContactForm copy={form} locale={locale} email={email} />
+      </Reveal>
       <Stagger as="ul" className="flex flex-col gap-4 sm:flex-row sm:flex-wrap">
         {links.map((link) => {
           const Icon = icons[link.icon];

@@ -50,7 +50,7 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
         <ExperienceSection id={SECTION_IDS.experience} index="04" {...experience} />
         <SystemsSection id={SECTION_IDS.systems} index="05" {...systems} />
         <EngineeringSection id={SECTION_IDS.engineering} index="06" {...engineering} />
-        <ContactSection id={SECTION_IDS.contact} index="07" {...contact} />
+        <ContactSection id={SECTION_IDS.contact} index="07" {...contact} locale={lang} />
       </main>
       <SiteFooter {...footer} />
     </>

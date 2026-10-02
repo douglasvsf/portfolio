@@ -122,6 +122,48 @@ describe("GODZILLA ERP — contas por convite", () => {
     });
   });
 
+  it("mensagem do formulário de contato chega ao painel do dono", () => {
+    const email = `contato.${Date.now()}@exemplo.com.br`;
+    const message = "Tenho um projeto de e-commerce e queria conversar sobre prazo e orçamento.";
+    cy.visit("/pt-BR");
+    cy.get("[data-testid='contact-form']").scrollIntoView();
+    cy.get("[data-testid='contact-form']").within(() => {
+      cy.contains("button", "Enviar mensagem").click();
+      cy.contains("Informe seu nome.").should("be.visible");
+      cy.contains("Escreva pelo menos 20 caracteres.").should("be.visible");
+
+      // Um erro não apaga o que a pessoa já digitou.
+      cy.get("input[name='name']").type("Marina Costa");
+      cy.contains("button", "Enviar mensagem").click();
+      cy.contains("Informe seu nome.").should("not.exist");
+      cy.get("input[name='name']").should("have.value", "Marina Costa");
+
+      cy.contains("label", "Freelance").click();
+      cy.get("textarea[name='message']").should("have.attr", "placeholder").and("contain", "orçamento");
+      cy.get("input[name='email']").type(email);
+      cy.get("input[name='company']").type("Loja da Marina");
+      cy.get("textarea[name='message']").type(message, { delay: 0 });
+      cy.contains("button", "Enviar mensagem").click();
+    });
+    cy.get("[data-testid='contact-success']", { timeout: 20_000 }).should("contain", "Mensagem enviada!");
+
+    asVisitor();
+    login(OWNER.email, OWNER.password);
+    cy.location("pathname", { timeout: 20_000 }).should("eq", "/erp/dashboard");
+    cy.visit("/erp/admin");
+    cy.contains("li", email).within(() => {
+      cy.contains("Marina Costa").should("exist");
+      cy.contains("Freelance").should("exist");
+      cy.contains(message).should("exist");
+      cy.contains("a", "Responder").should("have.attr", "href").and("contain", `mailto:${email}`);
+      cy.contains("button", "Marcar como lida").click();
+      cy.contains("button", "Marcar como não lida", { timeout: 20_000 }).should("exist");
+      cy.contains("button", "Apagar").click();
+      cy.contains("button", "Apagar mesmo").click();
+    });
+    cy.contains("li", email, { timeout: 20_000 }).should("not.exist");
+  });
+
   it("login errado mostra mensagem genérica", () => {
     asVisitor();
     login("ninguem@exemplo.com.br", "senha-qualquer-123");

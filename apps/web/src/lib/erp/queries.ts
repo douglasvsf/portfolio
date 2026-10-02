@@ -1,7 +1,7 @@
 import "server-only";
 import { redirect } from "next/navigation";
 import { cache } from "react";
-import type { erp } from "@portfolio/shared";
+import type { contact, erp } from "@portfolio/shared";
 import { erpRequest, isApiError } from "./client";
 import { getSession, type ErpSession } from "./session";
 
@@ -89,6 +89,7 @@ export const ownerCompanies = () => load<erp.Company[]>("/erp/owner/companies");
 export const ownerUsers = () => load<erp.TeamMember[]>("/erp/owner/users");
 export const ownerInvites = () => load<erp.Invite[]>("/erp/owner/invites");
 export const ownerAccessRequests = () => load<erp.AccessRequest[]>("/erp/owner/access-requests");
+export const ownerMessages = () => load<contact.ContactMessage[]>("/erp/owner/messages");
 
 /** A instalação (criar o dono) só aparece enquanto não houver dono. */
 export async function setupAvailable() {

@@ -1,25 +1,34 @@
 import type { Metadata } from "next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@godzilla/ui";
 import { AccessRequestCard } from "@/components/erp/access-requests";
+import { ContactMessageCard } from "@/components/erp/contact-messages";
 import { InvitesTable, MembersTable } from "@/components/erp/members-table";
 import { CompanyForm, InviteForm } from "@/components/erp/team-manager";
 import { PageHeader, StatCard } from "@/components/erp/ui";
 import { formatDate, formatDateTime, money } from "@/lib/erp/format";
-import { ownerAccessRequests, ownerCompanies, ownerInvites, ownerOverview, ownerUsers, requireAccount } from "@/lib/erp/queries";
+import { ownerAccessRequests, ownerCompanies, ownerInvites, ownerMessages, ownerOverview, ownerUsers, requireAccount } from "@/lib/erp/queries";
 
 export const metadata: Metadata = { title: "Painel do dono" };
 
 /** Painel do dono do sistema: todas as empresas, todas as pessoas, convites e a demonstração pública. */
 export default async function OwnerPage() {
   const session = await requireAccount("owner");
-  const [overview, companies, users, invites, requests] = await Promise.all([ownerOverview(), ownerCompanies(), ownerUsers(), ownerInvites(), ownerAccessRequests()]);
+  const [overview, companies, users, invites, requests, messages] = await Promise.all([
+    ownerOverview(),
+    ownerCompanies(),
+    ownerUsers(),
+    ownerInvites(),
+    ownerAccessRequests(),
+    ownerMessages(),
+  ]);
   const companyOptions = companies.map((company) => ({ id: company.id, name: company.name }));
 
   return (
     <div className="flex flex-col gap-8">
       <PageHeader title="Painel do dono" description="Visão do sistema inteiro. Só você vê esta página." />
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
+        <StatCard label="Mensagens" value={overview.unreadMessages} hint="de contato, não lidas" tone={overview.unreadMessages ? "warning" : undefined} />
         <StatCard label="Empresas" value={overview.companies} hint="contas de verdade" />
         <StatCard label="Pessoas" value={overview.users} hint={overview.blockedUsers ? `${overview.blockedUsers} bloqueada(s)` : "todas ativas"} />
         <StatCard label="Pedidos" value={overview.pendingRequests} hint="de acesso, aguardando você" tone={overview.pendingRequests ? "warning" : undefined} />
@@ -31,6 +40,23 @@ export default async function OwnerPage() {
           tone={overview.activeDemos >= overview.demoCapacity * 0.8 ? "warning" : undefined}
         />
       </div>
+
+      <section className="flex flex-col gap-3" aria-labelledby="mensagens">
+        <h2 id="mensagens" className="font-mono text-overline uppercase tracking-widest text-primary">
+          Mensagens de contato {messages.length > 0 && `(${messages.length})`}
+        </h2>
+        {messages.length === 0 ? (
+          <p className="text-body-sm text-muted-foreground">Nenhuma mensagem. Elas chegam pelo formulário da seção Contato do site.</p>
+        ) : (
+          <ul className="grid gap-4 lg:grid-cols-2">
+            {messages.map((message) => (
+              <li key={message.id}>
+                <ContactMessageCard message={message} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <section className="flex flex-col gap-3" aria-labelledby="pedidos">
         <h2 id="pedidos" className="font-mono text-overline uppercase tracking-widest text-primary">

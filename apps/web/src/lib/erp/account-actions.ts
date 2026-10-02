@@ -232,3 +232,25 @@ export async function rejectRequest(id: string): Promise<ActionState> {
   refresh();
   return { status: "success", message: "Pedido recusado." };
 }
+
+// ---- Mensagens do formulário de contato (painel do dono) -------------------------------
+
+export async function setMessageStatus(id: string, status: "new" | "read"): Promise<ActionState> {
+  try {
+    await erpRequest(`/erp/owner/messages/${id}`, { method: "PATCH", body: { status } });
+  } catch (error) {
+    return handle(error);
+  }
+  refresh();
+  return { status: "success", message: status === "read" ? "Marcada como lida." : "Marcada como não lida." };
+}
+
+export async function deleteMessage(id: string): Promise<ActionState> {
+  try {
+    await erpRequest(`/erp/owner/messages/${id}`, { method: "DELETE" });
+  } catch (error) {
+    return handle(error);
+  }
+  refresh();
+  return { status: "success", message: "Mensagem apagada." };
+}

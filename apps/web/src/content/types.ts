@@ -89,6 +89,34 @@ export interface ContactLink extends LinkItem {
   icon: ContactIcon;
 }
 
+/** Textos do formulário de contato (vagas e freelances). */
+export interface ContactFormCopy {
+  title: string;
+  description: string;
+  kindLabel: string;
+  kinds: { job: string; freelance: string; other: string };
+  name: string;
+  email: string;
+  company: string;
+  message: string;
+  /** Sugestão do que escrever, conforme o tipo de contato. */
+  placeholders: { job: string; freelance: string; other: string };
+  submit: string;
+  sending: string;
+  privacy: string;
+  success: { title: string; text: string; again: string };
+  errors: {
+    name: string;
+    email: string;
+    message: string;
+    /** Falha de validação: confira os campos. */
+    invalid: string;
+    rateLimited: string;
+    /** {email} vira o e-mail de contato. */
+    unavailable: string;
+  };
+}
+
 /** Cabeçalho comum a todas as seções da página. */
 export interface SectionCopy {
   title: string;
@@ -129,7 +157,7 @@ export interface SiteContent {
   skills: SectionCopy & { groups: SkillGroup[] };
   projects: SectionCopy & ProjectsSectionCopy;
   experience: SectionCopy & { items: ExperienceItem[] };
-  contact: SectionCopy & { links: ContactLink[] };
+  contact: SectionCopy & { links: ContactLink[]; form: ContactFormCopy };
   systems: SectionCopy & { items: SystemItem[]; openLabel: string };
   engineering: SectionCopy & {
     pipelineLabel: string;
