@@ -6,7 +6,7 @@ import { Model, Types } from "mongoose";
 import type { erp } from "@portfolio/shared";
 import type { ErpSession, TokenPayload } from "../common/auth";
 import { ErpException, forbidden, invalidState, notFound } from "../common/errors";
-import { AccessRequest, ContactMessage, Invite, Order, PasswordReset, Product, User, Workspace } from "../schemas";
+import { AccessRequest, Invite, Order, PasswordReset, Product, User, Workspace } from "../schemas";
 import { dummyHash, hashPassword, hashToken, newLinkToken, safeEqual, verifyPassword } from "./password";
 
 /** Sessão de conta: 12 horas; depois, login de novo. */
@@ -47,7 +47,6 @@ export class AccountsService {
     @InjectModel(Invite.name) private readonly invites: Model<Invite>,
     @InjectModel(PasswordReset.name) private readonly resets: Model<PasswordReset>,
     @InjectModel(AccessRequest.name) private readonly requests: Model<AccessRequest>,
-    @InjectModel(ContactMessage.name) private readonly contactMessages: Model<ContactMessage>,
     @InjectModel(Workspace.name) private readonly workspaces: Model<Workspace>,
     @InjectModel(Product.name) private readonly products: Model<Product>,
     @InjectModel(Order.name) private readonly orders: Model<Order>,
@@ -240,7 +239,7 @@ export class AccountsService {
 
   async overview(): Promise<erp.OwnerOverview> {
     const now = new Date();
-    const [companies, users, blockedUsers, pendingInvites, activeDemos, recent, pendingRequests, unreadMessages] = await Promise.all([
+    const [companies, users, blockedUsers, pendingInvites, activeDemos, recent, pendingRequests] = await Promise.all([
       this.workspaces.countDocuments({ kind: "real" }),
       this.users.countDocuments(),
       this.users.countDocuments({ status: "blocked" }),
@@ -248,7 +247,6 @@ export class AccountsService {
       this.workspaces.countDocuments({ kind: { $ne: "real" }, expiresAt: { $gt: now } }),
       this.users.find({ lastLoginAt: { $exists: true } }).sort({ lastLoginAt: -1 }).limit(8).lean(),
       this.requests.countDocuments({ status: "pending" }),
-      this.contactMessages.countDocuments({ status: "new" }),
     ]);
     const names = await this.workspaceNames(recent.map((user) => user.workspaceId));
     return {
@@ -257,7 +255,6 @@ export class AccountsService {
       blockedUsers,
       pendingInvites,
       pendingRequests,
-      unreadMessages,
       activeDemos,
       demoCapacity: Number(this.config.get("ERP_MAX_WORKSPACES") ?? 300),
       lastLogins: recent.map((user) => ({ name: user.name, email: user.email, workspace: names.get(user.workspaceId.toString()) ?? "—", at: iso(user.lastLoginAt!) })),

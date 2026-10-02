@@ -655,10 +655,9 @@ describe("formulário de contato", () => {
     await visitor()({ ...valid, name: { $ne: null } }).expect(400);
     await visitor()({ ...valid, name: "Robô", website: "http://spam.example" }).expect(202);
 
-    const { body: messages } = await api(owner.token).get("/erp/owner/messages").expect(200);
+    const { body: messages } = await api(owner.token).get("/admin/messages").expect(200);
     expect(messages).toHaveLength(1);
     expect(messages[0]).toMatchObject({ kind: "freelance", name: "Marina Costa", email: "marina@exemplo.com.br", company: "Loja da Marina", status: "new", locale: "pt-BR" });
-    expect((await api(owner.token).get("/erp/owner/overview").expect(200)).body.unreadMessages).toBe(1);
   });
 
   it("limite por visitante: a quarta mensagem em uma hora é 429", async () => {
@@ -670,16 +669,16 @@ describe("formulário de contato", () => {
 
   it("só o dono lê, marca como lida e apaga", async () => {
     const demo = await newDemo();
-    await api(demo.token).get("/erp/owner/messages").expect(403);
-    await request(app.getHttpServer()).get("/erp/owner/messages").expect(401);
+    await api(demo.token).get("/admin/messages").expect(403);
+    await request(app.getHttpServer()).get("/admin/messages").expect(401);
 
-    const [message] = (await api(owner.token).get("/erp/owner/messages").expect(200)).body as { id: string }[];
-    const { body: read } = await api(owner.token).patch(`/erp/owner/messages/${message!.id}`, { status: "read" }).expect(200);
+    const [message] = (await api(owner.token).get("/admin/messages").expect(200)).body as { id: string }[];
+    const { body: read } = await api(owner.token).patch(`/admin/messages/${message!.id}`, { status: "read" }).expect(200);
     expect(read.status).toBe("read");
-    expect((await api(owner.token).get("/erp/owner/overview").expect(200)).body.unreadMessages).toBe(0);
+    expect((await api(owner.token).get("/admin/messages").expect(200)).body[0].status).toBe("read");
 
-    await api(owner.token).delete(`/erp/owner/messages/${message!.id}`).expect(204);
-    await api(owner.token).delete(`/erp/owner/messages/${message!.id}`).expect(404);
-    expect((await api(owner.token).get("/erp/owner/messages").expect(200)).body).toEqual([]);
+    await api(owner.token).delete(`/admin/messages/${message!.id}`).expect(204);
+    await api(owner.token).delete(`/admin/messages/${message!.id}`).expect(404);
+    expect((await api(owner.token).get("/admin/messages").expect(200)).body).toEqual([]);
   });
 });

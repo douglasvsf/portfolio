@@ -45,16 +45,19 @@ interface RequestOptions {
   query?: Record<string, string | number | boolean | undefined>;
   /** Sem sessão (ex.: criar a demo). */
   anonymous?: boolean;
+  /** Token explícito, no lugar da sessão do ERP (painel do site, que tem cookie próprio). */
+  token?: string;
   /** Headers extras (ex.: Idempotency-Key da venda no PDV). */
   headers?: Record<string, string>;
 }
 
-export async function erpRequest<T>(path: string, { method = "GET", body, query, anonymous, headers: extraHeaders }: RequestOptions = {}): Promise<T> {
+export async function erpRequest<T>(path: string, { method = "GET", body, query, anonymous, token, headers: extraHeaders }: RequestOptions = {}): Promise<T> {
   const url = new URL(apiUrl(path.replace(/^\//, "")));
   for (const [key, value] of Object.entries(query ?? {})) if (value !== undefined && value !== "") url.searchParams.set(key, String(value));
 
-  const session = anonymous ? null : await getSession();
-  if (!anonymous && !session) throw new ErpApiError(401, "unauthorized", "Sessão ausente — entre na demonstração");
+  const session = anonymous || token ? null : await getSession();
+  const bearer = token ?? session?.token;
+  if (!anonymous && !bearer) throw new ErpApiError(401, "unauthorized", "Sessão ausente — entre na demonstração");
 
   const ip = await clientIp();
   let response: Response;
@@ -66,7 +69,7 @@ export async function erpRequest<T>(path: string, { method = "GET", body, query,
       headers: {
         accept: "application/json",
         ...(body !== undefined ? { "content-type": "application/json" } : {}),
-        ...(session ? { authorization: `Bearer ${session.token}` } : {}),
+        ...(bearer ? { authorization: `Bearer ${bearer}` } : {}),
         ...(process.env.ERP_BFF_KEY ? { "x-bff-key": process.env.ERP_BFF_KEY } : {}),
         ...(ip ? { "x-client-ip": ip } : {}),
         ...extraHeaders,

@@ -10,7 +10,7 @@ const id = new ZodPipe(erp.objectIdSchema);
 
 /**
  * Formulário de contato do portfólio: envio público (com limite apertado por
- * visitante) e leitura só pelo dono do sistema, no painel.
+ * visitante) e leitura só pelo dono, no painel administrativo do site (/admin).
  */
 @ApiTags("Contato")
 @Controller()
@@ -27,7 +27,7 @@ export class ContactController {
     return { received: true };
   }
 
-  @Get("erp/owner/messages")
+  @Get("admin/messages")
   @ApiBearerAuth()
   @UseGuards(SessionGuard)
   @AccountOnly()
@@ -36,7 +36,7 @@ export class ContactController {
     return this.messages.list();
   }
 
-  @Patch("erp/owner/messages/:id")
+  @Patch("admin/messages/:id")
   @ApiBearerAuth()
   @UseGuards(SessionGuard)
   @AccountOnly()
@@ -46,7 +46,7 @@ export class ContactController {
     return this.messages.setStatus(messageId, body.status);
   }
 
-  @Delete("erp/owner/messages/:id")
+  @Delete("admin/messages/:id")
   @HttpCode(204)
   @ApiBearerAuth()
   @UseGuards(SessionGuard)

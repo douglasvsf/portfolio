@@ -147,10 +147,21 @@ describe("GODZILLA ERP — contas por convite", () => {
     });
     cy.get("[data-testid='contact-success']", { timeout: 20_000 }).should("contain", "Mensagem enviada!");
 
-    asVisitor();
-    login(OWNER.email, OWNER.password);
-    cy.location("pathname", { timeout: 20_000 }).should("eq", "/erp/dashboard");
-    cy.visit("/erp/admin");
+    // As mensagens ficam no painel do site (/admin), que tem login próprio — não no ERP.
+    cy.visit("/admin");
+    cy.contains("h1", "Painel do site").should("be.visible");
+    cy.contains(email).should("not.exist");
+    cy.get("input[name='email']").type(OWNER.email);
+    cy.get("input[name='password']").type("senha-errada-12345", { log: false });
+    cy.contains("button", /^Entrar$/).click();
+    cy.contains("E-mail ou senha inválidos.").should("be.visible");
+    cy.get("input[name='email']").clear().type(OWNER.email);
+    cy.get("input[name='password']").clear().type(OWNER.password, { log: false });
+    cy.contains("button", /^Entrar$/).click();
+    cy.contains("h2", "Mensagens de contato", { timeout: 20_000 }).should("be.visible");
+    cy.getCookie("admin_session").should("have.property", "httpOnly", true);
+    cy.getCookie("erp_session").should("not.exist");
+
     cy.contains("li", email).within(() => {
       cy.contains("Marina Costa").should("exist");
       cy.contains("Freelance").should("exist");
@@ -162,6 +173,10 @@ describe("GODZILLA ERP — contas por convite", () => {
       cy.contains("button", "Apagar mesmo").click();
     });
     cy.contains("li", email, { timeout: 20_000 }).should("not.exist");
+
+    cy.contains("button", "Sair").click();
+    cy.get("input[name='password']").should("be.visible");
+    cy.getCookie("admin_session").should("not.exist");
   });
 
   it("login errado mostra mensagem genérica", () => {
