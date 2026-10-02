@@ -35,4 +35,26 @@ describe("kaiju 3D", () => {
     });
     cy.then(() => expect(problems, "erros ou bloqueios").to.deep.eq([]));
   });
+
+  it("cada clique aumenta a fúria; no décimo ele carrega, solta o sopro atômico e a fúria zera", () => {
+    cy.viewport(1440, 900);
+    cy.visit("/pt-BR");
+    cy.window().then((win) => {
+      const canvas = win.document.createElement("canvas");
+      if (!(canvas.getContext("webgl2") ?? canvas.getContext("webgl"))) return;
+
+      cy.get("[data-testid='kaiju-3d']", { timeout: 30_000 }).as("kaiju").should("have.attr", "data-ready", "true");
+      cy.get("@kaiju").should("have.attr", "data-rage", "0");
+      for (let click = 1; click <= 9; click++) {
+        cy.get("@kaiju").find("canvas").click({ force: true });
+        cy.get("@kaiju").should("have.attr", "data-rage", String(click)).and("have.attr", "data-phase", "calm");
+      }
+      cy.get("@kaiju").find("canvas").click({ force: true });
+      cy.get("@kaiju").should("have.attr", "data-phase", "charging");
+      // Durante o disparo, cliques não contam.
+      cy.get("@kaiju").find("canvas").click({ force: true });
+      cy.get("@kaiju", { timeout: 6000 }).should("have.attr", "data-phase", "firing").and("have.attr", "data-rage", "10");
+      cy.get("@kaiju", { timeout: 10_000 }).should("have.attr", "data-phase", "calm").and("have.attr", "data-rage", "0");
+    });
+  });
 });

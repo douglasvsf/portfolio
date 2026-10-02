@@ -1,13 +1,20 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { useAnimations, useGLTF } from "@react-three/drei";
 import * as THREE from "three";
+import { MAX_RAGE, type RagePhase, type RageState } from "./rage";
 
 /**
  * Cena 3D do topo da home: um kaiju low-poly "respirando", com a cabeça
  * seguindo o mouse, placas dorsais em neon e uma cidade ao fundo.
+ *
+ * Fúria: cada clique o deixa mais furioso — as placas acendem da cauda ao
+ * pescoço (como no filme, quando ele carrega), o brilho vai do verde ao azul,
+ * a respiração acelera e ele treme. No 10º clique ele vira de perfil, carrega e
+ * solta o sopro atômico pela boca; depois esfria e a fúria zera. Sem cliques, a
+ * fúria baixa sozinha.
  *
  * Modelo: "T-Rex" de Quaternius (CC0), com esqueleto e animações. Tudo o que o
  * transforma em kaiju é feito aqui, por código: materiais, placas e luzes.
@@ -35,6 +42,34 @@ const PALETTE: Record<string, { color: string; emissive?: string; intensity?: nu
 /** Quadros desenhados antes de a cena substituir a imagem estática. */
 const READY_AFTER_FRAMES = 3;
 
+/** Cor do brilho no auge da fúria e do raio (azul elétrico, como no cinema). */
+const ATOMIC = "#52c8ff";
+/** No disparo ele vira quase de perfil: o raio atravessa a tela em vez de vir para a câmera. */
+const FIRE_YAW = -1.22;
+const BEAM_LENGTH = 17;
+/** Duração de cada fase do disparo, em segundos. */
+const PHASE_SECONDS = { charging: 0.9, firing: 2.4, cooling: 1.6 } as const;
+/** Sem cliques por este tempo, a fúria começa a baixar (um nível a cada DECAY_STEP). */
+const DECAY_AFTER = 3;
+const DECAY_STEP = 1.1;
+
+interface Plate {
+  material: THREE.MeshStandardMaterial;
+  /** 0 no pescoço, 1 na ponta da cauda. */
+  t: number;
+}
+
+/** Peças da cena que a fúria anima (criadas uma vez, na montagem). */
+interface Effects {
+  plates: Plate[];
+  mouth?: THREE.MeshStandardMaterial;
+  eyes?: THREE.MeshStandardMaterial;
+  beam?: THREE.Group;
+  beamCore?: THREE.Mesh;
+  beamGlow?: THREE.Mesh;
+  beamLight?: THREE.PointLight;
+}
+
 /** Espinha, do pescoço à ponta da cauda: as placas nascem ao longo dela. */
 const SPINE = ["Neck", "Shoulders", "Torso", "Hips", "Tail1", "Tail2", "Tail3", "Tail4"];
 
@@ -49,13 +84,15 @@ function usePointer() {
   return pointer;
 }
 
-function Kaiju({ onReady }: { onReady: () => void }) {
+function Kaiju({ onReady, onRage }: { onReady: () => void; onRage: (state: RageState) => void }) {
   const group = useRef<THREE.Group>(null);
   const { scene, animations } = useGLTF(MODEL_URL);
   const { actions, mixer } = useAnimations(animations, group);
   const pointer = usePointer();
   const look = useRef(new THREE.Vector2());
   const frames = useRef(0);
+  const effects = useRef<Effects>({ plates: [] });
+  const rage = useRef({ level: 0, phase: "calm" as RagePhase, phaseTime: 0, sinceClick: 0, decay: 0, yaw: BASE_YAW });
 
   const bones = useMemo(() => {
     const found: Record<string, THREE.Bone> = {};
@@ -65,17 +102,19 @@ function Kaiju({ onReady }: { onReady: () => void }) {
     return found;
   }, [scene]);
 
-  // Materiais, escala e placas dorsais: uma vez, com o modelo ainda na pose original.
+  // Materiais, escala, placas dorsais e o raio: uma vez, com o modelo ainda na pose original.
   useLayoutEffect(() => {
     const meshes: THREE.SkinnedMesh[] = [];
+    const materials: Record<string, THREE.MeshStandardMaterial> = {};
     scene.traverse((object) => {
       const mesh = object as THREE.SkinnedMesh;
-      if (!mesh.isMesh) return;
+      // Só o corpo (malhas com esqueleto): placas e raio, criados aqui, ficam de fora numa remontagem.
+      if (!mesh.isSkinnedMesh) return;
       meshes.push(mesh);
       mesh.frustumCulled = false;
       const source = mesh.material as THREE.MeshStandardMaterial;
       const style = PALETTE[source.name] ?? PALETTE.Green!;
-      mesh.material = new THREE.MeshStandardMaterial({
+      const material = new THREE.MeshStandardMaterial({
         name: source.name,
         color: style.color,
         emissive: style.emissive ?? "#000000",
@@ -84,9 +123,11 @@ function Kaiju({ onReady }: { onReady: () => void }) {
         metalness: 0.1,
         flatShading: true,
       });
+      mesh.material = material;
+      materials[source.name] = material;
     });
 
-    // Normaliza: pés no chão (y = 0), centralizado, com a altura definida.
+    // Normaliza: pés no chão (y = 0), centralizado, com o comprimento definido.
     scene.scale.setScalar(1);
     scene.position.set(0, 0, 0);
     scene.updateMatrixWorld(true);
@@ -100,7 +141,12 @@ function Kaiju({ onReady }: { onReady: () => void }) {
     // O raio das placas precisa dos ossos já posicionados (isso só acontece no primeiro quadro).
     meshes.forEach((mesh) => mesh.skeleton.update());
 
-    addDorsalPlates(scene, bones, meshes, size.y * scale);
+    effects.current = {
+      plates: addDorsalPlates(scene, bones, meshes, size.y * scale),
+      mouth: materials.Red,
+      eyes: materials.Black,
+      ...addAtomicBeam(scene, bones.Head, meshes),
+    };
   }, [scene, bones]);
 
   // Parado "respirando"; um clique faz o ataque (rugido) e volta.
@@ -126,29 +172,156 @@ function Kaiju({ onReady }: { onReady: () => void }) {
     attack.reset().setLoop(THREE.LoopOnce, 1).fadeIn(0.2).play();
   };
 
-  // Depois da animação do quadro: gira pescoço e cabeça na direção do ponteiro.
-  useFrame((state, delta) => {
+  /** Cada clique sobe a fúria; o 10º começa o disparo. Durante o disparo, cliques não contam. */
+  const provoke = (event: ThreeEvent<MouseEvent>) => {
+    // O clique atravessa a área invisível e o corpo: sem isto, contaria uma vez para cada.
+    event.stopPropagation();
+    const state = rage.current;
+    if (state.phase !== "calm") return;
+    state.level = Math.min(MAX_RAGE, state.level + 1);
+    state.sinceClick = 0;
+    state.decay = 0;
+    if (state.level === MAX_RAGE) {
+      state.phase = "charging";
+      state.phaseTime = 0;
+    }
+    roar();
+    onRage({ level: state.level, phase: state.phase });
+  };
+
+  useFrame((frame, delta) => {
     const root = group.current;
     if (!root) return;
     // Só avisa o palco depois de alguns quadros desenhados: a troca imagem → cena não pisca.
     if (frames.current < READY_AFTER_FRAMES && ++frames.current === READY_AFTER_FRAMES) onReady();
+
+    const state = rage.current;
+    const time = frame.clock.elapsedTime;
+    advanceRage(state, delta, onRage);
+
+    // 0 (calmo) a 1 (fúria máxima). Esfriando, cai de 1 a 0.
+    const cooling = state.phase === "cooling" ? state.phaseTime / PHASE_SECONDS.cooling : 0;
+    const fury = state.phase === "calm" ? state.level / MAX_RAGE : 1 - cooling;
+    const firing = state.phase === "firing";
+    const charging = state.phase === "charging";
+
+    actions["Armature|TRex_Idle"]?.setEffectiveTimeScale(1 + fury * 1.8);
+    paintFury(effects.current, fury, state.phase, time);
+    fireBeam(effects.current, firing ? state.phaseTime : -1, time);
+
+    // No disparo vira de perfil; depois volta ao 3/4.
+    const targetYaw = charging || firing ? FIRE_YAW : BASE_YAW;
+    state.yaw += (targetYaw - state.yaw) * (1 - Math.exp(-delta * 5));
+
     const ease = 1 - Math.exp(-delta * 4);
     look.current.lerp(pointer.current, ease);
+    // Furioso, ele treme; disparando, treme mais (e a câmera junto).
+    const tremor = (firing ? 0.045 : charging ? 0.03 : Math.max(0, fury - 0.4) * 0.03) * Math.sin(time * 71);
+    root.rotation.y = state.yaw + look.current.x * (firing ? 0.1 : 0.18);
+    root.position.set(tremor, Math.sin(time * 0.8) * 0.03 + Math.abs(tremor) * 0.5, 0);
+    frame.camera.position.set(CAMERA.x + (firing ? Math.sin(time * 53) * 0.035 : 0), CAMERA.y + (firing ? Math.cos(time * 47) * 0.03 : 0), CAMERA.z);
 
-    root.rotation.y = BASE_YAW + look.current.x * 0.18;
-    root.position.y = Math.sin(state.clock.elapsedTime * 0.8) * 0.03;
-
-    const yaw = look.current.x * 0.55;
-    const pitch = -look.current.y * 0.3;
+    // Depois da animação do quadro: pescoço e cabeça seguem o ponteiro (no disparo, levanta um pouco o focinho).
+    const yaw = look.current.x * (firing ? 0.25 : 0.55);
+    const pitch = -look.current.y * 0.3 - (charging || firing ? 0.12 : 0);
     turnBone(bones.Neck, root, yaw * 0.4, pitch * 0.4);
     turnBone(bones.Head, root, yaw * 0.6, pitch * 0.6);
   });
 
   return (
-    <group ref={group} rotation-y={BASE_YAW} onClick={roar}>
+    <group
+      ref={group}
+      rotation-y={BASE_YAW}
+      onClick={provoke}
+      // O canvas é largo: a "mãozinha" só aparece em cima do kaiju.
+      onPointerOver={(event) => ((event.nativeEvent.target as HTMLElement).style.cursor = "pointer")}
+      onPointerOut={(event) => ((event.nativeEvent.target as HTMLElement).style.cursor = "")}
+    >
       <primitive object={scene} />
+      {/* Área de clique folgada e invisível: ele se mexe ao rugir, e o clique não pode errar por isso. */}
+      <mesh position={[0, KAIJU_LENGTH * 0.24, 0]}>
+        <boxGeometry args={[KAIJU_LENGTH * 0.42, KAIJU_LENGTH * 0.52, KAIJU_LENGTH * 1.05]} />
+        <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+      </mesh>
     </group>
   );
+}
+
+/** Posição da câmera: enquadra o kaiju inteiro, de baixo para cima (parece maior). */
+const CAMERA = new THREE.Vector3(0.4, 1.35, 10.5);
+
+/** Avança o tempo da fúria: fases do disparo e a queda quando param os cliques. */
+function advanceRage(state: { level: number; phase: RagePhase; phaseTime: number; sinceClick: number; decay: number }, delta: number, notify: (state: RageState) => void) {
+  if (state.phase === "calm") {
+    state.sinceClick += delta;
+    if (state.level > 0 && state.sinceClick > DECAY_AFTER) {
+      state.decay += delta;
+      if (state.decay >= DECAY_STEP) {
+        state.decay = 0;
+        state.level -= 1;
+        notify({ level: state.level, phase: "calm" });
+      }
+    }
+    return;
+  }
+  state.phaseTime += delta;
+  if (state.phaseTime < PHASE_SECONDS[state.phase]) return;
+  state.phaseTime = 0;
+  state.phase = state.phase === "charging" ? "firing" : state.phase === "firing" ? "cooling" : "calm";
+  if (state.phase === "calm") {
+    state.level = 0;
+    state.sinceClick = 0;
+  }
+  notify({ level: state.level, phase: state.phase });
+}
+
+const GREEN = new THREE.Color("#6fdd16");
+const BLUE = new THREE.Color(ATOMIC);
+const WHITE = new THREE.Color("#ffffff");
+const glow = new THREE.Color();
+
+/**
+ * Pinta a fúria no corpo. As placas acendem da cauda ao pescoço conforme o
+ * nível sobe, com uma onda correndo por elas; boca e olhos acompanham.
+ */
+function paintFury(effects: Effects, fury: number, phase: RagePhase, time: number) {
+  glow.copy(GREEN).lerp(BLUE, fury ** 1.4);
+  if (phase === "charging") glow.lerp(WHITE, 0.35 + 0.35 * Math.sin(time * 40));
+
+  for (const plate of effects.plates) {
+    const lit = fury > 0 && plate.t >= 1 - fury - 0.001;
+    const wave = Math.sin(time * (4 + fury * 14) + plate.t * 7);
+    // Brilho contido: acima disso a cor estoura para o branco e o azul some.
+    const intensity = phase === "cooling" && fury < 0.5 ? 0.35 + fury : lit ? 1.5 + fury * 0.9 + wave * (0.15 + fury * 0.35) : 1.1;
+    plate.material.emissive.copy(lit ? glow : GREEN);
+    plate.material.color.copy(lit ? glow : GREEN).multiplyScalar(0.35);
+    plate.material.emissiveIntensity = phase === "firing" ? 2.9 + wave * 0.5 : intensity;
+  }
+  for (const [material, base] of [
+    [effects.mouth, 1.6],
+    [effects.eyes, 2.2],
+  ] as const) {
+    if (!material) continue;
+    material.emissive.copy(glow);
+    material.emissiveIntensity = base + fury * 1.6 + (phase === "firing" ? 1.5 : 0);
+  }
+}
+
+/** Sopro atômico: cresce a partir da boca, tremula enquanto dura e some no fim. `elapsed < 0` = desligado. */
+function fireBeam(effects: Effects, elapsed: number, time: number) {
+  const { beam, beamCore, beamGlow, beamLight } = effects;
+  if (!beam || !beamCore || !beamGlow || !beamLight) return;
+  beam.visible = elapsed >= 0;
+  if (elapsed < 0) return;
+
+  const grow = Math.min(1, elapsed / 0.16);
+  const fade = Math.min(1, (PHASE_SECONDS.firing - elapsed) / 0.3);
+  const flicker = 1 + 0.16 * Math.sin(time * 67) + 0.08 * Math.sin(time * 151);
+  beamCore.scale.set(flicker, flicker, BEAM_LENGTH * grow);
+  beamGlow.scale.set(flicker * 1.15, flicker * 1.15, BEAM_LENGTH * grow);
+  (beamCore.material as THREE.MeshBasicMaterial).opacity = 0.95 * fade;
+  (beamGlow.material as THREE.MeshBasicMaterial).opacity = 0.3 * fade * flicker;
+  beamLight.intensity = 90 * fade * flicker;
 }
 
 const UP = new THREE.Vector3();
@@ -191,10 +364,17 @@ function turnBone(bone: THREE.Bone | undefined, body: THREE.Object3D, yaw: numbe
  * para baixo acha a superfície das costas; a placa nasce ali e é presa ao osso
  * mais próximo — então acompanha a respiração e o ataque.
  */
-function addDorsalPlates(scene: THREE.Object3D, bones: Record<string, THREE.Bone>, meshes: THREE.SkinnedMesh[], bodyHeight: number) {
-  if (scene.getObjectByName("dorsal-plate-0")) return;
+function addDorsalPlates(scene: THREE.Object3D, bones: Record<string, THREE.Bone>, meshes: THREE.SkinnedMesh[], bodyHeight: number): Plate[] {
+  // O modelo fica em cache entre montagens: se as placas já existem, só as reaproveita.
+  const existing: Plate[] = [];
+  scene.traverse((object) => {
+    if (object.name.startsWith("dorsal-plate")) existing.push({ material: (object as THREE.Mesh).material as THREE.MeshStandardMaterial, t: object.userData.t as number });
+  });
+  if (existing.length) return existing;
+
+  const plates: Plate[] = [];
   const chain = SPINE.map((name) => bones[name]).filter((bone): bone is THREE.Bone => Boolean(bone));
-  if (chain.length < 2) return;
+  if (chain.length < 2) return plates;
 
   const material = new THREE.MeshStandardMaterial({ color: "#2c4a12", emissive: "#6fdd16", emissiveIntensity: 1.25, roughness: 0.45, flatShading: true });
   const geometry = new THREE.ConeGeometry(0.5, 1, 4, 1);
@@ -218,8 +398,12 @@ function addDorsalPlates(scene: THREE.Object3D, bones: Record<string, THREE.Bone
 
       // Maiores no meio das costas, menores no pescoço e na ponta da cauda.
       const height = bodyHeight * (0.07 + 0.2 * Math.sin(Math.PI * Math.min(1, t * 1.25)) ** 1.4);
-      const plate = new THREE.Mesh(geometry, material);
+      // Material próprio: cada placa acende na sua vez quando ele carrega o sopro.
+      const plateMaterial = material.clone();
+      const plate = new THREE.Mesh(geometry, plateMaterial);
       plate.name = `dorsal-plate-${index++}`;
+      plate.userData.t = t;
+      plates.push({ material: plateMaterial, t });
       plate.position.copy(hit.point).addScaledVector(down, height * 0.12);
       plate.scale.set(height * 0.16, height, height * 0.62);
       // Fina de lado e larga ao longo da espinha: alinha com o corpo (que pode estar girado).
@@ -231,6 +415,66 @@ function addDorsalPlates(scene: THREE.Object3D, bones: Record<string, THREE.Bone
       chain[segment]!.attach(plate);
     }
   }
+  return plates;
+}
+
+/**
+ * Sopro atômico preso à cabeça: um núcleo branco-azulado dentro de um halo
+ * azul, com mistura aditiva (soma luz, como um feixe de verdade) e uma luz na
+ * boca. Nasce no interior da boca, apontando para a frente do kaiju; por estar
+ * preso ao osso, acompanha a cabeça — e o mouse.
+ */
+function addAtomicBeam(scene: THREE.Object3D, head: THREE.Bone | undefined, meshes: THREE.SkinnedMesh[]): Pick<Effects, "beam" | "beamCore" | "beamGlow" | "beamLight"> {
+  const cached = scene.getObjectByName("atomic-beam") as THREE.Group | undefined;
+  if (cached) {
+    return {
+      beam: cached,
+      beamCore: cached.getObjectByName("atomic-beam-core") as THREE.Mesh,
+      beamGlow: cached.getObjectByName("atomic-beam-glow") as THREE.Mesh,
+      beamLight: cached.getObjectByName("atomic-beam-light") as THREE.PointLight,
+    };
+  }
+  const mouth = meshes.find((mesh) => (mesh.material as THREE.Material).name === "Red");
+  if (!head || !mouth) return {};
+
+  // Centro do interior da boca e a direção "para a frente" do modelo.
+  mouth.computeBoundingBox();
+  const mouthBox = mouth.boundingBox!.clone().applyMatrix4(mouth.matrixWorld);
+  const orientation = scene.getWorldQuaternion(new THREE.Quaternion());
+  const forward = new THREE.Vector3(0, 0, 1).applyQuaternion(orientation);
+  const origin = mouthBox.getCenter(new THREE.Vector3()).addScaledVector(forward, mouthBox.getSize(new THREE.Vector3()).z * 0.35);
+
+  const beamMaterial = (color: string) =>
+    new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, fog: false, toneMapped: false, side: THREE.DoubleSide });
+  // Cilindro ao longo de +Z, da boca (z = 0) até z = 1; o comprimento vem da escala.
+  const tube = (near: number, far: number) => {
+    const geometry = new THREE.CylinderGeometry(far, near, 1, 14, 1, true);
+    geometry.rotateX(Math.PI / 2);
+    geometry.translate(0, 0, 0.5);
+    return geometry;
+  };
+
+  const beam = new THREE.Group();
+  beam.name = "atomic-beam";
+  beam.visible = false;
+  const beamCore = new THREE.Mesh(tube(0.05, 0.17), beamMaterial("#eafaff"));
+  beamCore.name = "atomic-beam-core";
+  const beamGlow = new THREE.Mesh(tube(0.13, 0.5), beamMaterial(ATOMIC));
+  beamGlow.name = "atomic-beam-glow";
+  const beamLight = new THREE.PointLight(ATOMIC, 0, 12);
+  beamLight.name = "atomic-beam-light";
+  beamLight.position.set(0, 0, 0.6);
+  for (const part of [beamCore, beamGlow]) {
+    part.frustumCulled = false;
+    part.renderOrder = 2;
+  }
+  beam.add(beamCore, beamGlow, beamLight);
+
+  beam.position.copy(origin);
+  beam.quaternion.copy(orientation);
+  beam.updateMatrixWorld(true);
+  head.attach(beam);
+  return { beam, beamCore, beamGlow, beamLight };
 }
 
 /** Gerador determinístico: a cidade é sempre a mesma. */
@@ -298,24 +542,22 @@ function City() {
   );
 }
 
-/** Enquadra o kaiju inteiro, de baixo para cima (parece maior). */
 function Rig() {
   const { camera } = useThree();
   useLayoutEffect(() => {
-    camera.position.set(0.4, 1.35, 10.5);
+    camera.position.copy(CAMERA);
     camera.lookAt(0, 1.45, 0);
   }, [camera]);
   return null;
 }
 
-export default function KaijuScene({ active, onReady }: { active: boolean; onReady: () => void }) {
+export default function KaijuScene({ active, onReady, onRage }: { active: boolean; onReady: () => void; onRage: (state: RageState) => void }) {
   return (
     <Canvas
       dpr={[1, 1.5]}
       frameloop={active ? "always" : "never"}
       gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
       camera={{ fov: 30, near: 0.1, far: 40 }}
-      style={{ cursor: "pointer" }}
     >
       <Rig />
       <fog attach="fog" args={[BACKGROUND, 13, 24]} />
@@ -324,7 +566,7 @@ export default function KaijuScene({ active, onReady }: { active: boolean; onRea
       {/* Contraluz verde: recorta a silhueta, como na ilustração original. */}
       <pointLight position={[2.5, 3.2, -3]} intensity={60} color={NEON} distance={14} />
       <pointLight position={[-2.5, 2.4, 1.5]} intensity={14} color={NEON} distance={9} />
-      <Kaiju onReady={onReady} />
+      <Kaiju onReady={onReady} onRage={onRage} />
       <City />
     </Canvas>
   );
