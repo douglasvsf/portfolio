@@ -154,14 +154,34 @@ const SIDE = new THREE.Vector3();
 const parentQuaternion = new THREE.Quaternion();
 const turn = new THREE.Quaternion();
 
-/** Soma uma rotação (em eixos do corpo do kaiju) ao osso já animado. */
+/** Pose que a animação deixou em cada osso e o resultado do último quadro (com o olhar somado). */
+const poses = new WeakMap<THREE.Bone, { base: THREE.Quaternion; result: THREE.Quaternion }>();
+
+/**
+ * Vira o osso na direção do olhar, sempre a partir da pose da animação.
+ *
+ * O three só reescreve um osso quando o valor da animação muda; no "parado" a
+ * cabeça quase não se mexe. Somar a rotação direto no osso a cada quadro
+ * acumulava — a cabeça girava sem parar. Então: se o osso está como deixamos
+ * no quadro anterior, a animação não mexeu e a base continua a mesma; se mudou,
+ * a animação escreveu e essa é a base nova.
+ */
 function turnBone(bone: THREE.Bone | undefined, body: THREE.Object3D, yaw: number, pitch: number) {
   if (!bone?.parent) return;
+  let pose = poses.get(bone);
+  if (!pose) {
+    pose = { base: bone.quaternion.clone(), result: bone.quaternion.clone() };
+    poses.set(bone, pose);
+  }
+  if (!bone.quaternion.equals(pose.result)) pose.base.copy(bone.quaternion);
+
   bone.parent.getWorldQuaternion(parentQuaternion).invert();
   UP.set(0, 1, 0).applyQuaternion(parentQuaternion);
   SIDE.set(1, 0, 0).applyQuaternion(body.quaternion).applyQuaternion(parentQuaternion);
+  bone.quaternion.copy(pose.base);
   bone.quaternion.premultiply(turn.setFromAxisAngle(UP, yaw));
   bone.quaternion.premultiply(turn.setFromAxisAngle(SIDE, pitch));
+  pose.result.copy(bone.quaternion);
 }
 
 /**
