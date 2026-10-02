@@ -49,6 +49,8 @@ export async function generateMetadata({ params }: LayoutProps<"/[lang]">): Prom
       url: `/${lang}`,
       type: "website",
     },
+    // Cartão grande no X/Twitter (a imagem vem do opengraph-image da rota).
+    twitter: { card: "summary_large_image" },
   };
 }
 

@@ -12,15 +12,25 @@ import { EngineeringSection } from "@/components/sections/engineering-section";
 import { ScrollProgress } from "@/components/motion/motion";
 import { SECTION_IDS, getContent } from "@/content";
 import { isLocale } from "@/i18n/config";
+import { JsonLd, homeJsonLd } from "@/lib/seo/json-ld";
 
 export default async function Home({ params }: PageProps<"/[lang]">) {
   const { lang } = await params;
   if (!isLocale(lang)) notFound();
 
-  const { nav, hero, about, skills, projects, experience, contact, systems, engineering, footer } = getContent(lang);
+  const { meta, nav, hero, about, skills, projects, experience, contact, systems, engineering, footer } = getContent(lang);
 
   return (
     <>
+      <JsonLd
+        data={homeJsonLd({
+          locale: lang,
+          // "Douglas Szapak — Engenheiro de Software Full Stack Sênior" → só o cargo.
+          jobTitle: meta.title.split(" — ")[1] ?? hero.subtitle,
+          description: meta.description,
+          knowsAbout: skills.groups.flatMap((group) => group.items),
+        })}
+      />
       <ScrollProgress />
       <SiteHeader
         brand={nav.brand}

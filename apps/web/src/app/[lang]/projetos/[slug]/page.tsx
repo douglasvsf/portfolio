@@ -8,6 +8,7 @@ import { getContent } from "@/content";
 import { CASE_IDS, adjacentCases, getProject } from "@/content/projects";
 import { DEFAULT_LOCALE, isLocale, locales, type Locale } from "@/i18n/config";
 import { fmt } from "@/i18n/message";
+import { JsonLd, caseJsonLd } from "@/lib/seo/json-ld";
 
 /** Só os cases existentes: qualquer outro slug vira 404. */
 export const dynamicParams = false;
@@ -49,6 +50,7 @@ export async function generateMetadata({ params }: PageProps<"/[lang]/projetos/[
       url: path(loaded.lang),
       locale: loaded.lang.replace("-", "_"),
     },
+    twitter: { card: "summary_large_image" },
   };
 }
 
@@ -64,6 +66,16 @@ export default async function ProjectCasePage({ params }: PageProps<"/[lang]/pro
 
   return (
     <>
+      <JsonLd
+        data={caseJsonLd({
+          locale: loaded.lang,
+          slug,
+          title: loaded.project.title,
+          summary: loaded.project.summary,
+          technologies: loaded.project.technologies,
+          company: loaded.project.company,
+        })}
+      />
       <ScrollProgress />
       <SiteHeader brand={nav.brand} brandHref={`/${loaded.lang}`} links={links} locale={loaded.lang} skipToContent={nav.skipToContent} />
       <main id="content" className="relative flex-1">
