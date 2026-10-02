@@ -76,7 +76,8 @@ export class ContactService {
     const to = this.config.get<string>("CONTACT_NOTIFY_EMAIL");
     if (!key || !to) return;
     try {
-      const response = await fetch("https://api.resend.com/emails", {
+      // Tipo explícito: o `Response` global muda conforme o ambiente que confere os tipos (o build da Vercel não vê `ok`/`status`).
+      const response: { ok: boolean; status: number } = await (fetch as (url: string, init: object) => Promise<{ ok: boolean; status: number }>)("https://api.resend.com/emails", {
         method: "POST",
         signal: AbortSignal.timeout(NOTIFY_TIMEOUT_MS),
         headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
