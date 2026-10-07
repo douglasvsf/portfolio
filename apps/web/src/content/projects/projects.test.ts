@@ -78,7 +78,7 @@ describe("projetos — dados", () => {
 describe("projetos — navegação entre cases", () => {
   it("CASE_IDS são os projetos com case (todos os profissionais e o ERP), na ordem da página", () => {
     expect(CASE_IDS).toEqual(PROJECT_DATA.filter((project) => project.hasCase).map((project) => project.id));
-    expect(CASE_IDS).toEqual(expect.arrayContaining([...PROJECT_DATA.filter((project) => project.category === "professional").map((project) => project.id), "godzilla-erp"]));
+    expect(CASE_IDS).toEqual(expect.arrayContaining([...PROJECT_DATA.filter((project) => project.category === "professional").map((project) => project.id), "godzilla-erp", "godzilla-pay"]));
   });
 
   it("anterior/próximo nas pontas e no meio", () => {

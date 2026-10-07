@@ -12,22 +12,25 @@ describe("Projetos", () => {
       cy.contains("Engineering snapshot").should("be.visible");
       cy.contains("dd", "400K+").should("exist");
 
-      cy.get("article").should("have.length", 8);
+      cy.get("article").should("have.length", 9);
       cy.contains("button", "Todos").should("have.attr", "aria-pressed", "true");
 
       cy.contains("button", "Pessoais").click().should("have.attr", "aria-pressed", "true");
-      cy.get("article").should("have.length", 4);
+      cy.get("article").should("have.length", 5);
       cy.contains("h3", "Profissionais").should("not.exist");
       cy.contains("article", "GODZILLA ERP").find("a").contains("Abrir").should("have.attr", "href", "/erp");
       cy.contains("article", "Kaiju Stocks").find("a").contains("Abrir").should("have.attr", "href", "/stocks");
+      cy.contains("article", "GODZILLA Pay").find("a").contains("Abrir").should("have.attr", "href", "/pay");
 
       cy.contains("button", "Frontend").click();
       cy.get("article").should("have.length", 2);
       cy.contains("article", "Plataforma de mercado de capitais").should("exist");
       cy.contains("article", "GODZILLA UI").should("exist");
 
-      // Nenhum projeto é só back-end: o filtro nem aparece.
-      cy.contains("button", "Backend").should("not.exist");
+      // O GODZILLA Pay é o projeto de back-end: o filtro aparece e mostra só ele.
+      cy.contains("button", "Backend").click();
+      cy.get("article").should("have.length", 1);
+      cy.contains("article", "GODZILLA Pay").should("exist");
 
       cy.contains("button", "Profissionais").click();
       cy.get("article").should("have.length", 4);

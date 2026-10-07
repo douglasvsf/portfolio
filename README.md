@@ -22,6 +22,7 @@ padrão de testes, CI, segurança e observabilidade que uso no trabalho.
 |---|---|---|
 | **Portfólio** | [`/pt-BR`](https://douglas-szapak.vercel.app/pt-BR) · `/en-US` · `/es-ES` | Cases de engenharia, i18n, SEO (imagem de compartilhamento e dados estruturados por página), currículo em PDF gerado do próprio conteúdo, kaiju 3D interativo |
 | **GODZILLA ERP** | [`/erp`](https://douglas-szapak.vercel.app/erp) | Mini-ERP de mercado: API NestJS + MongoDB, estoque com livro-razão, pedidos em transação, frente de caixa (PDV), contas por convite e painel do dono |
+| **GODZILLA Pay** | [`/pay`](https://douglas-szapak.vercel.app/pay) | Gateway Pix de demonstração: API NestJS + PostgreSQL, BR Code do Banco Central, livro-caixa de partidas dobradas, idempotência e webhooks assinados com novas tentativas |
 | **Kaiju Stocks** | [`/stocks`](https://douglas-szapak.vercel.app/stocks) | Cotações da B3 e cripto, carteira com preço médio, proventos, comparação com o CDI e importação da planilha da B3 |
 | **GODZILLA Spotify Stats** | [`/spotify`](https://douglas-szapak.vercel.app/spotify) | OAuth (Authorization Code + PKCE), sessão em cookie cifrado, Spotify e Last.fm — [documentação](docs/godzilla-spotify-stats.md) |
 | **Design System** | [`/design-system`](https://douglas-szapak.vercel.app/design-system) | Storybook do `@godzilla/ui`: Atomic Design, tokens, acessibilidade, i18n — [documentação](docs/design-system.md) |
@@ -82,6 +83,23 @@ Cada item aponta para o código que o sustenta.
 - **Backup criptografado** — só os dados de verdade, AES-256-GCM, agendado num
   repositório privado ([erp-backup.cjs](apps/api/scripts/erp-backup.cjs)).
 
+**GODZILLA Pay**
+
+- **Partidas dobradas garantidas pelo banco** — um trigger de restrição adiado
+  recusa, no COMMIT, qualquer transação desbalanceada; lançamento não se altera nem
+  se apaga ([migrations.ts](apps/api/src/pay/migrations.ts)).
+- **Concorrência** — pagar e estornar travam as linhas com `FOR NO KEY UPDATE` em
+  ordem fixa; 15 confirmações do mesmo Pix e 10 estornos simultâneos são testados
+  ([charges.service.ts](apps/api/src/pay/charges.service.ts)).
+- **Idempotência na mesma transação** do trabalho, com repetição simultânea
+  esperando a resposta gravada ([idempotency.ts](apps/api/src/pay/idempotency.ts)).
+- **Webhooks** — outbox no próprio Postgres, `FOR UPDATE SKIP LOCKED`, assinatura
+  HMAC e novas tentativas com espera crescente
+  ([webhooks.service.ts](apps/api/src/pay/webhooks.service.ts)).
+- **Proteção contra SSRF** nas URLs de webhook, com o IP conferido depois do DNS
+  ([safe-http.ts](apps/api/src/pay/safe-http.ts)).
+- **Pix no padrão EMV** do Banco Central, com CRC16 ([brcode.ts](apps/api/src/pay/brcode.ts)).
+
 **Segurança**
 
 - Content Security Policy e cabeçalhos de segurança no site
@@ -133,14 +151,15 @@ pnpm build && pnpm --filter web test:e2e:ci # build de produção + Cypress
 
 ```
 apps/
-  web/          Next.js 16 (App Router): portfólio, /erp, /stocks, /spotify
-    src/app/          rotas — [lang]/ (portfólio), erp/, stocks/, spotify/, api/
+  web/          Next.js 16 (App Router): portfólio, /erp, /pay, /stocks, /spotify
+    src/app/          rotas — [lang]/ (portfólio), erp/, pay/, admin/, stocks/, spotify/, api/
     src/components/   seções, kaiju 3D, telas do ERP, Stocks e Spotify
     src/content/      textos do site nos 3 idiomas (tipados)
     src/lib/          lógica testada: erp (BFF), seo, cv, http, spotify, stocks…
     cypress/e2e/      fluxos de ponta a ponta
-  api/          NestJS 11 + Mongoose: API do ERP
+  api/          NestJS 11: API do ERP (Mongoose) e do Pay (PostgreSQL, SQL puro)
     src/erp/          catálogo, estoque, pedidos, PDV, dashboard, contas, seed da demo
+    src/pay/          cobranças Pix, livro-caixa, idempotência, webhooks, migrações SQL
     scripts/          servidor de E2E (Mongo em memória) e backup
   storybook/    documentação viva do Design System
   playground/   app Vite consumindo @godzilla/ui como um projeto externo
@@ -163,8 +182,8 @@ pnpm dev:web          # site em http://localhost:3000
 ```
 
 O portfólio, o Kaiju Stocks e o Spotify Stats (em modo demo) funcionam só com o
-site. Para o **ERP**, suba a API com um MongoDB em memória — ele já vem com
-replica set, que as transações exigem:
+site. Para o **ERP** e o **Pay**, suba a API com um MongoDB em memória (já com
+replica set, que as transações exigem) e um PostgreSQL embutido — sem Docker:
 
 ```bash
 pnpm --filter api e2e:server   # API em http://localhost:3001 (Swagger em /docs)
@@ -194,6 +213,7 @@ Os `.env.example` de cada app documentam todas. As principais:
 | api | `MONGODB_URI` | banco |
 | api | `ERP_JWT_SECRET`, `ERP_BFF_KEY` | assinatura dos tokens e chave do BFF |
 | api | `ERP_SETUP_TOKEN` | cria a conta do dono do sistema, uma única vez |
+| api | `PAY_DATABASE_URL` | PostgreSQL do Pay (a integração Neon da Vercel cria a variável sozinha) |
 
 Segredos ficam só em `.env.local`/`.env` (ignorados pelo git) e nas variáveis da
 Vercel — nunca com prefixo `NEXT_PUBLIC_`.
@@ -208,12 +228,13 @@ pnpm --filter web cypress:open    # Cypress interativo (com o site no ar)
 ```
 
 - **Jest na API** — o app real, com a mesma configuração de produção, contra um
-  MongoDB em memória: concorrência (duas confirmações simultâneas), isolamento
-  entre empresas, permissões, idempotência, contas e tentativas de ataque.
+  MongoDB em memória e um PostgreSQL embutido: concorrência (confirmações e
+  estornos simultâneos), isolamento entre empresas e lojas, permissões,
+  idempotência, regras do livro-caixa, webhooks, contas e tentativas de ataque.
 - **Jest no site** — a camada BFF do ERP, contratos das APIs externas, máscaras,
   regras do caixa, geração do currículo e dos dados estruturados.
 - **Cypress** — o que só o navegador prova: fluxo completo do ERP (da demo ao
-  cupom do PDV), contas por convite, troca de idioma, kaiju 3D, página 404,
+  cupom do PDV) e do Pay (do Pix ao reenvio de webhook), contas por convite, troca de idioma, kaiju 3D, página 404,
   cabeçalhos de segurança e ausência de bloqueios da CSP.
 
 ## Deploy

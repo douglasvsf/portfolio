@@ -231,6 +231,64 @@ export const enUS: ProjectsCopy = {
         ],
       },
     },
+    "godzilla-pay": {
+      title: "GODZILLA Pay",
+      summary:
+        "A demo Pix payment gateway with a NestJS + PostgreSQL API: charges with BR Codes in the Brazilian Central Bank standard, a double-entry ledger enforced by the database, idempotency and signed webhooks with retries.",
+      case: {
+        context: "After the ERP, the portfolio was missing a system where the back end is the main character, on a topic that comes up in every fintech interview: payments. GODZILLA Pay is a demo Pix gateway — every visitor gets a test store with an API key and integrates the way a merchant would.",
+        challenge: "Moving money calls for guarantees that can't rely on application code alone: no Pix paid twice, no refund above what was paid, no negative balance — even with concurrent requests, flaky networks and double clicks. And reliably notifying the merchant when the webhook endpoint is down. All on free tiers (Vercel and Neon).",
+        role: [
+          "NestJS REST API on PostgreSQL with hand-written SQL, no ORM: stores, API keys, charges, refunds, ledger and webhooks, documented in Swagger.",
+          "Pix in the Central Bank EMV standard: BR Code (copy and paste) with CRC16 and a server-rendered QR code.",
+          "Double-entry ledger: the balance is computed from entries, and the database rejects any unbalanced transaction at COMMIT.",
+          "Webhooks queued in Postgres itself, HMAC signatures, retries with growing backoff, manual resend and an inspector that verifies the signature.",
+          "Next.js screens (BFF) with the API key in an httpOnly cookie, to try the whole flow without writing code.",
+          "Tests against a real embedded PostgreSQL, no Docker, including concurrency — 15 simultaneous confirmations of the same Pix and 10 concurrent refunds — running in CI.",
+        ],
+        architecture: [
+          { label: "Browser", detail: "React screens" },
+          { label: "Next.js (BFF)", detail: "server actions · httpOnly cookie" },
+          { label: "NestJS API", detail: "API key · idempotency · Swagger" },
+          { label: "PostgreSQL (Neon)", detail: "ledger · webhook queue" },
+        ],
+        result: "Live at /pay, with the public API in Swagger. Visitors create a store in seconds, generate a Pix, simulate the payment, refund it and follow every ledger entry and webhook — including simulating the endpoint being down.",
+        decisions: [
+          {
+            title: "Double entry enforced by the database",
+            description: "Payments and refunds become debit and credit entries. A deferred constraint trigger checks at COMMIT that every transaction sums to zero, and entries can't be updated or deleted. Not even an application bug can write crooked money.",
+          },
+          {
+            title: "Concurrency without deadlocks",
+            description: "Paying and refunding lock rows with FOR NO KEY UPDATE, always in the same order (store, then charge). FOR UPDATE deadlocked against the lock the idempotency foreign key had already taken — the concurrency test caught it before production.",
+          },
+          {
+            title: "Idempotency in the same transaction",
+            description: "The Idempotency-Key is written in the same transaction as the work. A concurrent retry waits, finds the stored response and returns it unchanged; if the work fails, the ROLLBACK takes the key with it. The same key with a different body is rejected.",
+          },
+          {
+            title: "Outbox and SKIP LOCKED",
+            description: "The event is queued in the same transaction that changes the charge: if it was paid, the webhook exists. Several workers take deliveries with FOR UPDATE SKIP LOCKED and never the same one; on failure, retries after 30 s, 2 min, 10 min, 1 h and 6 h.",
+          },
+          {
+            title: "Signed webhooks",
+            description: "Each delivery carries a Godzilla-Signature header with a timestamp and the HMAC-SHA256 of the body. The receiver checks it in constant time and rejects stale signatures — protecting against forged or replayed events.",
+          },
+          {
+            title: "SSRF protection",
+            description: "Webhook URLs must be public https on port 443. The IP is checked after DNS resolution, on the connection itself: domains pointing to the internal network or cloud metadata are rejected, DNS rebinding included.",
+          },
+          {
+            title: "API keys treated like passwords",
+            description: "The gz_test_ key is shown only once; the database keeps the prefix and a SHA-256. Rate limiting counts per key, and the test store disappears after 24 hours, cascading everything it owns.",
+          },
+          {
+            title: "Real PostgreSQL in tests",
+            description: "Tests start an embedded PostgreSQL, no Docker, in CI too: concurrency, database rules and the full Cypress flow of the site run on the same engine as production.",
+          },
+        ],
+      },
+    },
     "kaiju-stocks": {
       title: "Kaiju Stocks",
       summary:

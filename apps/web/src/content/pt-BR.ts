@@ -216,6 +216,7 @@ export const ptBR: SiteContent = {
     openLabel: "Abrir",
     items: systemItems({
       erp: "Mini-ERP de mercado com API em NestJS e MongoDB: produtos, estoque com livro-razão, clientes, pedidos que baixam o estoque em transação, frente de caixa (PDV) com código de barras, dashboard e papéis de acesso. Cada visitante ganha a própria empresa demo.",
+      pay: "Gateway Pix de demonstração com API em NestJS e PostgreSQL: cobranças com QR Code no padrão do Banco Central, pagamento simulado, estornos, livro-caixa de partidas dobradas e webhooks assinados com novas tentativas. Cada visitante ganha uma loja de teste com chave de API.",
       spotify: "Dashboard de estatísticas musicais com OAuth da Spotify, Last.fm e vitrine ao vivo: top artistas, músicas, gêneros e o que está tocando agora.",
       stocks: "Cotações da B3 em tempo quase real, histórico com gráficos e uma carteira com preço médio, proventos, comparação com o CDI e importação da planilha da B3.",
       designSystem: "A biblioteca de componentes que dá cara a todos os sistemas — Atomic Design, acessível, com i18n e documentada no Storybook.",

@@ -33,7 +33,7 @@ export function navLinks(labels: Record<(typeof NAV_SECTIONS)[number], string>) 
  * Sistemas publicados junto com o site (seção "Produtos"). Nome, link, prévia
  * e tags são iguais em todos os idiomas — cada idioma só fornece a descrição.
  */
-export function systemItems(descriptions: Record<"erp" | "spotify" | "stocks" | "designSystem", string>) {
+export function systemItems(descriptions: Record<"erp" | "pay" | "spotify" | "stocks" | "designSystem", string>) {
   return [
     {
       name: "GODZILLA ERP",
@@ -41,6 +41,13 @@ export function systemItems(descriptions: Record<"erp" | "spotify" | "stocks" | 
       image: "/images/systems/erp.webp",
       description: descriptions.erp,
       tags: ["NestJS", "MongoDB", "Next.js", "Zod", "Swagger"],
+    },
+    {
+      name: "GODZILLA Pay",
+      href: PAY_LINK.href,
+      image: "/images/systems/pay.webp",
+      description: descriptions.pay,
+      tags: ["NestJS", "PostgreSQL", "SQL", "Pix", "Webhooks"],
     },
     {
       name: "GODZILLA Spotify Stats",
@@ -107,6 +114,9 @@ export function contactLinks(emailLabel: string) {
 
 /** GODZILLA ERP — mini-ERP de mercado com API em NestJS (ver src/app/erp e apps/api). */
 export const ERP_LINK = { label: "GODZILLA ERP", href: "/erp" };
+
+/** GODZILLA Pay — gateway Pix de demonstração com API em NestJS e PostgreSQL (ver src/app/pay e apps/api/src/pay). */
+export const PAY_LINK = { label: "GODZILLA Pay", href: "/pay" };
 
 /** GODZILLA Spotify Stats — dashboard de estatísticas musicais (ver src/app/spotify). */
 export const SPOTIFY_LINK = { label: "Spotify Stats", href: "/spotify" };

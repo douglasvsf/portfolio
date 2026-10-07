@@ -216,6 +216,7 @@ export const enUS: SiteContent = {
     openLabel: "Open",
     items: systemItems({
       erp: "A grocery-store mini-ERP with a NestJS + MongoDB API: products, stock ledger, customers, orders that deduct stock in a transaction, a barcode-driven point of sale, a dashboard and access roles. Every visitor gets their own demo company.",
+      pay: "A demo Pix payment gateway with a NestJS + PostgreSQL API: charges with QR codes in the Brazilian Central Bank standard, simulated payments, refunds, a double-entry ledger and signed webhooks with retries. Every visitor gets a test store with its own API key.",
       spotify: "Music stats dashboard with Spotify OAuth, Last.fm and a live showcase: top artists, tracks, genres and what's playing right now.",
       stocks: "Near real-time B3 quotes, price history charts and a portfolio tracker with average price, dividends, a CDI benchmark and B3 spreadsheet import.",
       designSystem: "The component library behind every system here — Atomic Design, accessible, with i18n and documented in Storybook.",

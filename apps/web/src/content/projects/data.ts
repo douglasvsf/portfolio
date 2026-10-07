@@ -87,6 +87,17 @@ export const PROJECT_DATA: ProjectData[] = [
     hasCase: true,
   },
   {
+    id: "godzilla-pay",
+    category: "personal",
+    discipline: "backend",
+    period: "2026",
+    technologies: ["NestJS", "PostgreSQL", "SQL", "Next.js", "Zod", "Swagger"],
+    metrics: [],
+    liveUrl: "/pay",
+    codeUrl: `${REPO}/tree/main/apps/api/src/pay`,
+    hasCase: true,
+  },
+  {
     id: "kaiju-stocks",
     category: "personal",
     discipline: "fullstack",

@@ -235,6 +235,64 @@ export const ptBR: ProjectsCopy = {
         ],
       },
     },
+    "godzilla-pay": {
+      title: "GODZILLA Pay",
+      summary:
+        "Gateway Pix de demonstração com API em NestJS e PostgreSQL: cobranças com BR Code no padrão do Banco Central, livro-caixa de partidas dobradas garantido pelo banco, idempotência e webhooks assinados com novas tentativas.",
+      case: {
+        context: "Depois do ERP, faltava no portfólio um sistema em que o back-end fosse o protagonista, num assunto que aparece em toda entrevista de fintech: pagamentos. O GODZILLA Pay é um gateway Pix de demonstração — cada visitante ganha uma loja de teste com chave de API e integra como um lojista faria.",
+        challenge: "Movimentar dinheiro exige garantias que não podem depender só do código da aplicação: nenhum Pix pago duas vezes, nenhum estorno acima do que foi pago, saldo nunca negativo — mesmo com requisições simultâneas, rede instável e clique duplo. E avisar o lojista de forma confiável quando o destino do webhook está fora do ar. Tudo em planos gratuitos (Vercel e Neon).",
+        role: [
+          "API REST em NestJS sobre PostgreSQL com SQL escrito à mão, sem ORM: lojas, chaves de API, cobranças, estornos, livro-caixa e webhooks, documentada no Swagger.",
+          "Pix no padrão EMV do Banco Central: BR Code (copia e cola) com CRC16 e QR Code gerado no servidor.",
+          "Livro-caixa de partidas dobradas: o saldo é calculado dos lançamentos, e o banco recusa no COMMIT qualquer transação desbalanceada.",
+          "Webhooks com fila no próprio Postgres, assinatura HMAC, novas tentativas com espera crescente, reenvio manual e um inspetor que confere a assinatura.",
+          "Telas em Next.js (BFF) com a chave de API em cookie httpOnly, para testar o fluxo inteiro sem escrever código.",
+          "Testes contra um PostgreSQL de verdade embutido, sem Docker, incluindo concorrência — 15 confirmações simultâneas do mesmo Pix e 10 estornos ao mesmo tempo — rodando no CI.",
+        ],
+        architecture: [
+          { label: "Navegador", detail: "telas em React" },
+          { label: "Next.js (BFF)", detail: "server actions · cookie httpOnly" },
+          { label: "API NestJS", detail: "chave de API · idempotência · Swagger" },
+          { label: "PostgreSQL (Neon)", detail: "livro-caixa · fila de webhooks" },
+        ],
+        result: "No ar em /pay, com a API pública no Swagger. O visitante cria a loja em segundos, gera o Pix, simula o pagamento, estorna e acompanha cada lançamento e cada webhook — inclusive simulando o destino fora do ar.",
+        decisions: [
+          {
+            title: "Partidas dobradas garantidas pelo banco",
+            description: "Pagamento e estorno viram lançamentos de débito e crédito. Um trigger de restrição adiado confere, no COMMIT, que cada transação fecha em zero, e lançamento não pode ser alterado nem apagado. Nem um bug na aplicação grava dinheiro torto.",
+          },
+          {
+            title: "Concorrência sem deadlock",
+            description: "Pagar e estornar travam as linhas com FOR NO KEY UPDATE, sempre na mesma ordem (loja, depois cobrança). Com FOR UPDATE havia deadlock contra a trava que a chave estrangeira da idempotência já tinha posto — o teste de concorrência pegou antes de ir para produção.",
+          },
+          {
+            title: "Idempotência na mesma transação",
+            description: "A Idempotency-Key é gravada na mesma transação do trabalho. Uma repetição simultânea espera, encontra a resposta gravada e a devolve igual; se o trabalho falha, o ROLLBACK leva a chave junto. Mesma chave com outro conteúdo é recusada.",
+          },
+          {
+            title: "Outbox e SKIP LOCKED",
+            description: "O evento entra na fila na mesma transação que muda a cobrança: se foi paga, o webhook existe. Vários trabalhadores pegam entregas com FOR UPDATE SKIP LOCKED e nunca a mesma; se falha, nova tentativa em 30 s, 2 min, 10 min, 1 h e 6 h.",
+          },
+          {
+            title: "Webhook assinado",
+            description: "Cada entrega leva o cabeçalho Godzilla-Signature com o horário e o HMAC-SHA256 do corpo. O receptor confere em tempo constante e recusa assinatura velha — protege contra evento forjado ou reenviado.",
+          },
+          {
+            title: "Proteção contra SSRF",
+            description: "URL de webhook só https pública, na porta 443. O IP é conferido depois da resolução de DNS, na própria conexão: domínio que aponta para a rede interna ou para os metadados da nuvem é recusado, inclusive com DNS rebinding.",
+          },
+          {
+            title: "Chave de API tratada como senha",
+            description: "A chave gz_test_ aparece uma vez só; o banco guarda o prefixo e o SHA-256. O rate limit conta por chave, e a loja de teste some sozinha em 24 horas, com tudo dela em cascata.",
+          },
+          {
+            title: "PostgreSQL de verdade nos testes",
+            description: "Os testes sobem um PostgreSQL embutido, sem Docker, também no CI: concorrência, regras do banco e o fluxo completo do site no Cypress rodam no mesmo motor da produção.",
+          },
+        ],
+      },
+    },
     "kaiju-stocks": {
       title: "Kaiju Stocks",
       summary:
