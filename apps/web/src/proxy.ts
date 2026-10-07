@@ -32,9 +32,9 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   // Ignora internos do Next, rotas de API, o Storybook publicado em /design-system,
-  // o Kaiju Stocks em /stocks, o GODZILLA ERP em /erp (ambos com idioma próprio), o painel do site em /admin e arquivos
+  // o Kaiju Stocks em /stocks, o GODZILLA ERP em /erp e o GODZILLA Pay em /pay (com idioma próprio), o painel do site em /admin e arquivos
   // estáticos (qualquer coisa com extensão).
   // Atenção ao escape: numa string JS, "\." vira só "." — a regex ficava ".*.*" (casa com tudo)
   // e o proxy só rodava em "/"; rotas sem idioma, como /projetos/..., davam 404.
-  matcher: ["/((?!_next|api|design-system|stocks|erp|admin|.*\\..*).*)"],
+  matcher: ["/((?!_next|api|design-system|stocks|erp|pay|admin|.*\\..*).*)"],
 };
