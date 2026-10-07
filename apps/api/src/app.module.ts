@@ -8,6 +8,7 @@ import { SkillsModule } from "./skills/skills.module";
 import { ProjectsModule } from "./projects/projects.module";
 import { ExperienceModule } from "./experience/experience.module";
 import { ErpModule } from "./erp/erp.module";
+import { PayModule } from "./pay/pay.module";
 import { ClientIpThrottlerGuard } from "./erp/common/throttler";
 
 /**
@@ -50,6 +51,7 @@ export function mongoUri(raw: string | undefined) {
     // 120 requisições por minuto por visitante; rotas sensíveis (criar demo) têm limite próprio.
     ThrottlerModule.forRoot([{ name: "default", ttl: 60_000, limit: 120 }]),
     ErpModule,
+    PayModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ClientIpThrottlerGuard }],
 })

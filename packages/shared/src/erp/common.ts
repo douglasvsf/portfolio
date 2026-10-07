@@ -49,6 +49,8 @@ export const ERROR_CODES = [
   "invalid_state",
   "demo_full",
   "rate_limited",
+  "insufficient_balance",
+  "service_unavailable",
   "internal_error",
 ] as const;
 export type ErrorCode = (typeof ERROR_CODES)[number];

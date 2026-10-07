@@ -43,16 +43,20 @@ export function configureApp(app: NestExpressApplication | INestApplication) {
   const document = SwaggerModule.createDocument(
     app,
     new DocumentBuilder()
-      .setTitle("GODZILLA ERP API")
+      .setTitle("GODZILLA.DEV API")
       .setDescription(
-        "API do mini-ERP do portfólio GODZILLA.DEV. Comece em POST /erp/sessions/demo: ele cria uma empresa demo isolada (24h) e devolve o token — clique em Authorize e cole o token para testar as demais rotas.",
+        [
+          "APIs dos sistemas do portfólio GODZILLA.DEV.",
+          "**GODZILLA ERP** (MongoDB): comece em POST /erp/sessions/demo — ele cria uma empresa demo isolada (24h) e devolve o token; clique em Authorize e cole o token.",
+          "**GODZILLA Pay** (PostgreSQL): comece em POST /pay/sandboxes — ele cria uma loja de teste (24h) e devolve a chave de API (gz_test_...); clique em Authorize e cole a chave. Criar cobrança e estornar exigem o cabeçalho Idempotency-Key.",
+        ].join("\n\n"),
       )
       .setVersion("1.0")
       .addBearerAuth()
       .build(),
   );
   SwaggerModule.setup("docs", app, document, {
-    customSiteTitle: "GODZILLA ERP API",
+    customSiteTitle: "GODZILLA.DEV API",
     swaggerOptions: { persistAuthorization: true },
     // Na Vercel a função não leva os arquivos do swagger-ui-dist (lidos do node_modules em
     // tempo de execução) e a página ficava em branco: a interface vem do CDN.
