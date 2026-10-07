@@ -20,6 +20,13 @@ const parsers = {
 
 const MIGRATION_LOCK = 724_001;
 
+/**
+ * Onde procurar a URL (a primeira que existir). A integração Neon da Vercel
+ * cria `<prefixo>_DATABASE_URL` — com o prefixo PAY_DATABASE, vira
+ * PAY_DATABASE_DATABASE_URL. Todas são a URL com pooler.
+ */
+export const DATABASE_URL_VARIABLES = ["PAY_DATABASE_URL", "PAY_DATABASE_DATABASE_URL", "DATABASE_URL"] as const;
+
 /** Pool, cliente de transação ou o próprio PayDatabase: qualquer coisa que execute SQL. */
 export interface Queryable {
   query<Row extends QueryResultRow = QueryResultRow>(text: string, params?: unknown[]): Promise<QueryResult<Row>>;
@@ -45,7 +52,7 @@ export class PayDatabase implements OnModuleDestroy {
   constructor(private readonly config: ConfigService) {}
 
   private async connect(): Promise<Pool> {
-    const url = databaseUrl(this.config.get<string>("PAY_DATABASE_URL") ?? this.config.get<string>("DATABASE_URL"));
+    const url = databaseUrl(DATABASE_URL_VARIABLES.map((name) => this.config.get<string>(name)).find(Boolean));
     if (!url) throw new ErpException("service_unavailable", "GODZILLA Pay indisponível: o banco de dados não está configurado.", HttpStatus.SERVICE_UNAVAILABLE);
     // Serverless: poucas conexões por instância (o pooler do Neon multiplica do lado de lá).
     this.pool ??= new Pool({ connectionString: url, max: 3, idleTimeoutMillis: 10_000, connectionTimeoutMillis: 8000, types: parsers });

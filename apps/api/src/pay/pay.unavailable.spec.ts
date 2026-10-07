@@ -3,17 +3,16 @@ import { ConfigModule } from "@nestjs/config";
 import { Test } from "@nestjs/testing";
 import request from "supertest";
 import { configureApp } from "../app.factory";
-import { databaseUrl } from "./db";
+import { DATABASE_URL_VARIABLES, databaseUrl } from "./db";
 import { PayModule } from "./pay.module";
 
 /** Sem banco configurado, só o GODZILLA Pay fica indisponível — com resposta clara, sem derrubar a API. */
 describe("GODZILLA Pay sem banco configurado", () => {
   let app: INestApplication;
-  const saved = { pay: process.env.PAY_DATABASE_URL, generic: process.env.DATABASE_URL };
+  const saved = Object.fromEntries(DATABASE_URL_VARIABLES.map((name) => [name, process.env[name]]));
 
   beforeAll(async () => {
-    delete process.env.PAY_DATABASE_URL;
-    delete process.env.DATABASE_URL;
+    for (const name of DATABASE_URL_VARIABLES) delete process.env[name];
     const moduleRef = await Test.createTestingModule({ imports: [ConfigModule.forRoot({ isGlobal: true, ignoreEnvFile: true }), PayModule] }).compile();
     app = configureApp(moduleRef.createNestApplication({ logger: false }));
     await app.init();
@@ -21,8 +20,7 @@ describe("GODZILLA Pay sem banco configurado", () => {
 
   afterAll(async () => {
     await app?.close();
-    if (saved.pay) process.env.PAY_DATABASE_URL = saved.pay;
-    if (saved.generic) process.env.DATABASE_URL = saved.generic;
+    for (const [name, value] of Object.entries(saved)) if (value) process.env[name] = value;
   });
 
   it("responde 503 com código estável", async () => {
