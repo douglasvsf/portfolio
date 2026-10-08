@@ -12,6 +12,15 @@ describe("kaiju 3D", () => {
     cy.get("[data-testid='kaiju-3d']").should("not.exist");
   });
 
+  it("abriu com a janela estreita e depois maximizou: a cena carrega", () => {
+    cy.viewport(900, 900);
+    cy.visit("/pt-BR");
+    cy.wait(3000);
+    cy.get("[data-testid='kaiju-3d']").should("not.exist");
+    cy.viewport(1440, 900);
+    cy.get("[data-testid='kaiju-3d']", { timeout: 30_000 }).should("exist");
+  });
+
   it("no desktop a cena carrega por cima da imagem, sem erro e sem bloqueio da CSP", () => {
     cy.viewport(1440, 900);
     const problems: string[] = [];

@@ -27,10 +27,13 @@ const CANVAS_MASK_CALM = "[mask-image:radial-gradient(24.04%_70.71%_at_center,bl
 /** No disparo: só esmaece em cima e embaixo — o raio vai até a borda da tela. */
 const CANVAS_MASK_UNLEASHED = "[mask-image:linear-gradient(to_bottom,transparent,black_14%,black_86%,transparent)]";
 
+const WIDE = "(min-width: 1024px)";
+const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
+
 /** Tela grande, sem "reduzir movimento" e com WebGL: só então vale carregar o 3D. */
 function canRender3d() {
-  if (!window.matchMedia("(min-width: 1024px)").matches) return false;
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return false;
+  if (!window.matchMedia(WIDE).matches) return false;
+  if (window.matchMedia(REDUCED_MOTION).matches) return false;
   try {
     const canvas = document.createElement("canvas");
     return Boolean(canvas.getContext("webgl2") ?? canvas.getContext("webgl"));
@@ -59,12 +62,25 @@ export function KaijuStage({ children }: { children: ReactNode }) {
   const unleashed = rage.phase !== "calm";
 
   useEffect(() => {
-    if (!canRender3d()) return;
-    const start = () => setEnabled(true);
-    const idle = window.requestIdleCallback?.(start, { timeout: 2500 }) ?? window.setTimeout(start, 1200);
-    return () => {
+    let idle: number | undefined;
+    const cancel = () => {
+      if (idle === undefined) return;
       if (window.cancelIdleCallback) window.cancelIdleCallback(idle);
       else window.clearTimeout(idle);
+      idle = undefined;
+    };
+    const tryStart = () => {
+      if (idle !== undefined || !canRender3d()) return;
+      const start = () => setEnabled(true);
+      idle = window.requestIdleCallback?.(start, { timeout: 2500 }) ?? window.setTimeout(start, 1200);
+    };
+    tryStart();
+    // Quem abre a página com a janela estreita e depois maximiza (ou liga as animações) também ganha o 3D.
+    const queries = [window.matchMedia(WIDE), window.matchMedia(REDUCED_MOTION)];
+    for (const query of queries) query.addEventListener("change", tryStart);
+    return () => {
+      for (const query of queries) query.removeEventListener("change", tryStart);
+      cancel();
     };
   }, []);
 

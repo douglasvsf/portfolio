@@ -23,6 +23,13 @@ import { MAX_RAGE, type RagePhase, type RageState } from "./rage";
  */
 
 const MODEL_URL = "/models/kaiju.glb";
+/**
+ * O modelo não usa compressão (Draco/Meshopt). Sem desligar, o drei inicia o
+ * decodificador Meshopt em WebAssembly — que a CSP do site bloqueia — e o Draco
+ * buscaria o decodificador num CDN externo. Os dois ficam desligados.
+ */
+const USE_DRACO = false;
+const USE_MESHOPT = false;
 const NEON = "#a3ff3c";
 const BACKGROUND = "#07090a";
 
@@ -89,7 +96,7 @@ function usePointer() {
 
 function Kaiju({ onReady, onRage }: { onReady: () => void; onRage: (state: RageState) => void }) {
   const group = useRef<THREE.Group>(null);
-  const { scene, animations } = useGLTF(MODEL_URL);
+  const { scene, animations } = useGLTF(MODEL_URL, USE_DRACO, USE_MESHOPT);
   const { actions, mixer } = useAnimations(animations, group);
   const pointer = usePointer();
   const look = useRef(new THREE.Vector2());
@@ -546,4 +553,4 @@ export default function KaijuScene({ active, onReady, onRage }: { active: boolea
   );
 }
 
-useGLTF.preload(MODEL_URL);
+useGLTF.preload(MODEL_URL, USE_DRACO, USE_MESHOPT);
