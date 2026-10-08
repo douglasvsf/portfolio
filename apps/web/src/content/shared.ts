@@ -85,14 +85,14 @@ export const ACTIONS_URL = `${REPO_URL}/actions/workflows/ci.yml`;
  * título e descrição.
  */
 const ENGINEERING = {
-  monorepo: { tags: ["pnpm workspaces", "Turborepo", "Next.js 16", "NestJS"], href: code("turbo.json") },
+  monorepo: { tags: ["pnpm workspaces", "Turborepo", "Next.js 16", "NestJS", "PostgreSQL"], href: code("turbo.json") },
   designSystem: { tags: ["Tailwind v4", "Radix UI", "Storybook"], href: code("packages/ui/src/") },
   ci: { tags: ["GitHub Actions", "Lighthouse CI", "Dependabot", "Vercel"], href: code(".github/workflows/ci.yml") },
-  tests: { tags: ["Jest", "Cypress", "Testing Library"], href: code("apps/web/src/lib/contracts.test.ts") },
+  tests: { tags: ["Jest", "Cypress", "Testing Library", "embedded-postgres"], href: code("apps/api/src/pay/pay.e2e.spec.ts") },
   contracts: { tags: ["Zod", "TypeScript"], href: code("apps/web/src/lib/http/contract.ts") },
   resilience: { tags: ["Backoff + jitter", "Timeout", "Data Cache"], href: code("apps/web/src/lib/http/retry.ts") },
   observability: { tags: ["Sentry", "Source maps", "Tracing"], href: code("apps/web/src/lib/observability/") },
-  security: { tags: ["OAuth PKCE", "AES-256-GCM", "Server-only"], href: code("apps/web/src/lib/spotify/crypto.ts") },
+  security: { tags: ["CSP", "scrypt", "HMAC", "Anti-SSRF", "OAuth PKCE"], href: code("apps/web/next.config.ts") },
   i18n: { tags: ["pt-BR · en-US · es-ES", "Intl", "WCAG"], href: code("apps/web/src/i18n/") },
 } as const;
 

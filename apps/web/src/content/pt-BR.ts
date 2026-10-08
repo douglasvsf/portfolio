@@ -229,7 +229,7 @@ export const ptBR: SiteContent = {
     pipelineLabel: "A cada push, 3 jobs em paralelo — a main só fica verde se todos passarem",
     pipeline: ["Lint · Typecheck", "Testes · Cobertura ≥ 80%", "Build · E2E · Lighthouse"],
     stats: [
-      { value: "150+", label: "testes automatizados" },
+      { value: "450+", label: "testes automatizados" },
       { value: "≥ 80%", label: "cobertura exigida no CI" },
       { value: "100", label: "acessibilidade e SEO no Lighthouse" },
       { value: "3", label: "idiomas com detecção automática" },
@@ -240,7 +240,7 @@ export const ptBR: SiteContent = {
     items: engineeringItems({
       monorepo: {
         title: "Monorepo",
-        description: "Site, sistemas, API NestJS e Design System no mesmo repositório, com pacotes compartilhados e build incremental em cache.",
+        description: "Site, sistemas, API NestJS (com MongoDB e PostgreSQL) e Design System no mesmo repositório, com contratos compartilhados e build incremental em cache.",
       },
       designSystem: {
         title: "Design System próprio",
@@ -252,7 +252,7 @@ export const ptBR: SiteContent = {
       },
       tests: {
         title: "Testes em camadas",
-        description: "Unitários, E2E no navegador e testes de contrato com respostas reais gravadas das APIs — incluindo cenários em que a API muda de formato.",
+        description: "Unitários, E2E no navegador e testes de contrato com respostas reais gravadas. As APIs rodam contra bancos de verdade (MongoDB em memória e PostgreSQL embutido), inclusive com requisições simultâneas.",
       },
       contracts: {
         title: "Contratos de API",
@@ -268,7 +268,7 @@ export const ptBR: SiteContent = {
       },
       security: {
         title: "Segurança",
-        description: "Login Spotify com OAuth PKCE, sessão em cookie criptografado com AES-256-GCM e segredos que só existem no servidor.",
+        description: "CSP e cabeçalhos de segurança, senhas com scrypt, sessões em cookie httpOnly, webhooks assinados com HMAC, proteção contra SSRF e segredos que só existem no servidor.",
       },
       i18n: {
         title: "i18n e acessibilidade",

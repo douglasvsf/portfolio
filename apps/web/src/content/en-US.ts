@@ -229,7 +229,7 @@ export const enUS: SiteContent = {
     pipelineLabel: "On every push, 3 parallel jobs — main only turns green when all of them pass",
     pipeline: ["Lint · Typecheck", "Tests · Coverage ≥ 80%", "Build · E2E · Lighthouse"],
     stats: [
-      { value: "150+", label: "automated tests" },
+      { value: "450+", label: "automated tests" },
       { value: "≥ 80%", label: "coverage enforced in CI" },
       { value: "100", label: "accessibility and SEO on Lighthouse" },
       { value: "3", label: "languages with automatic detection" },
@@ -240,7 +240,7 @@ export const enUS: SiteContent = {
     items: engineeringItems({
       monorepo: {
         title: "Monorepo",
-        description: "Site, apps, NestJS API and Design System in one repository, with shared packages and cached incremental builds.",
+        description: "Site, apps, NestJS API (with MongoDB and PostgreSQL) and Design System in one repository, with shared contracts and cached incremental builds.",
       },
       designSystem: {
         title: "In-house Design System",
@@ -252,7 +252,7 @@ export const enUS: SiteContent = {
       },
       tests: {
         title: "Layered testing",
-        description: "Unit tests, in-browser E2E and contract tests against recorded real API responses — including cases where the API changes shape.",
+        description: "Unit tests, in-browser E2E and contract tests against recorded real responses. The APIs run against real databases (in-memory MongoDB and embedded PostgreSQL), concurrent requests included.",
       },
       contracts: {
         title: "API contracts",
@@ -268,7 +268,7 @@ export const enUS: SiteContent = {
       },
       security: {
         title: "Security",
-        description: "Spotify login with OAuth PKCE, session in an AES-256-GCM encrypted cookie and secrets that only exist on the server.",
+        description: "CSP and security headers, scrypt passwords, httpOnly cookie sessions, HMAC-signed webhooks, SSRF protection and secrets that only exist on the server.",
       },
       i18n: {
         title: "i18n & accessibility",

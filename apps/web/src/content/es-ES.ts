@@ -229,7 +229,7 @@ export const esES: SiteContent = {
     pipelineLabel: "En cada push, 3 jobs en paralelo — main solo queda en verde si todos pasan",
     pipeline: ["Lint · Typecheck", "Tests · Cobertura ≥ 80%", "Build · E2E · Lighthouse"],
     stats: [
-      { value: "150+", label: "tests automatizados" },
+      { value: "450+", label: "tests automatizados" },
       { value: "≥ 80%", label: "cobertura exigida en el CI" },
       { value: "100", label: "accesibilidad y SEO en Lighthouse" },
       { value: "3", label: "idiomas con detección automática" },
@@ -240,7 +240,7 @@ export const esES: SiteContent = {
     items: engineeringItems({
       monorepo: {
         title: "Monorepo",
-        description: "Sitio, sistemas, API NestJS y Design System en un mismo repositorio, con paquetes compartidos y build incremental en caché.",
+        description: "Sitio, sistemas, API NestJS (con MongoDB y PostgreSQL) y Design System en un mismo repositorio, con contratos compartidos y build incremental en caché.",
       },
       designSystem: {
         title: "Design System propio",
@@ -252,7 +252,7 @@ export const esES: SiteContent = {
       },
       tests: {
         title: "Tests en capas",
-        description: "Unitarios, E2E en el navegador y tests de contrato con respuestas reales grabadas de las APIs — incluidos los casos en que la API cambia de formato.",
+        description: "Unitarios, E2E en el navegador y tests de contrato con respuestas reales grabadas. Las APIs corren contra bases de datos reales (MongoDB en memoria y PostgreSQL embebido), incluso con peticiones simultáneas.",
       },
       contracts: {
         title: "Contratos de API",
@@ -268,7 +268,7 @@ export const esES: SiteContent = {
       },
       security: {
         title: "Seguridad",
-        description: "Login de Spotify con OAuth PKCE, sesión en cookie cifrada con AES-256-GCM y secretos que solo existen en el servidor.",
+        description: "CSP y cabeceras de seguridad, contraseñas con scrypt, sesiones en cookie httpOnly, webhooks firmados con HMAC, protección contra SSRF y secretos que solo existen en el servidor.",
       },
       i18n: {
         title: "i18n y accesibilidad",
