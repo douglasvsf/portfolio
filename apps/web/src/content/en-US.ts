@@ -24,7 +24,7 @@ export const enUS: SiteContent = {
     prompt: "$ whoami",
     title: "Douglas Szapak",
     subtitle: "Full Stack Developer",
-    fanNote: "Card-carrying Godzilla fan — hence the kaiju next door and the name GODZILLA.DEV.",
+    fanNote: "Card-carrying Godzilla fan.",
     description:
       "A personal portfolio built on a modern stack, showcasing projects, experience and the way I work. Always evolving — just like a kaiju that never stops growing.",
     primaryCta: { label: "See projects", href: `#${SECTION_IDS.projects}` },

@@ -24,7 +24,7 @@ export const ptBR: SiteContent = {
     prompt: "$ whoami",
     title: "Douglas Szapak",
     subtitle: "Full Stack Developer",
-    fanNote: "Fã de carteirinha do Godzilla — daí o kaiju ao lado e o nome GODZILLA.DEV.",
+    fanNote: "Fã de carteirinha do Godzilla.",
     description:
       "Portfolio pessoal construído com uma stack moderna, mostrando projetos, experiência e forma de trabalhar. Em constante evolução — assim como um kaiju que nunca para de crescer.",
     primaryCta: { label: "Ver projetos", href: `#${SECTION_IDS.projects}` },
