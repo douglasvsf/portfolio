@@ -9,6 +9,7 @@ import { ProjectsModule } from "./projects/projects.module";
 import { ExperienceModule } from "./experience/experience.module";
 import { ErpModule } from "./erp/erp.module";
 import { PayModule } from "./pay/pay.module";
+import { AgentModule } from "./agent/agent.module";
 import { ClientIpThrottlerGuard } from "./erp/common/throttler";
 
 /**
@@ -52,6 +53,7 @@ export function mongoUri(raw: string | undefined) {
     ThrottlerModule.forRoot([{ name: "default", ttl: 60_000, limit: 120 }]),
     ErpModule,
     PayModule,
+    AgentModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ClientIpThrottlerGuard }],
 })

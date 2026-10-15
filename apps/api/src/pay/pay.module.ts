@@ -9,5 +9,6 @@ import { WebhooksService } from "./webhooks.service";
 @Module({
   controllers: [PayController, PayWorkerController],
   providers: [PayDatabase, MerchantsService, ChargesService, WebhooksService, ApiKeyGuard],
+  exports: [MerchantsService, ChargesService],
 })
 export class PayModule {}

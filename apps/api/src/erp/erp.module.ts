@@ -84,6 +84,8 @@ import { WorkspacesService } from "./workspaces/workspaces.service";
     }),
   ],
   controllers: [SessionController, AuthController, TeamController, OwnerController, ContactController, SiteAdminController, ProductsController, StockController, CustomersController, OrdersController, PosController, DashboardController],
+  // O Kaiju Agent usa os mesmos serviços (e o mesmo JWT) que as rotas do ERP.
+  exports: [JwtModule, WorkspacesService, CatalogService, OrdersService, DashboardService, SiteAdminService, SiteAdminGuard],
   providers: [AccountsService, ContactService, SiteAdminService, SiteAdminGuard, WorkspacesService, CatalogService, StockService, OrdersService, PosService, DashboardService, SessionGuard],
 })
 export class ErpModule {}

@@ -91,6 +91,12 @@ export class MerchantsService {
     return toMerchant(rows[0]!);
   }
 
+  /** Loja pelo id (o Kaiju Agent opera a loja que criou para o visitante), ou `null` se venceu. */
+  async findById(id: string): Promise<MerchantRow | null> {
+    const { rows } = await this.db.query<MerchantRow>(`select ${MERCHANT_COLUMNS} from pay_merchants where id = $1 and expires_at > now()`, [id]);
+    return rows[0] ?? null;
+  }
+
   /** Loja dona da chave, ou `null` (chave inexistente, errada ou loja vencida). */
   async authenticate(apiKey: string): Promise<MerchantRow | null> {
     if (!API_KEY_PATTERN.test(apiKey)) return null;
