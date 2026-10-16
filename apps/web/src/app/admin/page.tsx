@@ -3,7 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader } from "@godzilla/ui";
 import { AdminLoginForm, AdminSetupForm } from "@/components/admin/admin-login";
 import { ContactMessageCard } from "@/components/admin/contact-messages";
 import { adminLogout } from "@/lib/admin/actions";
-import { adminPanel, adminSetupAvailable } from "@/lib/admin/queries";
+import { adminPanel, adminSetupAvailable, agentAudit } from "@/lib/admin/queries";
+import { formatDateTime } from "@/lib/erp/format";
 
 /** Painel do site: as mensagens que chegam pelo formulário de contato. Sem sessão, mostra o login. */
 export default async function AdminPage() {
@@ -24,6 +25,7 @@ export default async function AdminPage() {
   }
 
   const { session, messages } = panel;
+  const turns = await agentAudit(session.token);
   const unread = messages.filter((message) => message.status === "new").length;
   const byKind = (kind: string) => messages.filter((message) => message.kind === kind).length;
   const stats = [
@@ -77,6 +79,34 @@ export default async function AdminPage() {
           </ul>
         )}
       </section>
+
+      {turns && (
+        <section className="flex flex-col gap-3" aria-labelledby="agente">
+          <h2 id="agente" className="font-mono text-overline uppercase tracking-widest text-primary">
+            Kaiju Agent — últimas conversas
+          </h2>
+          <p className="text-body-sm text-muted-foreground">O que os visitantes pediram e o que o agente fez (guardado por 7 dias).</p>
+          {turns.length === 0 ? (
+            <p className="text-body-sm text-muted-foreground">Ninguém conversou com o agente ainda.</p>
+          ) : (
+            <ul className="flex flex-col gap-2" data-testid="agent-audit">
+              {turns.map((turn) => {
+                const asked = turn.steps.find((step) => step.type === "text" && step.role === "user");
+                const tools = turn.steps.filter((step) => step.type === "tool");
+                return (
+                  <li key={turn.id} className="flex flex-col gap-1 border-b border-border py-2 text-body-sm">
+                    <span>{asked && asked.type === "text" ? asked.text : "—"}</span>
+                    <span className="font-mono text-caption text-muted-foreground">
+                      {formatDateTime(turn.createdAt)} · {turn.session} · {turn.status} · {turn.llmCalls} chamada(s) ao modelo
+                      {tools.length > 0 && ` · ${tools.map((step) => (step.type === "tool" ? `${step.tool} (${step.status})` : "")).join(", ")}`}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+      )}
     </div>
   );
 }

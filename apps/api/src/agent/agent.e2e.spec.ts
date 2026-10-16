@@ -201,6 +201,10 @@ describe("confirmação humana", () => {
 
     await as(token).confirm(paused.id, true).expect(409);
     expect(await charges()).toHaveLength(1);
+    const { body: saved } = await as(token).conversation().expect(200);
+    const savedTurn = (saved as agent.AgentConversation).turns.find((item) => item.id === paused.id)!;
+    expect(tools(savedTurn)[0]).toMatchObject({ status: "ok", result: { valorCentavos: 5000 } });
+    expect(savedTurn.pending).toBeNull();
   });
 
   it("recusar não executa, e o modelo fica sabendo que não deve insistir", async () => {
@@ -213,6 +217,11 @@ describe("confirmação humana", () => {
     });
     const { body: done } = await as(token).confirm(paused.id, false).expect(200);
     expect(tools(done)[0]!.status).toBe("rejected");
+    // O que ficou GRAVADO (é o que a tela lê depois), não só a resposta da confirmação.
+    const { body: saved } = await as(token).conversation().expect(200);
+    const savedTurn = (saved as agent.AgentConversation).turns.find((item) => item.id === paused.id)!;
+    expect(tools(savedTurn)[0]!.status).toBe("rejected");
+    expect(savedTurn.status).toBe("done");
     expect((await charges())[0]!.status).toBe("pending");
   });
 

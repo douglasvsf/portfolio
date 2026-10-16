@@ -1,5 +1,5 @@
 import "server-only";
-import type { contact } from "@portfolio/shared";
+import type { agent, contact } from "@portfolio/shared";
 import { erpRequest, isApiError } from "@/lib/erp/client";
 import { getAdminSession, type AdminSession } from "./session";
 
@@ -25,5 +25,16 @@ export async function adminSetupAvailable(): Promise<boolean> {
     return (await erpRequest<{ available: boolean }>("/admin/auth/setup", { anonymous: true })).available;
   } catch {
     return false;
+  }
+}
+
+export type AgentAuditTurn = agent.AgentTurn & { session: string; llmCalls: number };
+
+/** Auditoria do Kaiju Agent. Se a API ainda não tiver o agente (ou falhar), o painel segue sem a seção. */
+export async function agentAudit(token: string): Promise<AgentAuditTurn[] | null> {
+  try {
+    return await erpRequest<AgentAuditTurn[]>("/admin/agent/turns", { token });
+  } catch {
+    return null;
   }
 }

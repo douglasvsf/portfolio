@@ -277,9 +277,12 @@ export class AgentService {
       const lastUser = messages.map((message) => message.role).lastIndexOf("user");
       messages.splice(lastUser);
     } finally {
-      // steps/pending são Mixed: alterações dentro deles não são detectadas sozinhas.
-      (turn as unknown as { markModified(path: string): void }).markModified("steps");
-      (turn as unknown as { markModified(path: string): void }).markModified("pending");
+      // steps é Mixed e recebe push E alteração no lugar (o passo confirmado): sem regravar o
+      // array inteiro, o Mongoose manda só o $push e a mudança de situação do passo se perde.
+      const document = turn as unknown as { set(path: string, value: unknown): void; markModified(path: string): void };
+      document.set("steps", JSON.parse(JSON.stringify(turn.steps)));
+      document.markModified("steps");
+      document.markModified("pending");
       await turn.save();
     }
   }

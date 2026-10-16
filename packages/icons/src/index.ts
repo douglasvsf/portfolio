@@ -22,6 +22,7 @@ export {
   Banknote,
   BarChart3,
   BookOpen,
+  Bot,
   Boxes,
   Building2,
   Calendar,

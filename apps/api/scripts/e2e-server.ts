@@ -18,6 +18,8 @@ async function main() {
   process.env.ERP_BFF_KEY ??= "e2e-bff-key";
   process.env.ERP_SETUP_TOKEN ??= "e2e-setup-token-0123456789";
   process.env.API_PORT ??= "3001";
+  // Kaiju Agent sem provedor de IA: o cérebro por regras chama as ferramentas de verdade.
+  process.env.AI_PROVIDER ??= "rules";
 
   const stop = async () => {
     await mongo.stop();
